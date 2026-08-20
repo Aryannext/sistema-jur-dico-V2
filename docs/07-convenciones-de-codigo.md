@@ -73,9 +73,28 @@ No como teoría, sino como comprobación concreta sobre este código:
 | **O** · Abierto/cerrado | Añadir una cuarta clase de `Pieza` **no debe obligar a tocar el portal**. Si hay que tocarlo, el diseño falló |
 | **L** · Sustitución de Liskov | Cualquier `Pieza` puede tratarse como `Pieza`; el portal no pregunta de qué tipo es, llama a `esVisibleParaCliente()` |
 | **I** · Segregación de interfaces | Ningún servicio expone métodos que sus consumidores no usan. Sin un `SistemaService` con 40 métodos |
-| **D** · Inversión de dependencias | El dominio **no importa** nada de `jakarta.persistence`, `org.springframework.web` ni del cliente HTTP de la Rama Judicial |
+| **D** · Inversión de dependencias | El dominio **no depende del comportamiento** de la infraestructura: no llama a repositorios, HTTP, correo ni servicios externos. Ver la precisión de §3.1 sobre las anotaciones JPA |
 
-**Prueba objetiva del principio D:** si el paquete `dominio/` de cualquier módulo importa algo de infraestructura, está mal. Se puede verificar con una búsqueda de texto.
+**Prueba objetiva del principio D:** si una clase de `dominio/` importa `org.springframework.web`, un repositorio, un cliente HTTP o el adaptador de correo, está mal. Se verifica con una búsqueda de texto.
+
+### 3.1 Precisión sobre JPA — corrección de una regla mal formulada
+
+La primera versión de este documento decía que el dominio *"no importa nada de `jakarta.persistence`"*. **Era una regla mal formulada y se corrige aquí**, porque llevaba a una conclusión equivocada.
+
+Mantenerla al pie de la letra obligaría a duplicar cada entidad —una de dominio y otra de persistencia— más un mapeador entre ambas. Para 4 sprints y una sola persona, eso es sobreingeniería: triplica el código sin reducir ningún riesgo real.
+
+**La distinción correcta es entre metadatos y comportamiento:**
+
+| Permitido en el dominio | Prohibido en el dominio |
+|---|---|
+| Anotaciones **declarativas**: `@Entity`, `@Column`, `@Enumerated` | Llamar a un repositorio |
+| Anotaciones de validación: `@NotBlank`, `@Email` | Hacer una petición HTTP |
+| | Enviar un correo |
+| | Depender de `HttpServletRequest` o de un DTO de la API |
+
+Una anotación dice *cómo se guarda* esta clase; no la hace **depender** de que exista una base de datos. La entidad se sigue construyendo con `new`, sus reglas se prueban sin levantar Spring, y ahí está lo que el principio D protege de verdad.
+
+**Lo que no se relaja:** el dominio no puede tener lógica de negocio anémica. Si `Despacho` es solo campos con `get` y `set`, y las reglas viven en el servicio, el principio S se rompió aunque el D se cumpla.
 
 ---
 

@@ -67,11 +67,48 @@
 
 	<build>
 		<plugins>
+			<!--
+			  Estrategia de pruebas (docs/07-convenciones-de-codigo.md §7)
+
+			  Por defecto se ejecutan SOLO las pruebas que no necesitan
+			  infraestructura: reglas de dominio, puras y rapidas. Asi
+			  "tiene pruebas" no significa "pruebas que solo corren si
+			  tienes PostgreSQL encendido".
+
+			  Las que si necesitan base de datos se marcan @Tag("integracion")
+			  y se ejecutan aparte:
+			      mvnw verify -Pintegracion
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<excludedGroups>integracion</excludedGroups>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<!-- mvnw test -Pintegracion  ->  incluye las pruebas con base de datos real -->
+		<profile>
+			<id>integracion</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<excludedGroups combine.self="override"/>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>
