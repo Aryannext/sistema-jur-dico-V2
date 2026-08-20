@@ -113,6 +113,14 @@ public class ConfiguracionSeguridad {
                         .requestMatchers("/api/usuarios/**")
                             .hasAuthority("ROL_ADMIN_DESPACHO")
 
+                        // Los catalogos los ADMINISTRA su administrador, pero
+                        // los abogados necesitan LEERLOS para rellenar
+                        // formularios. Por eso se separa lectura de escritura.
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/catalogos/**")
+                            .hasAnyAuthority("ROL_ADMIN_DESPACHO", "ROL_ABOGADO")
+                        .requestMatchers("/api/catalogos/**")
+                            .hasAuthority("ROL_ADMIN_DESPACHO")
+
                         // El alta y el estado de los despachos es exclusivo del
                         // Administrador de Plataforma (RF-01, RF-02).
                         .requestMatchers("/api/despachos/**")

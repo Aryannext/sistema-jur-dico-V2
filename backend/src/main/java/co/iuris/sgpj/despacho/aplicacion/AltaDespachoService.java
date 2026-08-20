@@ -1,5 +1,6 @@
 package co.iuris.sgpj.despacho.aplicacion;
 
+import co.iuris.sgpj.catalogo.aplicacion.SembradorCatalogos;
 import co.iuris.sgpj.despacho.dominio.Despacho;
 import co.iuris.sgpj.usuario.aplicacion.UsuarioService;
 import co.iuris.sgpj.usuario.dominio.CodigoRol;
@@ -34,10 +35,13 @@ public class AltaDespachoService {
 
     private final DespachoService despachos;
     private final UsuarioService usuarios;
+    private final SembradorCatalogos catalogos;
 
-    public AltaDespachoService(DespachoService despachos, UsuarioService usuarios) {
+    public AltaDespachoService(DespachoService despachos, UsuarioService usuarios,
+                               SembradorCatalogos catalogos) {
         this.despachos = despachos;
         this.usuarios = usuarios;
+        this.catalogos = catalogos;
     }
 
     /** Resultado del alta: ambas piezas, para poder informarlas juntas. */
@@ -49,6 +53,11 @@ public class AltaDespachoService {
                                         String nombreAdmin, String correoAdmin, String contrasenaAdmin) {
 
         Despacho despacho = despachos.registrar(nombre, nit, correoContacto, telefono);
+
+        // El despacho nace con sus catalogos poblados: sin estados procesales
+        // ni tipos de proceso no se podria registrar el primer caso, y el
+        // administrador tendria que crearlos a mano antes de empezar (D-13).
+        catalogos.sembrarPara(despacho);
 
         // Se usa la variante que recibe el despacho explícitamente: quien
         // ejecuta esta operación es el Administrador de Plataforma, que no
