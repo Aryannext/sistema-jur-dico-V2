@@ -22,3 +22,12 @@ logging.level.org.flywaydb=INFO
 
 # Muestra el error completo en consola durante el desarrollo
 logging.level.co.iuris.sgpj=DEBUG
+
+# --- Administrador de Plataforma inicial ---------------------
+# Sin esto nadie puede entrar: la seguridad esta activa y el primer
+# usuario debe existir antes de poder autenticarse. Si no se define,
+# la aplicacion arranca pero avisa de que nadie podra iniciar sesion.
+# NO hay contrasena por defecto, a proposito.
+sgpj.administrador-inicial.correo=CAMBIE-ESTE-CORREO
+sgpj.administrador-inicial.contrasena=CAMBIE-ESTA-CLAVE
+sgpj.administrador-inicial.nombre=Administrador de Plataforma

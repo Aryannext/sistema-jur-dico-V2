@@ -1,7 +1,7 @@
 package co.iuris.sgpj.usuario.aplicacion;
 
 import co.iuris.sgpj.comun.dominio.ReglaDeNegocioException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 /**
@@ -29,7 +29,16 @@ public class ServicioContrasenas {
      */
     public static final int LONGITUD_MINIMA = 8;
 
-    private final BCryptPasswordEncoder codificador = new BCryptPasswordEncoder();
+    /**
+     * Inyectado, no instanciado aquí: debe ser el <em>mismo</em> codificador
+     * que usa Spring Security al validar el inicio de sesión. Dos instancias
+     * con parámetros distintos generarían hashes que no se validan entre sí.
+     */
+    private final PasswordEncoder codificador;
+
+    public ServicioContrasenas(PasswordEncoder codificador) {
+        this.codificador = codificador;
+    }
 
     public String cifrar(String contrasenaEnClaro) {
         exigirContrasenaValida(contrasenaEnClaro);

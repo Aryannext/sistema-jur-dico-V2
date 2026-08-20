@@ -39,15 +39,18 @@
 		</dependency>
 
 		<!--
-		  Solo el modulo de criptografia de Spring Security, no el starter
-		  completo. La seguridad web (autenticacion, filtros, tenant) llega
-		  en el incremento M2; esto se adelanta porque RNF-05 exige que las
-		  contrasenas se guarden con hash desde el PRIMER usuario creado.
-		  Ver D-23: el hash es de los dos controles que no se relajan ni en local.
+		  Seguridad web completa: autenticacion, autorizacion por rol y
+		  proteccion CSRF. Incluye spring-security-crypto, que ya se usaba
+		  para el hash de contrasenas (RNF-05).
 		-->
 		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-crypto</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security-test</artifactId>
+			<scope>test</scope>
 		</dependency>
 
 		<dependency>

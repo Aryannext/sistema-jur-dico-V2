@@ -1,8 +1,11 @@
 package co.iuris.sgpj.usuario.infraestructura;
 
+import co.iuris.sgpj.usuario.dominio.CodigoRol;
 import co.iuris.sgpj.usuario.dominio.Usuario;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +36,38 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findWithDespachoAndRolesByCorreo(String correo);
 
     boolean existsByCorreo(String correo);
+
+    /** ¿Existe ya alguien con este rol? Se usa para no duplicar el administrador inicial. */
+    boolean existsByRoles_Codigo(CodigoRol codigo);
+
+    /**
+     * ¿Este usuario puede operar <em>ahora mismo</em>? RN-04 · CA-02.1.
+     *
+     * <p>Consulta deliberadamente mínima —devuelve un booleano, no la entidad—
+     * porque se ejecuta en <strong>cada</strong> petición. Traer el usuario
+     * completo con sus roles solo para leer dos banderas sería un coste
+     * innecesario en el camino más transitado del sistema.
+     *
+     * <p>Existe porque el estado guardado en la sesión se calculó al
+     * autenticar y no se entera de que el despacho se desactivó después.
+     *
+     * <p><strong>El {@code left join} es obligatorio, no una preferencia de
+     * estilo.</strong> Escribir {@code u.despacho.estado} genera un INNER JOIN
+     * implícito, que descarta a los usuarios sin despacho — es decir, al
+     * Administrador de Plataforma. La consulta no devolvía ninguna fila para
+     * él, el filtro lo interpretaba como "no puede operar" y lo expulsaba del
+     * sistema. Se detectó al probar la revocación: el administrador no podía
+     * reactivar un despacho.
+     */
+    @Query("""
+            select case when (u.activo = true
+                              and (d is null or d.estado = co.iuris.sgpj.despacho.dominio.EstadoDespacho.ACTIVO))
+                        then true else false end
+            from Usuario u
+            left join u.despacho d
+            where u.id = :usuarioId
+            """)
+    Optional<Boolean> puedeOperarAhora(@Param("usuarioId") Long usuarioId);
 
     boolean existsByCorreoAndIdNot(String correo, Long id);
 
