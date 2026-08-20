@@ -1,8 +1,10 @@
 package co.iuris.sgpj.despacho.infraestructura;
 
+import co.iuris.sgpj.despacho.aplicacion.AltaDespachoService;
 import co.iuris.sgpj.despacho.aplicacion.DespachoService;
 import co.iuris.sgpj.despacho.dominio.Despacho;
 import co.iuris.sgpj.despacho.dominio.EstadoDespacho;
+import co.iuris.sgpj.despacho.infraestructura.dto.CrearDespachoRequest;
 import co.iuris.sgpj.despacho.infraestructura.dto.DespachoRequest;
 import co.iuris.sgpj.despacho.infraestructura.dto.DespachoResponse;
 import jakarta.validation.Valid;
@@ -29,35 +31,55 @@ import java.util.List;
  * deliberada (CA-02.3): desactivar no es eliminar (RN-05), y los datos del
  * despacho se conservan siempre (RN-52).
  *
- * <p><strong>⚠ DEUDA CONOCIDA — estos endpoints todavía no exigen autenticación.</strong>
- * El módulo de seguridad (M2) llega en un incremento posterior, y hasta entonces
- * cualquiera que alcance el puerto puede registrar o desactivar despachos.
- * Es aceptable únicamente porque el sistema corre en local sobre una base sin
- * datos reales (D-23). <strong>No puede exponerse el servidor a la red mientras
- * esta nota siga aquí</strong>; el control 1 de la lista de D-23 lo bloquea.
+ * <p>Requiere el rol {@code ADMIN_PLATAFORMA}; la restricción está declarada en
+ * la configuración de seguridad, no repetida en cada método.
  */
 @RestController
 @RequestMapping("/api/despachos")
 public class DespachoController {
 
     private final DespachoService servicio;
+    private final AltaDespachoService altaServicio;
 
-    public DespachoController(DespachoService servicio) {
+    public DespachoController(DespachoService servicio, AltaDespachoService altaServicio) {
         this.servicio = servicio;
+        this.altaServicio = altaServicio;
     }
 
-    /** RF-01 · HU-01 */
+    /**
+     * RF-01 · HU-01 · CA-01.2: registra el despacho <strong>y su primer
+     * administrador</strong> en una sola operación.
+     *
+     * <p>La respuesta incluye el identificador y el correo del administrador
+     * creado, para que quien da de alta sepa a quién entregar el acceso.
+     * Nunca incluye la contraseña.
+     */
     @PostMapping
-    public ResponseEntity<DespachoResponse> registrar(@Valid @RequestBody DespachoRequest peticion,
-                                                      UriComponentsBuilder constructorUri) {
-        Despacho despacho = servicio.registrar(
-                peticion.nombre(), peticion.nit(), peticion.correoContacto(), peticion.telefono());
+    public ResponseEntity<AltaDespachoResponse> registrar(@Valid @RequestBody CrearDespachoRequest peticion,
+                                                          UriComponentsBuilder constructorUri) {
+        var alta = altaServicio.registrar(
+                peticion.nombre(), peticion.nit(), peticion.correoContacto(), peticion.telefono(),
+                peticion.administrador().nombre(),
+                peticion.administrador().correo(),
+                peticion.administrador().contrasena());
 
         URI ubicacion = constructorUri.path("/api/despachos/{id}")
-                .buildAndExpand(despacho.id())
+                .buildAndExpand(alta.despacho().id())
                 .toUri();
 
-        return ResponseEntity.created(ubicacion).body(DespachoResponse.desde(despacho));
+        return ResponseEntity.created(ubicacion).body(
+                new AltaDespachoResponse(
+                        DespachoResponse.desde(alta.despacho()),
+                        new AltaDespachoResponse.AdministradorCreado(
+                                alta.administrador().id(),
+                                alta.administrador().nombre(),
+                                alta.administrador().correo())));
+    }
+
+    /** Despacho recién creado junto con el administrador que puede entrar a él. */
+    public record AltaDespachoResponse(DespachoResponse despacho, AdministradorCreado administrador) {
+        public record AdministradorCreado(Long id, String nombre, String correo) {
+        }
     }
 
     @GetMapping("/{id}")

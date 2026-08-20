@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -79,6 +80,28 @@ public class ManejadorGlobalErrores extends ResponseEntityExceptionHandler {
         respuesta.setProperty("errores", errores);
 
         return ResponseEntity.badRequest().body(respuesta);
+    }
+
+    /**
+     * Acceso denegado por regla de negocio, típicamente un intento de alcanzar
+     * un recurso de otro despacho. RN-02 · CA-41.2.
+     *
+     * <p>Sin este manejador, la excepción caería en el genérico de abajo y se
+     * convertiría en un 500 "error del sistema": el usuario no sabría que fue
+     * un problema de permisos, y en el registro parecería un fallo técnico en
+     * lugar de un intento de acceso cruzado.
+     *
+     * <p>El mensaje no revela si el recurso existe. Decir "el usuario 7 es de
+     * otro despacho" confirmaría que ese usuario existe y a quién pertenece.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ProblemDetail manejarAccesoDenegado(AccessDeniedException error) {
+        registro.warn("Acceso denegado: {}", error.getMessage());
+
+        ProblemDetail respuesta = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN, "No tiene permisos para acceder a este recurso.");
+        respuesta.setTitle("Acceso denegado");
+        return respuesta;
     }
 
     /**

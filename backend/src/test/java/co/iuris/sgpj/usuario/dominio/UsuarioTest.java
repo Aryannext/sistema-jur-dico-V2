@@ -6,7 +6,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
 
@@ -28,26 +27,6 @@ class UsuarioTest {
 
     private static final String HASH = "$2a$10$hashDePrueba";
 
-    /**
-     * Construye un Rol del catálogo. Los roles no se crean desde la aplicación
-     * (RN-07), así que en pruebas se rellenan por reflexión en lugar de abrir
-     * un constructor público que el código de producción no debería tener.
-     */
-    private static Rol rol(CodigoRol codigo) {
-        try {
-            Rol rol = Rol.class.getDeclaredConstructor().newInstance();
-            Field campoCodigo = Rol.class.getDeclaredField("codigo");
-            campoCodigo.setAccessible(true);
-            campoCodigo.set(rol, codigo);
-            Field campoNombre = Rol.class.getDeclaredField("nombre");
-            campoNombre.setAccessible(true);
-            campoNombre.set(rol, codigo.nombre());
-            return rol;
-        } catch (ReflectiveOperationException error) {
-            throw new IllegalStateException("No se pudo construir el rol de prueba", error);
-        }
-    }
-
     private static Despacho unDespacho() {
         return new Despacho("Despacho Melo", "900123456", "despacho@correo.co", null);
     }
@@ -60,7 +39,7 @@ class UsuarioTest {
         @DisplayName("puede ser Administrador de Despacho Y Abogado con una sola cuenta")
         void acumulaAmbosRoles() {
             Usuario carlos = new Usuario(unDespacho(), "Carlos Melo", "carlos@despacho.co", HASH,
-                    List.of(rol(CodigoRol.ADMIN_DESPACHO), rol(CodigoRol.ABOGADO)));
+                    List.of(RolesDePrueba.de(CodigoRol.ADMIN_DESPACHO), RolesDePrueba.de(CodigoRol.ABOGADO)));
 
             assertAll(
                     () -> assertTrue(carlos.tieneRol(CodigoRol.ADMIN_DESPACHO)),
@@ -73,7 +52,7 @@ class UsuarioTest {
         @DisplayName("sus permisos son la UNION de los roles, no los de un rol principal")
         void permisosPorUnion() {
             Usuario carlos = new Usuario(unDespacho(), "Carlos Melo", "carlos@despacho.co", HASH,
-                    List.of(rol(CodigoRol.ADMIN_DESPACHO), rol(CodigoRol.ABOGADO)));
+                    List.of(RolesDePrueba.de(CodigoRol.ADMIN_DESPACHO), RolesDePrueba.de(CodigoRol.ABOGADO)));
 
             assertTrue(carlos.tieneAlgunoDeEstosRoles(CodigoRol.ABOGADO, CodigoRol.CLIENTE));
             assertTrue(carlos.tieneAlgunoDeEstosRoles(CodigoRol.ADMIN_DESPACHO));
@@ -83,9 +62,9 @@ class UsuarioTest {
         @DisplayName("al retirarle un rol conserva exactamente los permisos del que queda (CA-06.3)")
         void alRetirarUnRolConservaElOtro() {
             Usuario carlos = new Usuario(unDespacho(), "Carlos Melo", "carlos@despacho.co", HASH,
-                    List.of(rol(CodigoRol.ADMIN_DESPACHO), rol(CodigoRol.ABOGADO)));
+                    List.of(RolesDePrueba.de(CodigoRol.ADMIN_DESPACHO), RolesDePrueba.de(CodigoRol.ABOGADO)));
 
-            carlos.reemplazarRoles(List.of(rol(CodigoRol.ABOGADO)));
+            carlos.reemplazarRoles(List.of(RolesDePrueba.de(CodigoRol.ABOGADO)));
 
             assertAll(
                     () -> assertTrue(carlos.tieneRol(CodigoRol.ABOGADO)),
@@ -104,7 +83,7 @@ class UsuarioTest {
         void exigeDespacho() {
             ReglaDeNegocioException error = assertThrows(ReglaDeNegocioException.class,
                     () -> new Usuario(null, "Ana", "ana@correo.co", HASH,
-                            List.of(rol(CodigoRol.ABOGADO))));
+                            List.of(RolesDePrueba.de(CodigoRol.ABOGADO))));
 
             assertEquals("RN-13", error.regla());
         }
@@ -113,7 +92,7 @@ class UsuarioTest {
         @DisplayName("el Administrador de Plataforma es el unico sin despacho")
         void administradorDePlataformaSinDespacho() {
             Usuario admin = new Usuario(null, "Operador", "operador@iuris.co", HASH,
-                    List.of(rol(CodigoRol.ADMIN_PLATAFORMA)));
+                    List.of(RolesDePrueba.de(CodigoRol.ADMIN_PLATAFORMA)));
 
             assertAll(
                     () -> assertNull(admin.despacho()),
@@ -126,7 +105,7 @@ class UsuarioTest {
         void administradorDePlataformaNoAcumulaRolesDeDespacho() {
             ReglaDeNegocioException error = assertThrows(ReglaDeNegocioException.class,
                     () -> new Usuario(null, "Operador", "operador@iuris.co", HASH,
-                            List.of(rol(CodigoRol.ADMIN_PLATAFORMA), rol(CodigoRol.ABOGADO))));
+                            List.of(RolesDePrueba.de(CodigoRol.ADMIN_PLATAFORMA), RolesDePrueba.de(CodigoRol.ABOGADO))));
 
             assertEquals("RN-10", error.regla());
         }
@@ -136,7 +115,7 @@ class UsuarioTest {
         void administradorDePlataformaConDespachoEsInvalido() {
             assertThrows(ReglaDeNegocioException.class,
                     () -> new Usuario(unDespacho(), "Operador", "operador@iuris.co", HASH,
-                            List.of(rol(CodigoRol.ADMIN_PLATAFORMA))));
+                            List.of(RolesDePrueba.de(CodigoRol.ADMIN_PLATAFORMA))));
         }
     }
 
@@ -157,7 +136,7 @@ class UsuarioTest {
         @DisplayName("el correo se normaliza a minusculas: es la credencial de acceso")
         void normalizaCorreo() {
             Usuario ana = new Usuario(unDespacho(), "Ana", "  ANA@Correo.CO  ", HASH,
-                    List.of(rol(CodigoRol.ABOGADO)));
+                    List.of(RolesDePrueba.de(CodigoRol.ABOGADO)));
 
             assertEquals("ana@correo.co", ana.correo());
         }
@@ -167,7 +146,7 @@ class UsuarioTest {
         void rechazaCorreoInvalido() {
             assertThrows(ReglaDeNegocioException.class,
                     () -> new Usuario(unDespacho(), "Ana", "sin-arroba", HASH,
-                            List.of(rol(CodigoRol.ABOGADO))));
+                            List.of(RolesDePrueba.de(CodigoRol.ABOGADO))));
         }
 
         @Test
@@ -175,7 +154,7 @@ class UsuarioTest {
         void exigeHash() {
             ReglaDeNegocioException error = assertThrows(ReglaDeNegocioException.class,
                     () -> new Usuario(unDespacho(), "Ana", "ana@correo.co", "  ",
-                            List.of(rol(CodigoRol.ABOGADO))));
+                            List.of(RolesDePrueba.de(CodigoRol.ABOGADO))));
 
             assertEquals("RNF-05", error.regla());
         }
@@ -189,7 +168,7 @@ class UsuarioTest {
         @DisplayName("un usuario activo de un despacho activo puede operar")
         void activoEnDespachoActivo() {
             Usuario ana = new Usuario(unDespacho(), "Ana", "ana@correo.co", HASH,
-                    List.of(rol(CodigoRol.ABOGADO)));
+                    List.of(RolesDePrueba.de(CodigoRol.ABOGADO)));
 
             assertTrue(ana.puedeOperar());
         }
@@ -199,7 +178,7 @@ class UsuarioTest {
         void despachoInactivoBloqueaAlUsuario() {
             Despacho despacho = unDespacho();
             Usuario ana = new Usuario(despacho, "Ana", "ana@correo.co", HASH,
-                    List.of(rol(CodigoRol.ABOGADO)));
+                    List.of(RolesDePrueba.de(CodigoRol.ABOGADO)));
 
             despacho.desactivar();
 
@@ -213,7 +192,7 @@ class UsuarioTest {
         @DisplayName("un usuario desactivado no opera aunque su despacho este activo")
         void usuarioDesactivado() {
             Usuario ana = new Usuario(unDespacho(), "Ana", "ana@correo.co", HASH,
-                    List.of(rol(CodigoRol.ABOGADO)));
+                    List.of(RolesDePrueba.de(CodigoRol.ABOGADO)));
 
             ana.desactivar();
 
@@ -229,7 +208,7 @@ class UsuarioTest {
         @DisplayName("toString no incluye el hash de la contrasena")
         void toStringSinHash() {
             Usuario ana = new Usuario(unDespacho(), "Ana", "ana@correo.co", HASH,
-                    List.of(rol(CodigoRol.ABOGADO)));
+                    List.of(RolesDePrueba.de(CodigoRol.ABOGADO)));
 
             String texto = ana.toString();
 
@@ -243,11 +222,11 @@ class UsuarioTest {
         @DisplayName("los roles devueltos no se pueden modificar desde fuera")
         void rolesInmutables() {
             Usuario ana = new Usuario(unDespacho(), "Ana", "ana@correo.co", HASH,
-                    List.of(rol(CodigoRol.ABOGADO)));
+                    List.of(RolesDePrueba.de(CodigoRol.ABOGADO)));
 
             Set<Rol> roles = ana.roles();
 
-            assertThrows(UnsupportedOperationException.class, () -> roles.add(rol(CodigoRol.ADMIN_DESPACHO)));
+            assertThrows(UnsupportedOperationException.class, () -> roles.add(RolesDePrueba.de(CodigoRol.ADMIN_DESPACHO)));
         }
     }
 }

@@ -19,26 +19,28 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
 
 /**
- * API de gestión de usuarios de un despacho. Módulo M2.
+ * API de gestión de usuarios del despacho. Módulo M2.
  *
- * <p>La ruta cuelga del despacho —{@code /api/despachos/{despachoId}/usuarios}—
- * y no es casualidad: RN-13 dice que un usuario pertenece a un solo despacho,
- * y la URL lo refleja. Un usuario suelto, sin despacho, no tiene sentido en
- * este sistema (salvo el Administrador de Plataforma, que por eso no se crea
- * desde aquí).
+ * <h2>Por qué la ruta ya no lleva el despacho</h2>
  *
- * <p><strong>⚠ DEUDA CONOCIDA — igual que en despachos, estos endpoints aún no
- * exigen autenticación.</strong> Además, hoy el {@code despachoId} llega por la
- * URL; cuando exista el contexto de tenant saldrá del token y <strong>nunca</strong>
- * de un parámetro del cliente (ADR-03, control 1). Mientras tanto, cualquiera
- * podría listar los usuarios de cualquier despacho cambiando un número. Solo es
- * aceptable en local, sobre datos falsos (D-23).
+ * <p>Antes era {@code /api/despachos/{despachoId}/usuarios}. Ahora es
+ * {@code /api/usuarios}, y el cambio es de seguridad, no de estética:
+ * <strong>el despacho se toma de la sesión, no de la URL</strong> (ADR-03,
+ * control 1).
+ *
+ * <p>Con la ruta anterior, un abogado del despacho 1 podía pedir
+ * {@code /api/despachos/2/usuarios} y ver los usuarios de otro despacho: el
+ * aislamiento dependía de que nadie cambiara un número. Con la ruta actual eso
+ * no se puede ni expresar — no hay dónde escribir el despacho ajeno.
+ *
+ * <p>Requisitos: RF-05, RF-06 · RNF-01 · Historias: HU-05, HU-06, HU-41
  */
 @RestController
-@RequestMapping("/api/despachos/{despachoId}/usuarios")
+@RequestMapping("/api/usuarios")
 public class UsuarioController {
 
     private final UsuarioService servicio;
@@ -49,36 +51,39 @@ public class UsuarioController {
 
     /** RF-05 · HU-05 · HU-06 */
     @PostMapping
-    public ResponseEntity<UsuarioResponse> crear(@PathVariable Long despachoId,
-                                                 @Valid @RequestBody CrearUsuarioRequest peticion,
+    public ResponseEntity<UsuarioResponse> crear(@Valid @RequestBody CrearUsuarioRequest peticion,
                                                  UriComponentsBuilder constructorUri) {
-        Usuario usuario = servicio.crearEnDespacho(
-                despachoId, peticion.nombre(), peticion.correo(),
-                peticion.contrasena(), peticion.roles());
+        Usuario usuario = servicio.crear(
+                peticion.nombre(), peticion.correo(), peticion.contrasena(), peticion.roles());
 
-        URI ubicacion = constructorUri.path("/api/despachos/{despachoId}/usuarios/{id}")
-                .buildAndExpand(despachoId, usuario.id())
+        URI ubicacion = constructorUri.path("/api/usuarios/{id}")
+                .buildAndExpand(usuario.id())
                 .toUri();
 
         return ResponseEntity.created(ubicacion).body(UsuarioResponse.desde(usuario));
     }
 
-    /** CA-05.3: el listado se limita a los usuarios de ese despacho. */
+    /** CA-05.3: solo los usuarios de mi despacho. */
     @GetMapping
-    public List<UsuarioResponse> listar(@PathVariable Long despachoId) {
-        return servicio.listarDeDespacho(despachoId).stream()
+    public List<UsuarioResponse> listar() {
+        return servicio.listarDeMiDespacho().stream()
                 .map(UsuarioResponse::desde)
                 .toList();
     }
 
+    /**
+     * CA-41.2: si el identificador es de un usuario de otro despacho, se
+     * deniega con 403. No se devuelve 404 ni una respuesta vacía: eso
+     * confundiría "no tienes permiso" con "no existe" y haría invisible el
+     * intento de acceso cruzado en la auditoría.
+     */
     @GetMapping("/{id}")
-    public UsuarioResponse obtener(@PathVariable Long despachoId, @PathVariable Long id) {
-        return UsuarioResponse.desde(servicio.obtener(id));
+    public UsuarioResponse obtener(@PathVariable Long id) {
+        return UsuarioResponse.desde(servicio.obtenerDeMiDespacho(id));
     }
 
     @PutMapping("/{id}")
-    public UsuarioResponse actualizar(@PathVariable Long despachoId,
-                                      @PathVariable Long id,
+    public UsuarioResponse actualizar(@PathVariable Long id,
                                       @Valid @RequestBody ActualizarUsuarioRequest peticion) {
         return UsuarioResponse.desde(
                 servicio.actualizarDatos(id, peticion.nombre(), peticion.correo()));
@@ -88,30 +93,29 @@ public class UsuarioController {
      * RF-06 · HU-06 · CA-06.3: reemplaza el conjunto completo de roles.
      *
      * <p>Es un reemplazo y no un "añadir rol" porque así el estado final es
-     * explícito: quien llama declara qué roles debe tener el usuario, en vez
-     * de acumular cambios cuyo resultado depende del orden.
+     * explícito: quien llama declara qué roles debe tener el usuario, en vez de
+     * acumular cambios cuyo resultado depende del orden.
      */
     @PutMapping("/{id}/roles")
-    public UsuarioResponse reemplazarRoles(@PathVariable Long despachoId,
-                                           @PathVariable Long id,
+    public UsuarioResponse reemplazarRoles(@PathVariable Long id,
                                            @Valid @RequestBody ActualizarRolesRequest peticion) {
         return UsuarioResponse.desde(servicio.reemplazarRoles(id, peticion.roles()));
     }
 
     @PutMapping("/{id}/activar")
-    public UsuarioResponse activar(@PathVariable Long despachoId, @PathVariable Long id) {
+    public UsuarioResponse activar(@PathVariable Long id) {
         return UsuarioResponse.desde(servicio.cambiarEstado(id, true));
     }
 
     @PutMapping("/{id}/desactivar")
-    public UsuarioResponse desactivar(@PathVariable Long despachoId, @PathVariable Long id) {
+    public UsuarioResponse desactivar(@PathVariable Long id) {
         return UsuarioResponse.desde(servicio.cambiarEstado(id, false));
     }
 
-    /** Roles disponibles, con su nombre en español para poblar la interfaz. */
+    /** Roles asignables, con su nombre en español para poblar la interfaz. */
     @GetMapping("/roles-disponibles")
-    public List<UsuarioResponse.RolResumen> rolesDisponibles(@PathVariable Long despachoId) {
-        return java.util.Arrays.stream(CodigoRol.values())
+    public List<UsuarioResponse.RolResumen> rolesDisponibles() {
+        return Arrays.stream(CodigoRol.values())
                 .filter(CodigoRol::perteneceADespacho)
                 .map(codigo -> new UsuarioResponse.RolResumen(codigo.name(), codigo.nombre()))
                 .toList();

@@ -101,10 +101,17 @@ public class ConfiguracionSeguridad {
                         // Único punto público: iniciar sesión.
                         .requestMatchers("/api/autenticacion/entrar", "/api/autenticacion/csrf").permitAll()
 
-                        // Más específica primero: los usuarios de un despacho
-                        // los gestiona su administrador.
-                        .requestMatchers("/api/despachos/*/usuarios/**")
-                            .hasAnyAuthority("ROL_ADMIN_DESPACHO", "ROL_ADMIN_PLATAFORMA")
+                        // Los usuarios de un despacho los gestiona su
+                        // administrador. La ruta ya NO lleva el despacho: sale
+                        // de la sesion (ADR-03, control 1).
+                        //
+                        // El Administrador de Plataforma queda fuera a
+                        // proposito: opera la plataforma, no los despachos
+                        // (RN-10). Su unica intervencion sobre usuarios es
+                        // crear el primer administrador al dar de alta un
+                        // despacho, y eso ocurre dentro de RF-01.
+                        .requestMatchers("/api/usuarios/**")
+                            .hasAuthority("ROL_ADMIN_DESPACHO")
 
                         // El alta y el estado de los despachos es exclusivo del
                         // Administrador de Plataforma (RF-01, RF-02).
