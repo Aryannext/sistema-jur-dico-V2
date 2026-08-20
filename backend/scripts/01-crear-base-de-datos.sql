@@ -42,6 +42,20 @@ CREATE ROLE sgpj_app WITH
 COMMENT ON ROLE sgpj_app IS
     'Rol de la aplicacion. Sin privilegios administrativos ni BYPASSRLS.';
 
+-- ATENCION - segunda via por la que RLS se puede anular sin que se note:
+--
+--    NOSUPERUSER y NOBYPASSRLS no bastan. En PostgreSQL el DUENO de una
+--    tabla queda exento de las politicas RLS de esa misma tabla.
+--    Como Flyway crea las tablas conectado con sgpj_app, ese rol termina
+--    siendo dueno de todas ellas (verificado en pg_tables el 2026-08-20).
+--
+--    Consecuencia: cuando se implemente el control 4 de ADR-03, cada
+--    tabla con datos de despacho necesitara ADEMAS:
+--        ALTER TABLE <tabla> FORCE ROW LEVEL SECURITY;
+--
+--    Sin ese FORCE las politicas existirian y no se aplicarian a nadie:
+--    exactamente el fallo silencioso que se queria evitar.
+
 
 -- 3) Permisos sobre la base ----------------------------------
 \connect iuris_sgpj

@@ -501,6 +501,8 @@ Escenarios de calidad en formato estímulo–respuesta–medida. Son la forma de
 
 **Costo real del control 4, que debe conocerse antes de comprometerlo:** RLS exige que cada transacción establezca el tenant en la sesión de base de datos. **Con un pool de conexiones esto es una trampa: si una conexión se devuelve al pool con el tenant de la petición anterior todavía establecido, la siguiente petición lo hereda — y se construye exactamente la fuga que se quería evitar.** Se implementa estableciendo el valor como local a la transacción, de modo que revierta al terminar; nunca como ajuste de sesión persistente.
 
+**⚠ Segunda trampa del control 4, verificada en el entorno real (2026-08-20):** crear el rol como `NOSUPERUSER NOBYPASSRLS` **no basta**. En PostgreSQL el **dueño** de una tabla queda exento de las políticas RLS de esa misma tabla — y como Flyway crea las tablas conectado con el rol de la aplicación, ese rol acaba siendo dueño de todas. Se comprobó en `pg_tables`: `despacho` y `flyway_schema_history` pertenecen a `sgpj_app`. Cada tabla con datos de despacho necesitará además `ALTER TABLE ... FORCE ROW LEVEL SECURITY`. Sin ese `FORCE`, las políticas existirían y no se aplicarían a nadie.
+
 **Condición explícita sobre el control 4:** si el equipo lo hace funcionar limpiamente con el pool, se mantiene. Si a mitad del Sprint 2 sigue sin resolverse, **se retira de forma consciente y documentada**, operando con los controles 1 a 3.
 
 **Lo que no puede ocurrir es que se omita por olvido.** Esa es la diferencia entre un riesgo aceptado y un riesgo ignorado: sin el control 4, ADR-02 queda apoyada solo en código — precisamente la premisa que ella misma declaró insuficiente.

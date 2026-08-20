@@ -299,6 +299,39 @@ El control 3 aporta la mayor parte del beneficio a una fracción del costo: atra
 
 **Estado del entorno a 2026-08-20:** Node 24.16, PostgreSQL 18.4 y Git 2.55 disponibles. **JDK y Maven no instalados** — requisito previo para el stack de D-02. Se resuelve con una sola instalación (JDK), ya que el proyecto usará Maven Wrapper.
 
+### D-23 — Rigor de seguridad diferenciado: local relajado, VPS estricto
+**Decisión del interesado:** durante el desarrollo **en local** no se exige rigor pleno en el manejo de credenciales. **En el despliegue al VPS sí**, sin excepción.
+
+**Justificación:** la base local no contiene datos reales de ningún despacho ni expediente sometido a reserva. Exigir el mismo rigor ahí frenaría el desarrollo sin reducir ningún riesgo real. El riesgo aparece cuando el sistema aloja información de clientes verdaderos.
+
+**Consecuencia — y es la razón de registrar esto:** un control relajado "temporalmente" solo es aceptable si existe el momento exacto en que deja de estarlo y alguien lo verifica. Sin esa lista, "lo arreglamos en producción" se convierte en "nunca se arregló".
+
+#### Controles diferidos al despliegue — verificación obligatoria antes de exponer el VPS
+
+| # | Control | Estado en local | Obligatorio en VPS |
+|---|---|---|---|
+| 1 | Credenciales por **variable de entorno**, nunca en archivo | `application-local.properties` con la clave escrita | **Sí.** El archivo local no se copia al VPS |
+| 2 | Clave del rol de base de datos **robusta y única** | Clave corta de desarrollo | **Sí.** Generada, no elegida a mano |
+| 3 | **TLS** en todo el tráfico (RNF-06) | HTTP plano en localhost | **Sí**, incluido el portal del cliente |
+| 4 | PostgreSQL **no expuesto a internet** | Escucha en localhost | **Sí.** Solo accesible desde la aplicación |
+| 5 | **CORS** con orígenes explícitos | Permisivo para desarrollo | **Sí** |
+| 6 | Cifrado de documentos en reposo (RNF-04) | Pendiente | **Sí** |
+| 7 | Respaldo diario **con restauración probada** (RNF-14) | No aplica | **Sí** |
+| 8 | Rol `sgpj_app` sin privilegios administrativos | ✅ Ya aplicado desde el inicio | Se mantiene |
+| 9 | Contraseñas de usuario con hash y salt (RNF-05) | Se aplica igual desde el inicio | **Sí** |
+
+Los controles 8 y 9 **no se relajan ni siquiera en local**: el 8 porque un rol con privilegios anularía Row-Level Security más adelante sin que nadie lo note (ADR-03), y el 9 porque el hash de contraseñas es código de la aplicación, no configuración de entorno — escribirlo mal en local significa escribirlo mal en producción.
+
+#### ⚠ Impacto en la arquitectura que debe revisarse
+
+La existencia de un **VPS único** como destino de despliegue es información nueva: la Fase 6 asumía "infraestructura en la nube" genérica con nodos separados. Un VPS único cambia tres cosas y **debe reflejarse en la vista de despliegue (VP-5) antes de desplegar**:
+
+- **ADR-05** — el "almacén de objetos" para documentos pasa a ser, con toda probabilidad, el sistema de archivos del propio VPS. El cifrado en reposo y el respaldo hay que resolverlos de otra forma.
+- **RA-1** — el punto único de fallo se agrava: aplicación, base de datos y documentos comparten una sola máquina. Si el VPS cae, **la vigilancia de términos se detiene por completo**.
+- **RNF-14** — el respaldo no puede quedarse en el mismo VPS. Un respaldo que muere con la máquina que respalda no es un respaldo.
+
+Estos tres puntos se resuelven en un incremento de arquitectura previo al despliegue, no durante él.
+
 ---
 
 ## 5. Supuestos vigentes [S]
