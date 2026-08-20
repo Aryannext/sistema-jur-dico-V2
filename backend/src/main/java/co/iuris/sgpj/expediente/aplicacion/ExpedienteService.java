@@ -6,6 +6,7 @@ import co.iuris.sgpj.catalogo.dominio.ValorCatalogo;
 import co.iuris.sgpj.comun.dominio.RecursoNoEncontradoException;
 import co.iuris.sgpj.comun.dominio.ReglaDeNegocioException;
 import co.iuris.sgpj.expediente.dominio.Actuacion;
+import co.iuris.sgpj.expediente.dominio.Documento;
 import co.iuris.sgpj.expediente.dominio.Nota;
 import co.iuris.sgpj.expediente.dominio.OrigenActuacion;
 import co.iuris.sgpj.expediente.dominio.Pieza;
@@ -38,15 +39,98 @@ public class ExpedienteService {
     private final UsuarioService usuarios;
     private final CatalogoService catalogos;
     private final ContextoSeguridad contexto;
+    private final AlmacenDocumentos almacen;
 
     public ExpedienteService(PiezaRepository piezas, ProcesoService procesos,
                              UsuarioService usuarios, CatalogoService catalogos,
-                             ContextoSeguridad contexto) {
+                             ContextoSeguridad contexto, AlmacenDocumentos almacen) {
         this.piezas = piezas;
         this.procesos = procesos;
         this.usuarios = usuarios;
         this.catalogos = catalogos;
         this.contexto = contexto;
+        this.almacen = almacen;
+    }
+
+    /**
+     * RF-15 · HU-15: cargar un documento al expediente.
+     *
+     * <h2>Sobre el orden de las operaciones</h2>
+     *
+     * <p>Primero se valida todo lo que puede fallar barato —el proceso, el tipo
+     * de documento, el tamaño— y solo después se escribe el archivo. Cifrar y
+     * guardar 20 MB para descubrir luego que el tipo de documento era de otro
+     * despacho sería trabajo tirado.
+     *
+     * <p>Si el registro en base falla después de escribir el archivo, se borra
+     * el archivo: el almacén no participa en la transacción de la base, así que
+     * un fallo ahí dejaría contenido cifrado que nadie podría volver a
+     * encontrar, ocupando espacio para siempre.
+     */
+    @Transactional
+    public Documento cargarDocumento(Long procesoId, Long tipoDocumentoId,
+                                     String nombreArchivo, String tipoContenido, byte[] contenido) {
+
+        Proceso proceso = procesos.obtenerDeMiDespacho(procesoId);
+        ValorCatalogo tipo = exigirTipoDocumento(tipoDocumentoId);
+        Usuario autor = autorActual();
+
+        if (contenido == null || contenido.length == 0) {
+            throw new ReglaDeNegocioException("RF-15", "El archivo está vacío.");
+        }
+        if (contenido.length > Documento.MAXIMO_BYTES) {
+            throw new ReglaDeNegocioException("RNF-13",
+                    "El archivo supera el máximo permitido de "
+                            + (Documento.MAXIMO_BYTES / (1024 * 1024)) + " MB.");
+        }
+
+        String identificador = almacen.guardarCifrado(contenido);
+
+        try {
+            Documento documento = new Documento(
+                    proceso.expediente(), autor, tipo,
+                    nombreArchivo, identificador, tipoContenido, contenido.length);
+
+            return piezas.save(documento);
+
+        } catch (RuntimeException error) {
+            almacen.eliminar(identificador);
+            throw error;
+        }
+    }
+
+    /** RF-15: recuperar el contenido descifrado de un documento. */
+    public ContenidoDescargado descargarDocumento(Long piezaId) {
+        Pieza pieza = obtenerDeMiDespacho(piezaId);
+
+        if (!(pieza instanceof Documento documento)) {
+            throw new ReglaDeNegocioException("RF-15", "La pieza indicada no es un documento.");
+        }
+        byte[] contenido = almacen.leerDescifrado(documento.identificadorAlmacen());
+
+        return new ContenidoDescargado(
+                documento.nombreOriginal(), documento.tipoContenido(), contenido);
+    }
+
+    /** Contenido listo para entregar, ya descifrado. */
+    public record ContenidoDescargado(String nombre, String tipoContenido, byte[] contenido) {
+    }
+
+    private ValorCatalogo exigirTipoDocumento(Long id) {
+        if (id == null) {
+            throw new ReglaDeNegocioException("RF-15", "Debe indicar el tipo de documento.");
+        }
+        ValorCatalogo valor = catalogos.obtenerDeMiDespacho(id);
+
+        if (valor.tipo() != TipoCatalogo.TIPO_DOCUMENTO) {
+            throw new ReglaDeNegocioException("RF-15",
+                    "El valor indicado no pertenece al catálogo de tipos de documento.");
+        }
+        if (!valor.activo()) {
+            throw new ReglaDeNegocioException("RF-33",
+                    "El tipo de documento «" + valor.nombre() + "» está desactivado.");
+        }
+        return valor;
     }
 
     /** RF-17 · HU-17: registrar una actuación en el expediente de un proceso. */

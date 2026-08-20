@@ -31,3 +31,9 @@ logging.level.co.iuris.sgpj=DEBUG
 sgpj.administrador-inicial.correo=CAMBIE-ESTE-CORREO
 sgpj.administrador-inicial.contrasena=CAMBIE-ESTA-CLAVE
 sgpj.administrador-inicial.nombre=Administrador de Plataforma
+
+# --- Cifrado de documentos (RNF-04) --------------------------
+# Clave AES-256 en Base64. Sin ella la aplicacion NO arranca, a
+# proposito: no hay clave por defecto porque estaria en el repositorio.
+# Generar:  openssl rand -base64 32
+sgpj.documentos.clave=CAMBIE-ESTA-CLAVE-BASE64-DE-32-BYTES
