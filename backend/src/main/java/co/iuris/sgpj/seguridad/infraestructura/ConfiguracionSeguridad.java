@@ -128,6 +128,18 @@ public class ConfiguracionSeguridad {
                         .requestMatchers("/api/clientes/**", "/api/procesos/**")
                             .hasAnyAuthority("ROL_ABOGADO", "ROL_ADMIN_DESPACHO")
 
+                        // Vigilancia del tiempo: el nucleo del sistema.
+                        .requestMatchers("/api/audiencias/**", "/api/terminos/**",
+                                         "/api/calendario", "/api/vencimientos")
+                            .hasAnyAuthority("ROL_ABOGADO", "ROL_ADMIN_DESPACHO")
+
+                        // El esquema de alertas lo configura el administrador
+                        // del despacho (RF-34); los abogados solo lo consultan.
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/esquema-alertas")
+                            .hasAnyAuthority("ROL_ABOGADO", "ROL_ADMIN_DESPACHO")
+                        .requestMatchers("/api/esquema-alertas")
+                            .hasAuthority("ROL_ADMIN_DESPACHO")
+
                         // El alta y el estado de los despachos es exclusivo del
                         // Administrador de Plataforma (RF-01, RF-02).
                         .requestMatchers("/api/despachos/**")

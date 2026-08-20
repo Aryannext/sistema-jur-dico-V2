@@ -1,6 +1,8 @@
 package co.iuris.sgpj.despacho.aplicacion;
 
 import co.iuris.sgpj.catalogo.aplicacion.SembradorCatalogos;
+import co.iuris.sgpj.vigilancia.dominio.EsquemaAlerta;
+import co.iuris.sgpj.vigilancia.infraestructura.EsquemaAlertaRepository;
 import co.iuris.sgpj.despacho.dominio.Despacho;
 import co.iuris.sgpj.usuario.aplicacion.UsuarioService;
 import co.iuris.sgpj.usuario.dominio.CodigoRol;
@@ -36,12 +38,14 @@ public class AltaDespachoService {
     private final DespachoService despachos;
     private final UsuarioService usuarios;
     private final SembradorCatalogos catalogos;
+    private final EsquemaAlertaRepository esquemas;
 
     public AltaDespachoService(DespachoService despachos, UsuarioService usuarios,
-                               SembradorCatalogos catalogos) {
+                               SembradorCatalogos catalogos, EsquemaAlertaRepository esquemas) {
         this.despachos = despachos;
         this.usuarios = usuarios;
         this.catalogos = catalogos;
+        this.esquemas = esquemas;
     }
 
     /** Resultado del alta: ambas piezas, para poder informarlas juntas. */
@@ -58,6 +62,11 @@ public class AltaDespachoService {
         // ni tipos de proceso no se podria registrar el primer caso, y el
         // administrador tendria que crearlos a mano antes de empezar (D-13).
         catalogos.sembrarPara(despacho);
+
+        // El despacho nace con un esquema de alertas valido. Es la forma mas
+        // fuerte de RN-37b: no existe el estado "despacho sin alertas
+        // configuradas", ni siquiera durante un instante.
+        esquemas.save(new EsquemaAlerta(despacho));
 
         // Se usa la variante que recibe el despacho explícitamente: quien
         // ejecuta esta operación es el Administrador de Plataforma, que no
