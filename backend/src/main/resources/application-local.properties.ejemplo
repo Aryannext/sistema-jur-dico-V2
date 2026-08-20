@@ -1,0 +1,24 @@
+# ============================================================
+#  PLANTILLA — copie este archivo como:
+#      application-local.properties
+#  y complete su clave. El archivo real está excluido del
+#  repositorio por .gitignore y NO debe subirse nunca.
+#
+#  Comando (desde backend/src/main/resources/):
+#      copy application-local.properties.ejemplo application-local.properties
+# ============================================================
+
+spring.datasource.username=sgpj_app
+spring.datasource.password=CAMBIE-ESTA-CLAVE
+
+# --- Solo para desarrollo local ------------------------------
+# Muestra el SQL que ejecuta Hibernate. Útil mientras se construye;
+# se apaga en cualquier otro entorno.
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+# Detalle de las migraciones de Flyway al arrancar
+logging.level.org.flywaydb=INFO
+
+# Muestra el error completo en consola durante el desarrollo
+logging.level.co.iuris.sgpj=DEBUG

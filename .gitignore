@@ -9,8 +9,11 @@
 !.env.example
 *-local.properties
 *-local.yml
-application-local.*
+application-local.properties
+application-local.yml
 application-secrets.*
+# La plantilla SI se versiona: documenta los nombres, no los valores
+!application-local.properties.ejemplo
 *.pem
 *.key
 *.p12
