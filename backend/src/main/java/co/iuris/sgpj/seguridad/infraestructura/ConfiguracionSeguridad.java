@@ -121,6 +121,13 @@ public class ConfiguracionSeguridad {
                         .requestMatchers("/api/catalogos/**")
                             .hasAuthority("ROL_ADMIN_DESPACHO")
 
+                        // Clientes y procesos: el trabajo diario del despacho.
+                        // Los lleva el abogado; el administrador tambien accede
+                        // porque D-11 le da acceso al contenido de los
+                        // expedientes de su despacho.
+                        .requestMatchers("/api/clientes/**", "/api/procesos/**")
+                            .hasAnyAuthority("ROL_ABOGADO", "ROL_ADMIN_DESPACHO")
+
                         // El alta y el estado de los despachos es exclusivo del
                         // Administrador de Plataforma (RF-01, RF-02).
                         .requestMatchers("/api/despachos/**")
