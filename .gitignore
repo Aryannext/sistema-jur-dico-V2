@@ -1,0 +1,78 @@
+# ============================================================
+#  Iuris / SGPJ — Sistema de Gestión de Procesos Jurídicos
+#  Lo que NUNCA debe entrar al repositorio
+# ============================================================
+
+# --- Secretos y configuración local (estándar 1 de D-21) ---
+.env
+.env.*
+!.env.example
+*-local.properties
+*-local.yml
+application-local.*
+application-secrets.*
+*.pem
+*.key
+*.p12
+*.jks
+credenciales*
+secretos*
+
+# --- Java / Maven ---
+target/
+build/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+*.class
+*.jar
+!maven-wrapper.jar
+*.war
+*.ear
+hs_err_pid*
+replay_pid*
+
+# --- Node / Angular ---
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# --- Base de datos y respaldos locales ---
+*.sql.bak
+*.dump
+respaldos/
+
+# --- Documentos de prueba subidos al expediente ---
+# El almacén de documentos vive fuera del repositorio (ADR-05)
+almacen-documentos/
+uploads/
+
+# --- Registros ---
+logs/
+*.log
+
+# --- Entornos de desarrollo ---
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+!.vscode/extensions.json
+.settings/
+.project
+.classpath
+.factorypath
+
+# --- Sistema operativo ---
+Thumbs.db
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+.DS_Store
+
+# --- OneDrive (D-22: la carpeta está sincronizada) ---
+*.tmp
+~$*

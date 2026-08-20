@@ -1,0 +1,382 @@
+# Registro de Decisiones y Trazabilidad de Origen
+
+**Proyecto:** Sistema de Gestión de Procesos Jurídicos para Consultorios de Abogados
+**Fuente base:** `24_propuesta.pdf` — Propuesta 24, Competencia 220501094 (Propuestas Técnicas de Software), pág. 27
+**Fecha de apertura:** 2026-08-20
+**Rol asumido:** Analista y Desarrollador de Software
+
+---
+
+## 1. Propósito de este documento
+
+Toda la documentación de este proyecto (Idea de Negocio → RN → RF/RNF → Historias de Usuario → Diagramas → Arquitectura) debe poder rastrearse hasta su origen. Este registro distingue tres orígenes posibles para cualquier afirmación del proyecto:
+
+| Marca | Origen | Significado |
+|---|---|---|
+| **[P]** | Propuesta | Está escrito literalmente en `24_propuesta.pdf`. Es verdad de proyecto, no se discute. |
+| **[D]** | Decisión | Vacío de la propuesta resuelto por decisión explícita del equipo con el interesado. Queda registrado abajo. |
+| **[S]** | Supuesto | Aún no decidido. Se trabaja bajo un supuesto declarado y debe validarse antes de cerrar la fase que lo consume. |
+
+Ninguna afirmación de la documentación puede carecer de una de estas tres marcas.
+
+---
+
+## 2. Contenido literal de la propuesta [P]
+
+Transcripción fiel del PDF, sin interpretación:
+
+**Título:** PROPUESTA 24: SISTEMA DE GESTIÓN DE PROCESOS JURÍDICOS PARA CONSULTORIOS DE ABOGADOS
+**Sector:** Jurídico / Legal
+
+**NECESIDAD**
+> Los consultorios jurídicos y abogados independientes de Neiva gestionan sus procesos judiciales con carpetas físicas, agendas personales y recordatorios manuales. Las fechas de audiencias se olvidan, los términos judiciales vencen por falta de seguimiento y la documentación de los expedientes se desorganiza, afectando la calidad del servicio al cliente y generando riesgos de sanciones disciplinarias.
+
+**OBJETIVO**
+> Desarrollar un sistema web de gestión de procesos jurídicos que administre el expediente digital de cada caso, controle fechas de audiencias y términos, gestione la documentación asociada y genere alertas automáticas de vencimiento para el abogado.
+
+**REQUERIMIENTOS (los de la propuesta, tal cual)**
+
+| Código | Enunciado literal |
+|---|---|
+| RF01 | Registro de clientes con datos personales y tipo de proceso. |
+| RF02 | Expediente digital por proceso con documentos adjuntos, actuaciones y notas. |
+| RF03 | Calendario de audiencias con alertas automáticas (48h, 24h y día de la audiencia). |
+| RF04 | Control de términos judiciales con fecha de vencimiento y alerta. |
+| RF05 | Generación de reportes de procesos activos, archivados y por estado procesal. |
+| RNF01 | Almacenamiento seguro de documentos con cifrado. |
+| RNF02 | Búsqueda de procesos por radicado, cliente, juzgado o tipo de proceso. |
+| RNF03 | Acceso restringido del cliente a su expediente vía portal web. |
+
+**TECNOLOGÍAS:** *(celda vacía en el PDF — la propuesta no define stack)*
+
+**SPRINTS (Scrum)**
+- Sprint 1: Registro de clientes y creación de expedientes.
+- Sprint 2: Documentación y actuaciones procesales.
+- Sprint 3: Calendario de audiencias y control de términos.
+- Sprint 4: Portal del cliente y reportes.
+
+**METODOLOGÍA**
+> Scrum con tablero Kanban (Trello/Jira). Roles: Product Owner (instructor), Scrum Master (líder del equipo), Development Team (aprendiz). Ceremonias: Sprint Planning, Daily Standup, Sprint Review, Sprint Retrospective. Duración de Sprint: 1 semana.
+> Columnas del Tablero Kanban: Backlog → To Do → In Progress → Code Review → Testing → Done
+
+**Nota importante:** los códigos RF01–RF05 y RNF01–RNF03 de la propuesta son *enunciados de intención*, no requisitos de ingeniería. En la Fase 3 se descomponen en requisitos formales con código propio, y cada uno mantendrá la referencia a su enunciado de origen.
+
+---
+
+## 3. Vacíos detectados en la propuesta
+
+Puntos que la propuesta **no** define y que bloquean o condicionan el diseño:
+
+| # | Vacío | Fase que lo consume | Estado |
+|---|---|---|---|
+| V-01 | ¿Un solo consultorio o plataforma para varios? | Modelo de negocio, modelo de datos | **Resuelto** → D-01 |
+| V-02 | Stack tecnológico (celda vacía) | Arquitectura, despliegue, componentes | **Resuelto** → D-02 |
+| V-03 | Canal por el que se emiten las alertas | RF de notificaciones, arquitectura | **Resuelto** → D-03 |
+| V-04 | Integraciones externas | Arquitectura, alcance | **Resuelto** → D-04 |
+| V-05 | Modelo de monetización y precios del SaaS | Modelo de negocio | **Resuelto** → D-06 |
+| V-06 | Roles y permisos exactos dentro del despacho | RN, RF de seguridad | **Resuelto** → D-07 y D-11 |
+| V-07 | Volumen esperado (despachos, procesos, documentos) | RNF de rendimiento y capacidad | **Resuelto** → D-19 |
+| V-08 | Política de retención y respaldo de expedientes | RNF, cumplimiento | **Resuelto** → D-19 |
+| V-09 | ¿Se gestionan honorarios o facturación al cliente? | Alcance | **Resuelto** → D-08 |
+| V-10 | Nombre comercial del producto | Identidad | **Resuelto** → D-05 |
+| V-11 | Visibilidad de las notas internas en el portal del cliente | RN, RF del portal | **Resuelto** → D-09 |
+
+Los vacíos se resolvieron en las fases donde se consumen, no antes.
+
+| # | Vacío | Fase que lo consume | Estado |
+|---|---|---|---|
+| V-12 | Formato de identificación del juzgado para la búsqueda de P-RNF02 | Modelo de datos (Fase 5) | **Resuelto** → D-17 |
+
+**Estado final: 12 de 12 vacíos cerrados.**
+
+---
+
+## 4. Decisiones tomadas [D]
+
+### D-01 — Alcance de tenencia: plataforma multi-consultorio (SaaS)
+**Decisión:** el sistema es una plataforma en la nube donde **varios** consultorios jurídicos y abogados independientes se registran y operan de forma aislada entre sí.
+**Justificación:** la propuesta describe la necesidad en plural — *"Los consultorios jurídicos y abogados independientes de Neiva"* — no la de un despacho concreto.
+**Consecuencias:**
+- Aparece la entidad raíz **Despacho** (tenant); todo dato del sistema cuelga de un despacho.
+- El aislamiento de datos entre despachos se convierte en requisito no funcional crítico de seguridad, no en un detalle de implementación.
+- Se requiere un proceso de alta/registro de despacho y un rol administrador por despacho.
+- Aparece un actor nuevo, no presente en la propuesta: el **Administrador de la Plataforma**.
+
+### D-02 — Stack tecnológico: Java + Spring Boot (backend) y Angular (frontend)
+**Decisión:** backend Java con Spring Boot exponiendo API REST; frontend Angular como SPA; base de datos relacional; almacenamiento de documentos en almacén de objetos con cifrado.
+**Justificación:** la propuesta deja la celda TECNOLOGÍAS vacía; se elige un stack empresarial consolidado, con soporte nativo para los mecanismos que exigen los RNF (Spring Security para el control de acceso del RNF03, cifrado en reposo para el RNF01, tareas programadas para las alertas del RF03/RF04).
+**Consecuencias:** el detalle de versiones, motor de base de datos y proveedor de almacenamiento se fija en la Fase de Arquitectura (IEEE 42010), no aquí.
+
+### D-03 — Canal de alerta: correo electrónico
+**Decisión:** las alertas automáticas de audiencias (48h, 24h, día del evento) y de vencimiento de términos se emiten por **correo electrónico** al abogado responsable.
+**Justificación:** la propuesta exige *"alertas automáticas"* pero no fija el medio. El correo es verificable, no depende de proveedores de pago y es auditable.
+**Alcance preciso — para evitar malentendidos:**
+- El **canal de alerta** es el correo. Es lo que cumple *"genera alertas automáticas"*.
+- El **calendario de audiencias en pantalla** y la visualización del estado de los términos son funcionalidad del RF03/RF04 (visualizar), no un canal de alerta. Existen igual.
+- No se implementan WhatsApp ni SMS.
+
+### D-04 — Integración externa: Consulta de Procesos de la Rama Judicial
+**Decisión:** el sistema consulta el servicio de Consulta de Procesos Nacional Unificada de la Rama Judicial de Colombia para traer las actuaciones publicadas de un proceso a partir de su número de radicado.
+**Justificación:** decisión del interesado. Refuerza directamente la necesidad de la propuesta —*"los términos judiciales vencen por falta de seguimiento"*— porque un término suele contarse desde una actuación publicada.
+**⚠ Advertencia de alcance:** esta integración **no está en la propuesta**. Amplía el alcance más allá de lo propuesto y trae dos riesgos que deben quedar visibles desde ahora:
+- **R-01:** la disponibilidad, estabilidad y condiciones de uso del servicio público de consulta son externas y no controlables por el equipo. Debe verificarse técnicamente antes de comprometer requisitos que dependan de ella.
+- **R-02:** el sistema no puede presentar la información consultada como fuente oficial ni sustituir la verificación del abogado. Es un apoyo al seguimiento.
+**Mitigación de diseño:** la integración se diseña como **componente desacoplado y degradable**. Si el servicio externo no responde, el sistema sigue operando al 100% con registro manual de actuaciones. Ningún requisito núcleo (RF01–RF05) puede depender de que la integración funcione.
+
+---
+
+### D-05 — Nombre comercial: *Iuris*
+**Decisión:** el producto se denomina comercialmente **Iuris**; el nombre técnico en la documentación de ingeniería sigue siendo **SGPJ**.
+**Justificación:** decisión del interesado. *Iuris* proviene del latín *ius, iuris* ("del derecho"), coherente con el sector.
+**Consecuencias:** el nombre comercial se usa en interfaz, portal del cliente y comunicaciones; el técnico en diagramas, requisitos y arquitectura. Cierra V-10.
+
+### D-06 — La monetización ocurre fuera del sistema
+**Decisión:** el sistema **no** gestiona suscripciones, cobros, pasarelas de pago ni facturación de la plataforma. Su única responsabilidad al respecto es mantener un **estado del despacho: activo / inactivo**, que el Administrador de Plataforma modifica manualmente según lo que ocurra por fuera.
+**Justificación:** decisión del interesado. Cierra V-05 y anula el supuesto S-01.
+**Consecuencias — importantes:**
+- Desaparecen del alcance planes, precios, ciclos de facturación y pasarelas de pago.
+- El modelo de datos del despacho gana un atributo `estado` con exactamente dos valores.
+- **El estado del despacho se convierte en una condición transversal del sistema**: aparece una pregunta que ninguna otra decisión resuelve — *¿qué deja de funcionar cuando un despacho pasa a inactivo?* Concretamente: si se siguen emitiendo las alertas, si el abogado puede entrar, si el cliente puede entrar al portal y si los datos se conservan. **Esto se resuelve como regla de negocio en la Fase 2 → asunto A-02.**
+
+### D-07 — Roles: Administrador de Despacho es distinto de Abogado, y son acumulables
+**Decisión:** dentro de un despacho existen dos roles internos **diferenciados** — Administrador de Despacho y Abogado — más el rol externo Cliente. **Una misma persona puede tener ambos roles internos a la vez**, que es exactamente el caso del abogado independiente.
+**Justificación:** decisión del interesado. Cierra parcialmente V-06 y anula el supuesto S-02.
+**Consecuencias — la más relevante del modelo de datos:**
+- La relación usuario–rol es **de uno a muchos, no de uno a uno**. Un usuario tiene un *conjunto* de roles dentro de su despacho. Modelar "un usuario = un rol" haría imposible el caso del abogado independiente, que es el segmento explícito de la propuesta **[P]**.
+- Los permisos se evalúan por **unión** de los roles del usuario, no por un rol único.
+- El alta de un despacho independiente crea **un usuario con los dos roles**, no dos usuarios.
+- **Queda abierto el alcance real del Administrador de Despacho sobre el contenido de los expedientes** (¿administra usuarios y configuración solamente, o también lee todos los expedientes del despacho?). Es una cuestión de confidencialidad, no de permisos técnicos. **Se resuelve en Fase 2 → asunto A-01.**
+
+### D-08 — Honorarios y facturación al cliente: fuera de alcance
+**Decisión:** el sistema **no** gestiona honorarios, facturación al cliente, pagos, contabilidad ni nómina del despacho.
+**Justificación:** decisión del interesado; la propuesta tampoco los menciona. Cierra V-09 y anula el supuesto S-05.
+**Aclaración necesaria para evitar una confusión de términos:** lo excluido son los **honorarios** (dinero). Los **horarios** (fecha y hora) **sí están dentro y son esenciales**: sin la hora de la audiencia no puede calcularse la alerta de 48h ni la de 24h que exige el RF03 **[P]**.
+
+### D-09 — Las notas internas nunca son visibles para el cliente
+**Decisión:** las notas del abogado son de **uso exclusivamente interno del despacho** y no se muestran en ninguna circunstancia en el portal del cliente.
+**Justificación:** decisión del interesado. Cierra V-11 y trata el riesgo R-06.
+**Consecuencias:**
+- La nota es la primera pieza del expediente con **visibilidad restringida por rol**. Esto obliga a que el expediente no sea un bloque homogéneo: sus componentes tienen reglas de visibilidad distintas.
+- Se deriva una pregunta que la decisión no cubre y que no voy a inventar: **¿los documentos y las actuaciones sí son todos visibles para el cliente, o también se decide pieza por pieza?** **Fase 2 → asunto A-03.**
+- Será regla de negocio de obligado cumplimiento y criterio de aceptación explícito en las historias del portal.
+
+### D-10 — Despacho inactivo: el sistema se bloquea por completo, pero no se borra nada
+**Resuelve:** asunto A-02 (abierto por D-06).
+**Decisión:** cuando un despacho pasa a **inactivo**, ninguno de sus usuarios —abogados, administrador del despacho **ni clientes**— puede realizar ninguna operación en la plataforma. **Toda la información del despacho se conserva íntegra**, precisamente para el caso de que el despacho olvide pagar o regularice después. La reactivación restituye el acceso al estado exacto en que quedó, sin pérdida.
+**Justificación:** decisión del interesado, tomada con conocimiento del riesgo R-07 (advertido antes de decidir).
+**Consecuencias:**
+- El estado del despacho es una **condición transversal previa a toda operación**. Debe verificarse en **un único punto de control** (filtro o interceptor de seguridad), nunca repetida en cada funcionalidad: repartirla garantiza que alguna se olvide.
+- La **suspensión de alertas queda dentro del bloqueo**. Es la consecuencia deliberadamente aceptada del riesgo R-07: mientras el despacho esté inactivo, el sistema **deja de vigilar** sus audiencias y términos.
+- **Desactivar ≠ eliminar.** Son operaciones distintas; la propuesta no contempla eliminación de despachos y no se implementa.
+- **Mitigación derivada (no contradice la decisión, la completa):** al pasar a inactivo, el sistema emite **un último aviso por correo** al despacho informando que la vigilancia de audiencias y términos queda suspendida. Es el corte limpio: el abogado sabe con certeza a partir de qué momento vuelve a ser él quien vigila. Sin ese aviso, el despacho seguiría confiando en un sistema que ya dejó de avisarle — que es exactamente el fallo R-02. Este aviso es una **notificación de corte**, no una funcionalidad de la plataforma, por lo que es compatible con el bloqueo total.
+
+### D-11 — El Administrador de Despacho administra y además lee los expedientes
+**Resuelve:** asunto A-01 (abierto por D-07). Cierra V-06 por completo.
+**Decisión:** el Administrador de Despacho realiza **ambas cosas**: gestiona usuarios, configuración y catálogos de su despacho, **y** accede al contenido de todos los expedientes del despacho.
+**Justificación:** decisión del interesado.
+**Consecuencias:**
+- Dentro de un despacho, el Administrador es un **superconjunto de permisos** respecto del Abogado.
+- Para el **abogado independiente** ambos roles se solapan casi por completo; aun así se mantienen separados, porque en un consultorio con varios abogados el Administrador puede ser una persona distinta de quien lleva los casos.
+- **Consecuencia de confidencialidad que debe quedar visible:** si el Administrador de Despacho llegara a ser una persona no abogada (por ejemplo, personal administrativo), tendría acceso a información sometida a reserva profesional. La decisión es del despacho, no del sistema, pero el sistema debe dejar rastro: **todo acceso al contenido de un expediente queda registrado en bitácora de auditoría** (quién, qué expediente, cuándo). Esto no restringe la decisión; la hace verificable.
+- El Administrador de **Plataforma** sigue **sin** acceso al contenido de los expedientes **[D-01]**. Son dos roles administrativos con alcances opuestos y no deben confundirse.
+
+### D-12 — El cliente ve todos los documentos y todas las actuaciones de su expediente
+**Resuelve:** asunto A-03 (abierto por D-09).
+**Decisión:** en el portal, el cliente ve **la totalidad** de los documentos y actuaciones de su propio expediente. No hay selección pieza por pieza.
+**Justificación:** decisión del interesado.
+**Consecuencias:**
+- **Simplifica el modelo de datos de forma notable:** la visibilidad se determina por el **tipo de pieza**, no por una marca en cada pieza individual. No se necesita atributo `visible` en documentos ni actuaciones.
+- El expediente queda partido en **dos zonas fijas**:
+
+  | Zona | Contenido | Ve el cliente |
+  |---|---|---|
+  | Compartida | Documentos, actuaciones, datos del proceso | **Sí, todo** |
+  | Interna | Notas del abogado | **No, nunca** **[D-09]** |
+
+- **Consecuencia operativa que el abogado debe conocer, y que se vuelve regla:** *todo documento que se sube al expediente es inmediatamente visible para el cliente.* No existe zona intermedia ni borrador oculto. Lo que el abogado no quiera mostrar, **no se sube**: va como nota interna. Esta frase debe aparecer en la interfaz de carga de documentos, no solo en la documentación.
+
+### D-13 — Los catálogos del dominio son administrables por cada despacho
+**Decisión:** los cuatro catálogos —estados procesales, tipos de proceso, tipos de documento y tipos de actuación— se entregan con valores iniciales por defecto, y el **Administrador de Despacho** puede añadir, renombrar y desactivar valores dentro de **su** despacho.
+**Justificación:** decisión del interesado — *"cada despacho tiene su forma propia de trabajar"*.
+**Consecuencias:**
+- Los valores propuestos en §2.2–§2.5 del documento 02 dejan de ser una definición del sistema y pasan a ser **semillas por defecto**. Que estén mal elegidos deja de ser un riesgo de análisis: es corregible por configuración.
+- Los catálogos pasan a ser **datos del despacho**, no constantes del código. Entran al modelo de datos como entidades, con su pertenencia a un despacho (RN-01).
+- Un valor en uso no se elimina, solo se desactiva (RN-06).
+- **Excepción que se mantiene:** los estados **Activo** y **Archivado** son obligatorios y no eliminables en todo despacho, porque el RF05 **[P]** exige reportar por ellos literalmente.
+
+### D-14 — Un usuario pertenece a un solo despacho
+**Decisión:** confirmada la regla RN-13. Un usuario está vinculado a exactamente un despacho.
+**Consecuencia:** una persona que colabore con dos despachos requiere **dos cuentas independientes**. Es el precio de garantizar RN-02 (aislamiento); una cuenta compartida entre despachos sería la vía más directa de fuga de información.
+
+### D-15 — El despacho habilita el acceso del cliente; no hay autorregistro
+**Decisión:** confirmada la regla RN-43. El cliente no crea su propia cuenta: el despacho le habilita el acceso al portal.
+**Consecuencia:** solo el despacho sabe a quién representa. Un autorregistro abierto permitiría que un tercero reclamara acceso a un expediente ajeno.
+
+### D-16 — Las alertas de términos son configurables en cantidad y anticipación
+**Decisión:** el despacho puede definir **cuántas** alertas se emiten por cada término y **con cuánta anticipación** se envían.
+**Justificación:** decisión del interesado. La propuesta **[P]** deja el RF04 sin especificar ("fecha de vencimiento y alerta"), a diferencia del RF03, que sí fija 48h, 24h y el día.
+**Consecuencias, y una es un riesgo serio:**
+- Aparece la entidad **Esquema de alertas**: un conjunto de anticipaciones (por ejemplo 15, 5 y 1 día antes) que se aplica a los términos.
+- **⚠ Riesgo R-08 — la configurabilidad permite configurar el fallo.** Si el esquema admite cero alertas, un despacho podría desactivar por completo la vigilancia de sus términos sin darse cuenta, y el sistema cumpliría su configuración mientras el término vence en silencio. Es **R-02 por la puerta de la configuración**.
+  **Tratamiento:** se establece un **mínimo obligatorio de una alerta anticipada por término**, no desactivable. La configuración decide *cuántas más* y *cuándo*, nunca *si*.
+- **Frontera con el RF03 [P]:** las tres alertas de audiencia (48h, 24h, día) están fijadas literalmente por la propuesta. Se conservan como **obligatorias**; el despacho puede **añadir** alertas adicionales, pero no eliminar esas tres. **[S — a confirmar]**
+- **Nivel de configuración: [S — a confirmar]** se propone que el esquema se defina **por despacho** (lo administra el Administrador de Despacho, coherente con D-11 y D-13), con posibilidad de ajustarlo en un término concreto cuando ese término lo amerite.
+
+### D-17 — *Juzgado* pasa a quinto catálogo, administrable por despacho
+**Resuelve:** asunto A-04 (abierto en la Fase 5 §3.4).
+**Decisión:** *Juzgado* se incorpora como quinto valor de `tipo_catalogo` en la tabla `VALOR_CATALOGO` ya existente. Es **administrable por cada despacho**, igual que los otros cuatro.
+**Justificación:** P-RNF02 **[P]** exige buscar por juzgado. Con texto libre, el mismo juzgado se escribiría de formas distintas y la búsqueda devolvería resultados incompletos — un requisito literal de la propuesta quedaría degradado.
+**Por qué por despacho y no global — es la parte no obvia:** los juzgados son entidades del mundo real y parecería que corresponden a una lista nacional mantenida por el Administrador de Plataforma. Se descarta: **un directorio nacional de juzgados es una responsabilidad de mantenimiento permanente que nadie pidió, que se desactualiza sola y que convertiría al Administrador de Plataforma en curador de datos jurídicos.** Un despacho litiga ante un puñado de juzgados, no ante todos los del país; su lista se construye sola con el uso. Promover el catálogo a global más adelante es sencillo; lo contrario no.
+**Consecuencias:**
+- `PROCESO.juzgado` pasa de texto libre a `juzgado_id` con clave foránea a `VALOR_CATALOGO`.
+- Cero tablas nuevas y cero migración de datos: aún no hay datos.
+- RF-33 amplía su alcance a cinco catálogos; la pantalla ya existe.
+- Cierra el riesgo arquitectónico **RA-3**.
+
+### D-18 — Aislamiento: tres controles obligatorios y RLS condicionado
+**Resuelve:** el pendiente sobre Row-Level Security de la Fase 6 (ADR-03).
+**Decisión:** el aislamiento entre despachos se implementa en cuatro controles, con obligatoriedad distinta:
+
+| Control | Cuándo | Obligatorio |
+|---|---|---|
+| 1 · Tenant tomado del token, nunca de parámetro del cliente | Sprint 1 | **Sí** |
+| 2 · Filtro automático de tenant a nivel de ORM | Sprint 1 | **Sí** |
+| 3 · **Pruebas automatizadas de acceso cruzado por módulo** (CA-41.3), como puerta de calidad | Sprint 1 | **Sí** |
+| 4 · Row-Level Security en PostgreSQL | Final de Sprint 1 / inicio de Sprint 2 | **Condicionado** |
+
+**Justificación:** RLS es la única capa que sigue protegiendo cuando el código se equivoca, pero tiene un costo real que debe conocerse: **con un pool de conexiones, si una conexión se devuelve al pool con el tenant de la petición anterior pegado, la siguiente lo hereda — y se construye exactamente la fuga que se quería evitar.** Se implementa con `SET LOCAL` dentro de la transacción, que se revierte al terminar; nunca con `SET` a secas.
+El control 3 aporta la mayor parte del beneficio a una fracción del costo: atrapa el olvido de filtro **en integración continua**, no en producción, y no depende del pool.
+**Condición sobre el control 4:** si el equipo lo hace funcionar limpiamente, se mantiene. Si a mitad del Sprint 2 sigue sin resolverse, **se retira de forma explícita** y se opera con los controles 1 a 3. Lo que no puede ocurrir es que se omita por olvido: eso dejaría ADR-02 apoyada en una premisa que ella misma declaró insuficiente.
+
+### D-19 — Cifras de los RNF adoptadas como línea base, con RNF-11 corregido
+**Resuelve:** los supuestos **S-03** y **S-04**, y el riesgo **RA-4**.
+**Decisión:** se adoptan las cifras propuestas como **línea base revisable** y se convierten en pruebas automatizadas.
+**Justificación:** no hay un despacho real con volumen medido a quien validárselas; el Product Owner es el instructor **[P]**. Esperar una validación que nadie puede dar sería bloquear sin obtener nada. Lo relevante no es que las cifras sean exactas, sino que sean **verificables** — y lo son.
+**Corrección a RNF-11:** la tolerancia pasa de **1 hora a 15 minutos**, con planificador ejecutándose cada 5 minutos.
+**Motivo de la corrección:** con tolerancia de 1 hora y planificador horario, la alerta de 24 horas podría emitirse a las 23h05 — perdería una hora entera de margen justo en el aviso que más importa, y la de 48h quedaría igual de degradada. El costo de bajar la tolerancia es nulo: es una tarea programada que casi siempre encontrará cero alertas pendientes.
+**Sin cambios:** RNF-12 (50 despachos · 500 procesos · < 3 s), RNF-13 (20 MB) y RNF-14 (respaldo diario con restauración probada).
+
+### D-20 — Redistribución de requisitos entre sprints para blindar el Sprint 3
+**Resuelve:** el riesgo **R-09**.
+**Principio:** **el Sprint 3 es el único irreductible** — contiene el motor de alertas, que es la razón de ser del producto. Todo lo demás puede moverse; eso no.
+**Decisión:** se mueven cinco requisitos, **sin cambiar los títulos de los sprints de la propuesta [P]**:
+
+| Requisitos | De → a | Por qué se puede |
+|---|---|---|
+| RF-02, RF-03 · estado del despacho | 1 → 2 | No hace falta poder desactivar despachos para registrar clientes |
+| RF-31 · búsqueda completa | 1 → 4 | Ya estaba repartido "base en 1, refinamiento en 4"; queda entero en el 4 |
+| **RF-19, RF-20 · audiencia y calendario** | 3 → 2 | **Movimiento clave.** Registrar una audiencia es un formulario que no depende del motor de alertas |
+
+**Resultado:** Sprint 1: 18 → **13** · Sprint 2: 10 → **15** · Sprint 3: 16 → **13** · Sprint 4: 8 → **9**.
+**Razonamiento:** el Sprint 2 se carga, pero es el más seguro — formularios y almacenamiento, sin lógica crítica. **Se carga el sprint barato para descargar el caro.**
+**Dos condiciones:**
+- Mover RF-19 al Sprint 2 estira su título *("Documentación y actuaciones procesales")*. **Requiere el visto bueno del Product Owner**; no se aplica unilateralmente.
+- Si el PO no acepta mover nada, la alternativa es aceptar R-09 y recortar **dentro** del Sprint 3: RF-20 se entrega como lista de próximas audiencias en lugar de calendario completo. **Nada del motor de alertas se recorta.**
+
+### D-21 — Estándares de construcción del código
+**Decisión:** el desarrollo se rige por cinco estándares fijados por el interesado:
+
+| # | Estándar | Cómo se aplica |
+|---|---|---|
+| 1 | **Proyecto real, seguridad en serio** | Sin secretos en el repositorio · contraseñas con hash desde el primer commit · CORS restringido · los tres controles obligatorios de ADR-03 entran en el **primer** incremento, no después |
+| 2 | **Software en español** | Interfaz, mensajes de error y validaciones en español |
+| 3 | **Código limpio** | Nombres del glosario de la Fase 1 · funciones cortas · sin comentarios que expliquen lo que el nombre ya dice |
+| 4 | **Principios SOLID** | Ya preparados desde el diseño: módulos M1–M12 (S), `Pieza` abstracta (O/L), servicios por módulo (I), dominio sin dependencias de infraestructura (D) |
+| 5 | **Construcción incremental "como legos"** | Una pieza pequeña y verificable a la vez, justificada contra un RF/RNF/HU ya documentado. **Nunca generar el proyecto completo de un tirón** |
+
+**Idioma del código:** **dominio en español, sufijos técnicos en inglés**.
+- Español: `Despacho`, `Expediente`, `TerminoJudicial`, `buscarPorRadicado()`, tabla `proceso`.
+- Inglés: `DespachoRepository`, `DespachoService`, `DespachoController`.
+
+**Justificación:** mantiene dentro del código el vocabulario del glosario de la Fase 1 y de las 56 reglas de negocio —lo que preserva la trazabilidad hasta el código— sin separarse de las convenciones de Spring.
+
+**Consecuencia sobre el orden de construcción:** el **aislamiento multi-tenant no puede postergarse**. Añadirlo después obligaría a reescribir todo lo construido antes; por eso entra en el primer bloque junto con despachos, usuarios y autenticación.
+
+### D-22 — Control de versiones con Git desde el inicio
+**Decisión:** el proyecto se versiona con Git desde antes de la primera línea de código, con `.gitignore` que excluye secretos, dependencias y artefactos de compilación.
+**Justificación:** cada incremento queda como un commit revisable y reversible. Además es la barrera que impide que un archivo con credenciales entre al repositorio por descuido — coherente con el estándar 1 de D-21.
+**⚠ Nota de entorno:** el proyecto vive dentro de una carpeta sincronizada por OneDrive. La sincronización puede interferir con archivos de compilación y con el directorio `.git`. El `.gitignore` excluye `target/` y `node_modules/`, que es donde ese conflicto se produce con más frecuencia.
+
+**Estado del entorno a 2026-08-20:** Node 24.16, PostgreSQL 18.4 y Git 2.55 disponibles. **JDK y Maven no instalados** — requisito previo para el stack de D-02. Se resuelve con una sola instalación (JDK), ya que el proyecto usará Maven Wrapper.
+
+---
+
+## 5. Supuestos vigentes [S]
+
+Se trabaja con ellos hasta que se validen. Cada uno indica cuándo debe cerrarse.
+
+### 5.1 Supuestos vigentes
+
+**Ninguno.** Los cinco supuestos abiertos durante el proyecto quedaron cerrados.
+
+### 5.2 Supuestos ya cerrados
+
+| ID | Supuesto original | Desenlace |
+|---|---|---|
+| S-01 | Suscripción por despacho escalada por número de abogados | **Anulado.** La monetización sale del sistema por completo → **D-06** |
+| S-02 | Existen tres perfiles: administrador de despacho, abogado y cliente | **Confirmado y precisado.** Los roles internos son acumulables → **D-07** |
+| S-05 | Honorarios y facturación fuera de alcance | **Confirmado** → **D-08** |
+| S-03 | Escala objetivo sin cifras confirmadas | **Cuantificado y adoptado** como línea base → **D-19** (RNF-12, RNF-13) |
+| S-04 | Conservación y respaldo | **Cuantificado y adoptado** como línea base → **D-19** (RNF-14, RNF-15) |
+
+---
+
+## 5.bis Asuntos abiertos para la Fase 2 [A]
+
+No son vacíos de la propuesta ni supuestos: son **preguntas nuevas que nacieron de las decisiones D-06, D-07 y D-09**. Cada decisión cerró un vacío y abrió una consecuencia que exige una regla de negocio. Se resuelven al abrir la Fase 2, no se inventan.
+
+| ID | Asunto | Nace de | Estado |
+|---|---|---|---|
+| **A-01** | ¿El Administrador de Despacho puede leer el contenido de todos los expedientes, o su rol es solo administrativo? | D-07 | **Resuelto** → **D-11** (hace ambas cosas) |
+| **A-02** | Cuando un despacho pasa a inactivo: ¿alertas?, ¿acceso del abogado?, ¿acceso del cliente?, ¿datos? | D-06 | **Resuelto** → **D-10** (bloqueo total, sin borrado) |
+| **A-03** | ¿El cliente ve todos los documentos y actuaciones, o pieza por pieza? | D-09 | **Resuelto** → **D-12** (ve todos) |
+
+| **A-04** | `PROCESO.juzgado` como texto libre degrada la búsqueda que exige P-RNF02 | Modelo de datos (Fase 5) | **Resuelto** → **D-17** (quinto catálogo, por despacho) |
+
+**Los cuatro asuntos quedan cerrados. No queda ningún asunto ni supuesto abierto en el proyecto.**
+
+---
+
+## 6. Fuera de alcance declarado
+
+No se construye, aunque sea tentador o aunque el dominio jurídico lo sugiera:
+
+- Litigio en línea, radicación de demandas o presentación de memoriales ante el juzgado.
+- Firma electrónica o digital de documentos.
+- Honorarios, facturación al cliente, nómina o contabilidad del despacho **[D-08]**. *(Los **horarios** —fecha y hora de audiencias— sí están dentro; son la base de las alertas.)*
+- Suscripciones, precios, pasarelas de pago y cobro de la plataforma **[D-06]**. El sistema solo marca el despacho como activo o inactivo.
+- Cálculo automático del vencimiento de un término a partir de normas procesales. **El sistema controla y alerta sobre la fecha que el abogado registra; no interpreta la ley ni computa plazos por sí mismo.** Esta frontera es central y se convertirá en regla de negocio.
+- Asesoría jurídica automatizada o cualquier sugerencia de contenido legal.
+- Aplicación móvil nativa. La propuesta dice **sistema web**.
+
+---
+
+## 7. Ruta de trabajo acordada
+
+```
+Fase 1  Idea y Definición de Negocio          ← en curso
+Fase 2  Reglas de Negocio (RN)
+Fase 3  Requisitos Funcionales (RF) y No Funcionales (RNF)
+Fase 4  Historias de Usuario + Criterios de Aceptación (con RF/RNF asociados)
+Fase 5  Diagramas: casos de uso, funcional, modelo de datos, flujo del sistema,
+        flujos individuales, clases, despliegue, componentes, secuencia, actividad
+Fase 6  Arquitectura del Sistema bajo ISO/IEC/IEEE 42010
+```
+
+Cada fase se valida antes de abrir la siguiente. Cada artefacto de una fase referencia el artefacto de la fase anterior que le dio origen.
+
+---
+
+## 8. Bitácora de cambios
+
+| Fecha | Cambio | Motivo |
+|---|---|---|
+| 2026-08-20 | Creación del registro. Decisiones D-01 a D-04. Supuestos S-01 a S-05. | Cierre de vacíos bloqueantes para iniciar Fase 1. |
+| 2026-08-20 | Decisiones **D-05 a D-09**. Cierre de V-05, V-09, V-10, V-11 y cierre parcial de V-06. Anulación de S-01, S-02 y S-05. Apertura de los asuntos **A-01, A-02 y A-03**. | Respuestas del interesado a las 5 preguntas de cierre de la Fase 1. **Fase 1 cerrada.** |
+| 2026-08-20 | Decisiones **D-10, D-11 y D-12**. Cierre de A-01, A-02 y A-03. Cierre completo de V-06. | Respuestas del interesado a los tres asuntos. **Apertura de la Fase 2 (Reglas de Negocio).** |
+| 2026-08-20 | Decisiones **D-13 a D-16**. Apertura del riesgo **R-08** (configurabilidad de las alertas) con su tratamiento. | Respuestas del interesado a las 5 preguntas de cierre de la Fase 2. **Fase 2 cerrada**, salvo dos confirmaciones menores dentro de D-16. |
+| 2026-08-20 | **Fase 3** — 36 RF y 16 RNF. Cierre cuantificado de **S-03** y **S-04** (pendiente de validación de cifras). Apertura del riesgo **R-09** (concentración de los Sprints 1 y 3). | Derivación de los requisitos a partir de las 55 reglas de negocio. |
+| 2026-08-20 | **Fase 4** — 42 historias de usuario con criterios de aceptación. La verificación inversa detectó dos reglas huérfanas (**RN-50** y **RN-51**), que obligaron a añadir **RF-37** y **RF-38** a la Fase 3 (ahora 38 RF, 54 requisitos). | La fase siguiente audita a la anterior: RN-51 es parte del tratamiento del riesgo crítico R-02 y se habría quedado sin llegar al código. |
+| 2026-08-20 | **Fase 5** — 15 diagramas en 10 categorías. Apertura del asunto **A-04** (`PROCESO.juzgado` como texto libre degrada la búsqueda que exige P-RNF02). | Modelado de datos. |
+| 2026-08-20 | **Fase 6** — Descripción Arquitectónica ISO/IEC/IEEE 42010: 8 interesados, 12 preocupaciones, 7 puntos de vista, 8 decisiones arquitectónicas (ADR-01 a ADR-08), 6 riesgos arquitectónicos. Cierre del pendiente de la Fase 5 sobre emisión duplicada de alertas (**ADR-04**). | **Ingeniería de requerimientos y arquitectura completadas.** |
+| 2026-08-20 | Decisiones **D-17 a D-20**. Cierre de **A-04**, de los supuestos **S-03** y **S-04**, y de los riesgos **RA-3**, **RA-4** y **R-09**. Corrección de RNF-11 (tolerancia 1 h → 15 min). | Cierre de los cuatro pendientes que quedaban tras la Fase 6. **No queda ningún asunto abierto.** |
