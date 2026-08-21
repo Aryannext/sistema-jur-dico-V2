@@ -145,6 +145,12 @@ public class ConfiguracionSeguridad {
                         .requestMatchers("/api/alertas/**")
                             .hasAnyAuthority("ROL_ABOGADO", "ROL_ADMIN_DESPACHO")
 
+                        // Reportes: el administrador ve la carga del despacho
+                        // (HU-36), y el abogado tambien, porque el resumen
+                        // incluye los terminos vencidos y eso le concierne.
+                        .requestMatchers("/api/reportes/**")
+                            .hasAnyAuthority("ROL_ABOGADO", "ROL_ADMIN_DESPACHO")
+
                         // El esquema de alertas lo configura el administrador
                         // del despacho (RF-34); los abogados solo lo consultan.
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/esquema-alertas")

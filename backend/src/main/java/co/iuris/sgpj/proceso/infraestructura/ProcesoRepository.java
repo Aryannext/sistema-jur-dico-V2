@@ -48,6 +48,53 @@ public interface ProcesoRepository extends JpaRepository<Proceso, Long> {
             Long despachoId, Long clienteId);
 
     /**
+     * Cuántos procesos hay en cada estado. RF-32 · HU-36 · CA-36.1.
+     *
+     * <p>Agrupa en la base en lugar de traer los procesos y contarlos en
+     * memoria: un despacho con cientos de casos no necesita cargarlos todos
+     * para saber cuántos tiene en cada estado.
+     *
+     * <p>Devuelve solo los estados <strong>que tienen procesos</strong>. Los que
+     * están a cero no aparecen aquí — el servicio los rellena desde el catálogo,
+     * porque un estado ausente del reporte no se distingue de uno con cero
+     * casos, y esa diferencia importa cuando lo que se consulta es la carga de
+     * trabajo del despacho.
+     */
+    @Query("""
+            select p.estadoProcesal.id, p.estadoProcesal.nombre, count(p)
+            from Proceso p
+            where p.despacho.id = :despachoId
+            group by p.estadoProcesal.id, p.estadoProcesal.nombre
+            """)
+    List<Object[]> contarPorEstado(@Param("despachoId") Long despachoId);
+
+    /** Conteo por tipo de proceso, para el desglose del reporte. */
+    @Query("""
+            select p.tipoProceso.id, p.tipoProceso.nombre, count(p)
+            from Proceso p
+            where p.despacho.id = :despachoId
+            group by p.tipoProceso.id, p.tipoProceso.nombre
+            """)
+    List<Object[]> contarPorTipo(@Param("despachoId") Long despachoId);
+
+    /**
+     * Carga de trabajo por abogado responsable.
+     *
+     * <p>Cuenta solo los procesos que <strong>no</strong> están archivados: la
+     * pregunta que responde es «cuánto lleva encima cada uno ahora mismo», y un
+     * caso cerrado hace años no pesa sobre nadie.
+     */
+    @Query("""
+            select p.abogadoResponsable.id, p.abogadoResponsable.nombre, count(p)
+            from Proceso p
+            where p.despacho.id = :despachoId
+              and lower(p.estadoProcesal.nombre) <> 'archivado'
+            group by p.abogadoResponsable.id, p.abogadoResponsable.nombre
+            order by count(p) desc
+            """)
+    List<Object[]> contarActivosPorAbogado(@Param("despachoId") Long despachoId);
+
+    /**
      * Búsqueda por los cuatro criterios de P-RNF02: radicado, cliente, juzgado
      * y tipo de proceso. CA-35.2: se pueden combinar.
      *
