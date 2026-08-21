@@ -134,3 +134,26 @@ export interface Usuario {
   roles: Rol[];
   fechaRegistro: string;
 }
+
+/**
+ * Una alerta del motor. RF-24 a RF-27 · RNF-08, RNF-09.
+ *
+ * <p>`detalleError` es el motivo real del fallo, conservado a propósito:
+ * cuando un despacho pregunte por qué no le llegó el aviso, «falló el envío»
+ * no es una respuesta.
+ */
+export interface Alerta {
+  id: number;
+  eventoId: number;
+  tipoEvento: string;
+  radicado: string;
+  resumen: string;
+  destinatario: string;
+  correoDestinatario: string;
+  programadaPara: string;
+  enviadaEn: string | null;
+  estado: 'PROGRAMADA' | 'ENVIADA' | 'FALLIDA';
+  estadoDescripcion: string;
+  intentos: number;
+  detalleError: string | null;
+}

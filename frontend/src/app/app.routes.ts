@@ -102,6 +102,11 @@ export const routes: Routes = [
         loadComponent: () => import('./configuracion/alertas').then(m => m.Alertas),
       },
       { path: 'configuracion', pathMatch: 'full', redirectTo: 'configuracion/catalogos' },
+      {
+        path: 'alertas',
+        title: 'Historial de alertas · Iuris',
+        loadComponent: () => import('./despacho/alertas/historial').then(m => m.HistorialAlertas),
+      },
       { path: '', pathMatch: 'full', redirectTo: 'vencimientos' },
     ],
   },

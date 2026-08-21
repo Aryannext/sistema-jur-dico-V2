@@ -23,12 +23,9 @@
       Audiencias
     </a>
 
-    <!-- Las secciones que aún no existen se muestran apagadas y sin enlace.
-         Esconderlas dejaría al usuario sin saber qué va a haber; ponerles un
-         enlace que no lleva a nada le haría pensar que está roto. -->
-    <a class="pendiente" aria-disabled="true">
+    <a routerLink="/alertas" routerLinkActive="on">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h11a2 2 0 0 1 2 2v15l-7.5-4-7.5 4v-15a2 2 0 0 1 2-2z"/></svg>
-      Historial de alertas <i class="n">pronto</i>
+      Historial de alertas
     </a>
 
     <div class="rot">Gestión</div>
@@ -56,7 +53,7 @@
     </a>
     <a routerLink="/configuracion/alertas" routerLinkActive="on">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8.5a6 6 0 1 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5z"/><path d="M13.7 20a2 2 0 0 1-3.4 0"/></svg>
-      Alertas
+      Configurar alertas
     </a>
     <a routerLink="/mi-cuenta" routerLinkActive="on">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>

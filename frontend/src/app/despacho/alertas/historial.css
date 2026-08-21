@@ -1,0 +1,49 @@
+/* Historial de alertas. Lo compartido viene de src/styles.css, generado desde
+   diseno/mockups/_base/. */
+
+:host { display: block; }
+
+button.sel { font: inherit; cursor: pointer; }
+button.sel:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
+
+/* El filtro de fallidas se tiñe SIEMPRE, tenga o no resultados: es el que
+   alguien viene a buscar cuando algo salió mal, y tiene que encontrarse sin
+   leer las tres etiquetas. */
+button.sel.fallidas {
+  border-color: var(--alto-borde);
+  color: var(--alto);
+}
+button.sel.fallidas span { color: var(--alto); font-weight: 700; }
+button.sel.fallidas.act {
+  background: var(--alto-suave);
+  border-color: var(--alto);
+}
+
+.tabla tbody tr.fallida { background: var(--alto-suave); }
+.tabla tbody tr.fallida:hover { background: #F9E6E3; }
+
+.rad-t { font-variant-numeric: tabular-nums; }
+
+/* El motivo real del fallo, debajo de la etiqueta. Es lo que permite
+   arreglarlo: casi siempre dice exactamente qué configurar. */
+.motivo {
+  font-size: 12.5px;
+  color: #8C4136;
+  line-height: 1.5;
+  margin-top: 6px;
+  max-width: 46ch;
+}
+
+.franja.verde { background: #E4F1EA; color: #245C43; }
+.franja.verde b { color: var(--tinta); }
+
+.enlace {
+  color: var(--marca);
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid var(--marca-media);
+}
+
+@media (max-width: 1000px) {
+  .dos { grid-template-columns: 1fr; }
+}

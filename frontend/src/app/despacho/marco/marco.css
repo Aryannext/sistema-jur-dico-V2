@@ -9,27 +9,6 @@
   min-width: 0; /* Sin esto, una tabla ancha estira la rejilla entera. */
 }
 
-/* Secciones aún no construidas: visibles, apagadas y sin enlace.
-   Esconderlas dejaría al usuario sin saber qué va a haber; ponerles un enlace
-   muerto le haría pensar que el sistema está roto. */
-.lado a.pendiente {
-  cursor: default;
-  opacity: .5;
-}
-.lado a.pendiente:hover {
-  background: none;
-}
-.lado a.pendiente .n {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  background: var(--hilo-suave);
-  color: var(--apagado);
-  border-radius: 99px;
-  padding: 2px 8px;
-}
-
 .yo .quien-soy {
   min-width: 0;
   flex: 1;

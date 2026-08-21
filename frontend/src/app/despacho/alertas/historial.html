@@ -1,0 +1,152 @@
+<main>
+  <div class="pag">
+    <div>
+      <h1>Historial de alertas</h1>
+      <p>Todo lo que el sistema intentó avisar · y lo que no pudo</p>
+    </div>
+    <div class="util">
+      <button class="btn fantasma" type="button" (click)="barrer()" [disabled]="barriendo()">
+        @if (barriendo()) {
+          <span class="girando"></span> Barriendo…
+        } @else {
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5A8 8 0 1 0 18.5 16"/><path d="M20 6v5.5h-5.5"/></svg>
+          Barrer ahora
+        }
+      </button>
+    </div>
+  </div>
+
+  @if (resultadoBarrido(); as mensaje) {
+    <p class="franja verde" role="status" style="margin-bottom:20px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7"/></svg>
+      <span>{{ mensaje }}</span>
+    </p>
+  }
+
+  <!-- Lo que falló va arriba del todo, antes que cualquier filtro: es lo único
+       de esta pantalla sobre lo que hay que hacer algo hoy. -->
+  @if (hayFallidas()) {
+    <p class="franja roja" style="margin-bottom:20px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <span>
+        @if (fallidas().length === 1) {
+          <b>Un aviso no pudo enviarse.</b>
+        } @else {
+          <b>{{ fallidas().length }} avisos no pudieron enviarse.</b>
+        }
+        El sistema los reintentó y aun así fallaron. <b>Nadie recibió esos correos</b> — compruebe usted mismo esos vencimientos.
+      </span>
+    </p>
+  }
+
+  <div class="filtros">
+    <button class="sel" type="button" [class.act]="filtro() === 'todas'" (click)="filtro.set('todas')">
+      Todas <span>{{ fallidas().length + programadas().length }}</span>
+    </button>
+    <button class="sel fallidas" type="button" [class.act]="filtro() === 'FALLIDA'" (click)="filtro.set('FALLIDA')">
+      Fallidas <span>{{ fallidas().length }}</span>
+    </button>
+    <button class="sel" type="button" [class.act]="filtro() === 'PROGRAMADA'" (click)="filtro.set('PROGRAMADA')">
+      Programadas <span>{{ programadas().length }}</span>
+    </button>
+    <div class="cuenta">Mostrando {{ mostradas().length }}</div>
+  </div>
+
+  @if (error(); as fallo) {
+    <p class="franja roja" role="alert" style="margin-bottom:20px">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <span>{{ fallo }}</span>
+    </p>
+  }
+
+  <section class="caja">
+    @if (cargando()) {
+      <div class="cargando"><span class="girando"></span> Consultando el historial…</div>
+
+    } @else if (mostradas().length === 0) {
+      <div class="vacio">
+        <div class="bola">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8.5a6 6 0 1 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5z"/><path d="M13.7 20a2 2 0 0 1-3.4 0"/></svg>
+        </div>
+        @if (filtro() === 'FALLIDA') {
+          <b>Ningún aviso ha fallado</b>
+          <span>Es la lista que conviene ver vacía: significa que todo lo que el sistema intentó avisar, salió.</span>
+        } @else if (filtro() === 'PROGRAMADA') {
+          <b>No hay avisos pendientes de salir</b>
+          <span>Se programan solos al registrar un término o una audiencia.</span>
+        } @else {
+          <b>Todavía no hay alertas</b>
+          <span>Se programan solas al registrar un término o una audiencia. No hay que crearlas a mano.</span>
+        }
+      </div>
+
+    } @else {
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th style="padding-top:21px">Aviso</th>
+            <th style="padding-top:21px">Proceso</th>
+            <th style="padding-top:21px">Destinatario</th>
+            <th style="padding-top:21px">Cuándo</th>
+            <th style="padding-top:21px">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (a of mostradas(); track a.id) {
+            <tr [class.fallida]="esFallida(a)">
+              <td>
+                <div class="p">{{ a.resumen }}</div>
+                <div class="s">{{ a.tipoEvento }}</div>
+              </td>
+              <td><div class="rad-t">{{ a.radicado }}</div></td>
+              <td>
+                <div style="font-size:14px">{{ a.destinatario }}</div>
+                <div class="s">{{ a.correoDestinatario }}</div>
+              </td>
+              <td>
+                @if (a.enviadaEn) {
+                  <span class="num" style="font-size:13.5px">{{ cuando(a.enviadaEn) }}</span>
+                } @else {
+                  <!-- Se distingue «se envió a esta hora» de «saldrá a esta
+                       hora»: confundirlas haría creer que un aviso futuro ya
+                       salió. -->
+                  <span style="font-size:13.5px;color:var(--apagado)">
+                    programada · {{ cuando(a.programadaPara) }}
+                  </span>
+                }
+              </td>
+              <td>
+                @if (esFallida(a)) {
+                  <span class="eti roja">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                    Falló tras {{ a.intentos }} intento(s)
+                  </span>
+                  @if (a.detalleError) {
+                    <!-- El motivo real, no un «falló el envío». Es lo que
+                         permite arreglarlo: casi siempre dice qué configurar. -->
+                    <div class="motivo">{{ a.detalleError }}</div>
+                  }
+                } @else if (a.estado === 'ENVIADA') {
+                  <span class="eti verde"><i></i>{{ a.estadoDescripcion }}</span>
+                } @else {
+                  <span class="eti"><i></i>{{ a.estadoDescripcion }}</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+
+  <div class="dos" style="margin-top:22px;grid-template-columns:1fr 1fr">
+    <p class="franja roja">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <span><b>Una alerta fallida no desaparece.</b> No existe un estado «descartada»: un aviso que no salió y se borra de la lista es peor que no tener avisos, porque el despacho cree que le avisaron.</span>
+    </p>
+    <p class="franja marca">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/></svg>
+      <span>Esta pantalla existe para <b>responder después</b>: si alguien pregunta por qué se venció un término, aquí está si el aviso salió, cuándo y a quién. <a class="enlace" routerLink="/configuracion/alertas">Configurar cuándo avisa</a>.</span>
+    </p>
+  </div>
+</main>
