@@ -1,0 +1,80 @@
+/* Reportes. Lo compartido viene de src/styles.css, generado desde
+   diseno/mockups/_base/. */
+
+:host { display: block; }
+
+.cifras.cuatro { grid-template-columns: repeat(4, 1fr); }
+
+.cif .bola.apagada {
+  background: var(--hilo-suave);
+  color: var(--apagado);
+}
+.cif .bola.roja {
+  background: #F7DCD8;
+  color: var(--alto);
+}
+/* La tarjeta de vencidos solo se tiñe cuando HAY vencidos. Pintarla de rojo
+   con un cero enseñaría a ignorar el color, que es justo lo contrario de lo
+   que se busca. */
+.cif.alerta {
+  background: var(--alto-suave);
+  box-shadow: none;
+}
+.cif.alerta dt { color: #8C4136; }
+.cif.alerta dd { color: var(--alto); }
+
+/* Un conteo en cero se escribe apagado y su barra queda como un carril
+   vacío: se ve que la categoría existe y que no tiene nada, que es
+   exactamente lo que hay que comunicar. */
+.br .fil b.cero { color: var(--apagado); font-weight: 600; }
+.via i.gris { background: var(--apagado); opacity: .45; }
+
+.cifra-lado {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -.03em;
+}
+.cifra-lado.mal { color: var(--alto); }
+
+.franja.verde {
+  background: #E4F1EA;
+  color: #245C43;
+}
+.franja.verde b { color: var(--tinta); }
+
+.franja .ir { display: inline-flex; }
+
+.enlace {
+  color: var(--marca);
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid var(--marca-media);
+}
+
+@media (max-width: 1100px) {
+  .dos { grid-template-columns: 1fr; }
+  .cifras.cuatro { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .cifras.cuatro { grid-template-columns: 1fr; }
+}
+
+/* Un conteo en cero no pinta barra: la pista vacía ya dice cero. Pintarla a
+   ancho completo en gris se leía como «lleno, pero apagado», que es
+   exactamente lo contrario. Se marca con un trazo discontinuo para que se
+   distinga de una barra que no cargó. */
+.via.vacia {
+  background: transparent;
+  border: 1px dashed var(--hilo);
+}
+
+/* El porcentaje va entre paréntesis y separado: «1 (100 %)» no se puede leer
+   como «1100 %», que es lo que pasaba antes. */
+.cif dd em {
+  font-style: normal;
+  margin-left: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--apagado);
+  letter-spacing: -.01em;
+}

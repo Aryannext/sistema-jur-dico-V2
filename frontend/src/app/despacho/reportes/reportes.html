@@ -1,0 +1,192 @@
+<main>
+  <div class="pag">
+    <div>
+      <h1>Reportes</h1>
+      <p>De su despacho · al {{ hoy() }}</p>
+    </div>
+    <div class="util">
+      <button class="btn fantasma" type="button" (click)="cargar()" [disabled]="cargando()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5A8 8 0 1 0 18.5 16"/><path d="M20 6v5.5h-5.5"/></svg>
+        Actualizar
+      </button>
+    </div>
+  </div>
+
+  @if (cargando() && !resumen()) {
+    <div class="caja"><div class="cargando"><span class="girando"></span> Calculando…</div></div>
+
+  } @else if (error(); as fallo) {
+    <section class="caja">
+      <div class="vacio">
+        <div class="bola" style="background:var(--alto-suave);color:var(--alto)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        </div>
+        <b>No se pudieron cargar los reportes</b>
+        <span>{{ fallo }}</span>
+        <button class="btn" type="button" (click)="cargar()" style="margin:18px auto 0">Reintentar</button>
+      </div>
+    </section>
+
+  } @else if (resumen(); as r) {
+
+    <div class="cifras cuatro">
+      <dl class="cif">
+        <div class="bola">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5a2 2 0 0 1 2-2H10l2 2.5h6.5a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg>
+        </div>
+        <div><dt>Procesos en total</dt><dd>{{ r.totalProcesos }}</dd></div>
+      </dl>
+
+      <dl class="cif">
+        <div class="bola">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7"/></svg>
+        </div>
+        <div>
+          <dt>Activos</dt>
+          <dd>{{ r.procesosNoArchivados }}<em>({{ porcentaje(r.procesosNoArchivados) }})</em></dd>
+        </div>
+      </dl>
+
+      <dl class="cif">
+        <div class="bola apagada">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="5" rx="1.7"/><path d="M5.5 9.5v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-9M10 14h4"/></svg>
+        </div>
+        <div><dt>Archivados</dt><dd>{{ r.procesosArchivados }}</dd></div>
+      </dl>
+
+      <!-- La cifra que de verdad importa. Las demás dicen cuánto trabajo hay;
+           esta dice si el despacho está perdiendo oportunidades procesales,
+           que es la razón por la que el sistema existe. -->
+      <dl class="cif" [class.alerta]="hayVencidos()">
+        <div class="bola" [class.roja]="hayVencidos()" [class.apagada]="!hayVencidos()">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        </div>
+        <div>
+          <dt>Términos vencidos</dt>
+          <dd>{{ r.terminosVencidos }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="dos">
+      <div>
+        <section class="caja" style="margin-bottom:24px">
+          <header>
+            <h3>Procesos por estado procesal</h3>
+            <span>{{ r.totalProcesos }} proceso(s)</span>
+          </header>
+
+          <div style="padding:20px 24px 24px">
+            @for (c of porEstado(); track c.id) {
+              <div class="br">
+                <div class="fil">
+                  <b [class.cero]="c.cantidad === 0">{{ c.nombre }}</b>
+                  <span>{{ c.cantidad }}</span>
+                </div>
+                <div class="via" [class.vacia]="c.cantidad === 0">
+                  @if (c.cantidad > 0) {
+                    <i [class.gris]="esArchivado(c.nombre)"
+                       [style.width.%]="ancho(c.cantidad, maximoEstado())"></i>
+                  }
+                </div>
+              </div>
+            }
+
+            <p class="franja marca" style="margin-top:20px">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/></svg>
+              <span><b>Los estados en cero aparecen igual.</b> Un estado que se omite del reporte no se distingue de uno vacío: usted quiere saber que <em>no hay</em> procesos ahí, no quedarse con la duda de si el reporte lo dejó por fuera.</span>
+            </p>
+          </div>
+        </section>
+
+        <section class="caja">
+          <header><h3>Procesos por tipo</h3><span>los tipos de su despacho</span></header>
+          <div style="padding:20px 24px 24px">
+            @for (c of porTipo(); track c.id) {
+              <div class="br">
+                <div class="fil">
+                  <b [class.cero]="c.cantidad === 0">{{ c.nombre }}</b>
+                  <span>{{ c.cantidad }}</span>
+                </div>
+                <div class="via" [class.vacia]="c.cantidad === 0">
+                  @if (c.cantidad > 0) {
+                    <i [style.width.%]="ancho(c.cantidad, maximoTipo())"></i>
+                  }
+                </div>
+              </div>
+            } @empty {
+              <p style="font-size:13.5px;color:var(--apagado)">Su despacho aún no tiene tipos de proceso configurados.</p>
+            }
+          </div>
+        </section>
+      </div>
+
+      <div>
+        <section class="caja" style="margin-bottom:24px">
+          <header><h3>Carga por abogado</h3><span>procesos abiertos</span></header>
+          <div style="padding:20px 24px 22px">
+            @for (c of cargaPorAbogado(); track c.id) {
+              <div class="br">
+                <div class="fil"><b>{{ c.nombre }}</b><span>{{ c.cantidad }}</span></div>
+                <div class="via"><i [style.width.%]="ancho(c.cantidad, maximoCarga())"></i></div>
+              </div>
+            } @empty {
+              <p style="font-size:13.5px;color:var(--apagado);line-height:1.6">
+                Ningún abogado tiene procesos abiertos ahora mismo.
+              </p>
+            }
+
+            <!-- El criterio contrario al de arriba, y dicho para que no
+                 parezca una incoherencia. -->
+            <p style="font-size:13.5px;color:var(--apagado);line-height:1.6;margin-top:18px">
+              Aquí <b style="color:var(--tinta)">sí se omiten</b> los abogados sin procesos abiertos — al revés que en los estados. Un estado vacío es información; una persona en cero, dentro de una tabla de carga de trabajo, dice algo que este reporte no pretende decir.
+            </p>
+          </div>
+        </section>
+
+        <section class="caja" style="margin-bottom:24px">
+          <header><h3>Vigilancia</h3></header>
+          <div style="padding:4px 24px 22px">
+            <div class="interr">
+              <div><b>Términos por vencer</b><span>En los próximos 30 días.</span></div>
+              <span class="num cifra-lado">{{ r.terminosPorVencer }}</span>
+            </div>
+            <div class="interr">
+              <div><b>Términos vencidos</b><span>Pasaron su fecha sin cumplirse.</span></div>
+              <span class="num cifra-lado" [class.mal]="hayVencidos()">{{ r.terminosVencidos }}</span>
+            </div>
+
+            @if (hayVencidos()) {
+              <p class="franja roja" style="margin-top:16px">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+                <span>
+                  <b>Esta es la cifra que importa.</b> Las demás dicen cuánto trabajo hay; esta dice si el despacho está perdiendo oportunidades procesales.
+                  <a class="ir" routerLink="/vencimientos" style="margin-top:8px">Ver cuáles son
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+                  </a>
+                </span>
+              </p>
+            } @else {
+              <p class="franja verde" style="margin-top:16px">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7"/></svg>
+                <span><b>Ningún término vencido.</b> Es la cifra que este sistema existe para mantener en cero.</span>
+              </p>
+            }
+          </div>
+        </section>
+
+        <section class="caja">
+          <header><h3>Alcance de estas cifras</h3></header>
+          <div style="padding:2px 24px 22px">
+            <p style="font-size:13.5px;color:var(--apagado);line-height:1.6;margin-top:12px">
+              Todo lo de esta pantalla es <b style="color:var(--tinta)">solo de su despacho</b>. Nunca se suman procesos de otras firmas: los números se filtran en la consulta, no después de traerlos.
+            </p>
+            <p style="font-size:13.5px;color:var(--apagado);line-height:1.6;margin-top:12px">
+              Para ver <em>cuáles</em> son los procesos de un estado, use la <a class="enlace" routerLink="/procesos">búsqueda de procesos</a>. Aquí se cuenta, no se lista.
+            </p>
+          </div>
+        </section>
+      </div>
+    </div>
+  }
+</main>
