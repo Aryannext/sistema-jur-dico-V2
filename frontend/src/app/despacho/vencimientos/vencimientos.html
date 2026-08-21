@@ -68,6 +68,25 @@
                 </span>
                 <span class="fecha-seca">{{ fechaCorta(termino.fechaVencimiento) }}</span>
               </div>
+
+              <!-- Se puede cerrar aquí mismo: es donde se ve el problema.
+                   Obligar a abrir el proceso añadiría dos clics justo cuando
+                   el abogado ya sabe lo que quiere hacer. -->
+              <div class="acciones">
+                <button class="btn suave" type="button" (click)="cumplir(termino)"
+                        [disabled]="cerrando() === termino.id">
+                  @if (cerrando() === termino.id) {
+                    <span class="girando"></span> Cerrando…
+                  } @else {
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7"/></svg>
+                    Marcar cumplido
+                  }
+                </button>
+                <a class="ir" [routerLink]="['/procesos', termino.procesoId]">
+                  Abrir expediente
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+                </a>
+              </div>
             </article>
           }
         </div>

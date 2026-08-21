@@ -46,6 +46,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./despacho/expediente/nueva-pieza').then(m => m.NuevaPieza),
       },
+      {
+        path: 'procesos/:id/terminos',
+        title: 'Términos · Iuris',
+        loadComponent: () =>
+          import('./despacho/terminos/terminos').then(m => m.Terminos),
+      },
       { path: '', pathMatch: 'full', redirectTo: 'vencimientos' },
     ],
   },

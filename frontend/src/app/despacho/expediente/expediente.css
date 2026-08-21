@@ -60,3 +60,19 @@ a.adj:hover {
   border-color: var(--marca);
   background: var(--marca-suave);
 }
+
+/* Los términos no son una pestaña de filtro: son otra pantalla. Se separan
+   visualmente para que no parezca que filtran la lista de abajo. */
+.pes a.aparte {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--marca);
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom-color: transparent;
+}
+.pes a.aparte:hover {
+  border-bottom-color: var(--marca-media);
+}

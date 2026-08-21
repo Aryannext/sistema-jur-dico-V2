@@ -52,6 +52,48 @@ export class Vigilancia {
   /** El número del distintivo de la barra lateral. */
   readonly cuantosVencidos = computed(() => this.vencidos().length);
 
+  /** Los términos de un proceso concreto, cumplidos incluidos. RF-22. */
+  async terminosDeProceso(procesoId: number): Promise<Termino[]> {
+    return firstValueFrom(
+      this.http.get<Termino[]>(`/api/procesos/${procesoId}/terminos`));
+  }
+
+  /**
+   * Registrar un término. RF-21 · RNF-16.
+   *
+   * <p>Dos campos y nada más, y no es una simplificación de esta pantalla: es
+   * el requisito. Si registrar un término en el sistema cuesta más que
+   * anotarlo en la agenda de papel, el abogado usa la agenda — y entonces el
+   * sistema no vigila nada.
+   */
+  async registrarTermino(
+    procesoId: number, descripcion: string, fechaVencimiento: string,
+  ): Promise<Termino> {
+    const creado = await firstValueFrom(this.http.post<Termino>(
+      `/api/procesos/${procesoId}/terminos`, { descripcion, fechaVencimiento }));
+
+    await this.refrescar();
+    return creado;
+  }
+
+  /**
+   * Marcar cumplido. RF-22 · CA-24.1.
+   *
+   * <p>Se refresca todo después. Un término que sigue en rojo en el panel
+   * después de haberlo cerrado haría dudar al abogado de si se guardó — y la
+   * duda es exactamente lo que este sistema existe para quitar.
+   */
+  async cumplir(terminoId: number): Promise<void> {
+    await firstValueFrom(this.http.put(`/api/terminos/${terminoId}/cumplir`, {}));
+    await this.refrescar();
+  }
+
+  /** Reabrir uno cerrado por error. RF-22. */
+  async reabrir(terminoId: number): Promise<void> {
+    await firstValueFrom(this.http.put(`/api/terminos/${terminoId}/reabrir`, {}));
+    await this.refrescar();
+  }
+
   /** Carga la primera vez y no más; para volver a pedir está `refrescar`. */
   async asegurarCargado(): Promise<void> {
     if (!this.cargadoAlguna) {

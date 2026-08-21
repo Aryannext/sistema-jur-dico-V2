@@ -1,4 +1,5 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { Autenticacion } from '../../nucleo/autenticacion';
 import { Termino } from '../../nucleo/modelos';
@@ -13,6 +14,7 @@ import { Vigilancia } from '../vigilancia';
  */
 @Component({
   selector: 'sgpj-vencimientos',
+  imports: [RouterLink],
   templateUrl: './vencimientos.html',
   styleUrl: './vencimientos.css',
 })
@@ -49,8 +51,36 @@ export class Vencimientos {
   protected readonly primerNombre = computed(
     () => this.autenticacion.nombre().trim().split(/\s+/)[0] ?? '');
 
+  /** Cuál se está cerrando, para deshabilitar solo ese botón. */
+  protected readonly cerrando = signal<number | null>(null);
+  protected readonly falloAlCerrar = signal<string | null>(null);
+
   async refrescar(): Promise<void> {
     await this.vigilancia.refrescar();
+  }
+
+  /**
+   * Marcar cumplido sin salir del panel. RF-22 · CA-24.1.
+   *
+   * <p>Está aquí y no solo en la pantalla del proceso porque este es el sitio
+   * donde el abogado <em>ve</em> el término en rojo. Obligarle a abrir el
+   * proceso para cerrarlo añade dos clics justo en el momento en que ya sabe
+   * lo que quiere hacer — y lo que cuesta clics se posterga.
+   */
+  protected async cumplir(termino: Termino): Promise<void> {
+    this.cerrando.set(termino.id);
+    this.falloAlCerrar.set(null);
+
+    try {
+      // El servicio refresca al terminar: el término desaparece de la lista y
+      // el contador de la barra lateral baja solo.
+      await this.vigilancia.cumplir(termino.id);
+    } catch {
+      this.falloAlCerrar.set(
+        'No se pudo marcar como cumplido. El término sigue abierto.');
+    } finally {
+      this.cerrando.set(null);
+    }
   }
 
   /**

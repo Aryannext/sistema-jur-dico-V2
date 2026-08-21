@@ -1,0 +1,76 @@
+/* Añadidos de la pantalla de términos. Lo compartido viene de src/styles.css,
+   generado desde diseno/mockups/_base/. */
+
+:host {
+  display: block;
+}
+
+/* El formulario de registro: los dos campos y el botón en una línea, para que
+   se vea de un golpe que registrar un término cuesta dos datos. Si ocupara
+   media pantalla parecería un trámite. */
+.registrar {
+  margin-bottom: 24px;
+}
+.campos {
+  display: grid;
+  grid-template-columns: 1fr 200px auto;
+  gap: 16px;
+  align-items: end;
+  padding: 18px 24px 4px;
+}
+.campo.estrecho { min-width: 0; }
+
+.campos input {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  outline: none;
+  width: 100%;
+  padding: 0;
+}
+.campos input::placeholder { color: var(--apagado); }
+.campos .btn { height: 46px; }
+
+.registrar .pie-nota {
+  margin: 16px 24px 20px;
+}
+
+/* Las filas de término pendiente llevan más aire que las del panel: aquí se
+   actúa sobre ellas, no solo se leen. */
+.term.grande {
+  align-items: center;
+  padding: 18px 24px;
+  gap: 17px;
+}
+.term.grande .txt b {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -.015em;
+}
+.marcas {
+  display: flex;
+  gap: 8px;
+  margin-top: 9px;
+  flex-wrap: wrap;
+}
+
+/* El semáforo de un vencido es más grande y lleva halo: es lo único de esta
+   pantalla que tiene que verse sin leer. */
+.sem.vencido {
+  background: var(--alto);
+  box-shadow: 0 0 0 4px var(--alto-suave);
+}
+
+.term .btn {
+  flex-shrink: 0;
+}
+.term .girando {
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 900px) {
+  .campos { grid-template-columns: 1fr; align-items: stretch; }
+  .term.grande { align-items: flex-start; flex-wrap: wrap; }
+}

@@ -1,0 +1,155 @@
+<main>
+  <div class="migas">
+    <a routerLink="/procesos">Procesos</a>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+    <a [routerLink]="['/procesos', id()]">{{ proceso()?.radicado ?? 'Proceso' }}</a>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+    <b>Términos</b>
+  </div>
+
+  <div class="pag">
+    <div>
+      <h1>Términos del proceso</h1>
+      <p>
+        @if (proceso(); as p) {
+          {{ p.tipoProceso.nombre }} · {{ p.clienteTitular.nombre }}
+        } @else {
+          Cargando…
+        }
+      </p>
+    </div>
+  </div>
+
+  <!-- El formulario está aquí y no detrás de otro clic: RNF-16 dice una sola
+       pantalla, y dos campos. Lo que cuesta trabajo no se hace. -->
+  <form class="caja registrar" (submit)="registrar($event)" novalidate>
+    <header><h3>Registrar un término</h3><span>dos campos</span></header>
+
+    <div class="campos">
+      <div class="campo">
+        <label for="que">¿Qué debe hacerse?</label>
+        <div class="caja-c">
+          <input id="que" type="text" [value]="descripcion()" (input)="escribirDescripcion($event)"
+                 placeholder="Contestar la demanda, aportar pruebas…" maxlength="300"
+                 [disabled]="guardando()">
+        </div>
+      </div>
+
+      <div class="campo estrecho">
+        <label for="cuando">¿Para cuándo?</label>
+        <div class="caja-c">
+          <input id="cuando" type="date" [value]="fecha()" (input)="escribirFecha($event)"
+                 [disabled]="guardando()">
+        </div>
+      </div>
+
+      <button class="btn" type="submit" [disabled]="!puedeGuardar()">
+        @if (guardando()) {
+          <span class="girando claro"></span> Guardando…
+        } @else {
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Registrar
+        }
+      </button>
+    </div>
+
+    @if (errorFormulario(); as fallo) {
+      <p class="franja roja" role="alert" style="margin:0 24px 20px">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        <span>{{ fallo }}</span>
+      </p>
+    } @else {
+      <p class="pie-nota">Al registrarlo, el sistema empieza a vigilarlo y programa sus avisos automáticamente. No hay que hacer nada más.</p>
+    }
+  </form>
+
+  @if (cargando()) {
+    <div class="caja"><div class="cargando"><span class="girando"></span> Consultando los términos…</div></div>
+
+  } @else if (error(); as fallo) {
+    <section class="caja">
+      <div class="vacio">
+        <div class="bola" style="background:var(--alto-suave);color:var(--alto)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        </div>
+        <b>No se pudieron cargar los términos</b>
+        <span>{{ fallo }}</span>
+        <button class="btn" type="button" (click)="cargar()" style="margin:18px auto 0">Reintentar</button>
+      </div>
+    </section>
+
+  } @else {
+    <section class="caja" style="margin-bottom:24px">
+      <header>
+        <h3>Pendientes</h3>
+        <span>{{ pendientes().length }} sin cumplir</span>
+      </header>
+
+      @for (t of pendientes(); track t.id) {
+        <div class="term grande">
+          <span class="sem" [class]="'sem ' + urgencia(t)"></span>
+          <div class="txt">
+            <b>{{ t.descripcion }}</b>
+            <div class="marcas">
+              <span class="eti" [class.roja]="t.vencido" [class.ambar]="!t.vencido && urgencia(t) !== 'ok'">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>
+                {{ cuanto(t) }}
+              </span>
+              <span class="eti gris">Vence el {{ fechaCorta(t.fechaVencimiento) }}</span>
+              @if (t.seVigila) {
+                <span class="eti gris">Avisos a {{ t.destinatarioAlertas }}</span>
+              } @else {
+                <!-- Un término que no se vigila es un término que el sistema no
+                     va a recordar. Decirlo aquí evita la falsa tranquilidad. -->
+                <span class="eti ambar">Sin vigilancia</span>
+              }
+            </div>
+          </div>
+          <button class="btn suave" type="button" (click)="cumplir(t)" [disabled]="ocupado() === t.id">
+            @if (ocupado() === t.id) {
+              <span class="girando"></span> Cerrando…
+            } @else {
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7"/></svg>
+              Marcar cumplido
+            }
+          </button>
+        </div>
+      } @empty {
+        <div class="vacio">
+          <div class="bola">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7"/></svg>
+          </div>
+          <b>Ningún término pendiente</b>
+          <span>Este proceso no tiene plazos que vigilar ahora mismo.</span>
+        </div>
+      }
+    </section>
+
+    @if (cerrados().length > 0) {
+      <section class="caja">
+        <header><h3>Cumplidos</h3><span>{{ cerrados().length }}</span></header>
+
+        @for (t of cerrados(); track t.id) {
+          <div class="term">
+            <span class="tic si" style="width:24px;height:24px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7"/></svg>
+            </span>
+            <div class="txt">
+              <b>{{ t.descripcion }}</b>
+              <span>{{ t.estadoDescripcion }} · vencía el {{ fechaCorta(t.fechaVencimiento) }}</span>
+            </div>
+            <!-- Reabrir existe porque cerrar por error es fácil y el término
+                 seguiría corriendo en el juzgado aunque aquí figure cumplido. -->
+            <button class="btn fantasma" type="button" (click)="reabrir(t)" [disabled]="ocupado() === t.id">
+              @if (ocupado() === t.id) {
+                <span class="girando"></span> Reabriendo…
+              } @else {
+                Reabrir
+              }
+            </button>
+          </div>
+        }
+      </section>
+    }
+  }
+</main>

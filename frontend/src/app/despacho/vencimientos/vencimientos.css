@@ -34,3 +34,23 @@
   .par { grid-template-columns: 1fr; }
   .cifras { grid-template-columns: 1fr; }
 }
+
+/* Acciones de la tarjeta de vencido. Van bajo la fecha y no al lado del
+   texto: primero se entiende qué pasó, después se decide qué hacer. */
+.acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 13px;
+  padding-top: 13px;
+  border-top: 1px solid var(--hilo-suave);
+}
+.acciones .btn {
+  padding: 8px 14px;
+  font-size: 13.5px;
+}
+.acciones .girando {
+  width: 14px;
+  height: 14px;
+}
