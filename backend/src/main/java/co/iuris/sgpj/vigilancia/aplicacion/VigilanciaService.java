@@ -1,5 +1,6 @@
 package co.iuris.sgpj.vigilancia.aplicacion;
 
+import co.iuris.sgpj.alertas.aplicacion.ProgramadorAlertas;
 import co.iuris.sgpj.comun.dominio.RecursoNoEncontradoException;
 import co.iuris.sgpj.comun.dominio.ReglaDeNegocioException;
 import co.iuris.sgpj.despacho.aplicacion.DespachoService;
@@ -39,10 +40,13 @@ public class VigilanciaService {
     private final UsuarioService usuarios;
     private final DespachoService despachos;
     private final ContextoSeguridad contexto;
+    private final ProgramadorAlertas programador;
 
     public VigilanciaService(VigilanciaRepository eventos, EsquemaAlertaRepository esquemas,
                              ProcesoService procesos, UsuarioService usuarios,
-                             DespachoService despachos, ContextoSeguridad contexto) {
+                             DespachoService despachos, ContextoSeguridad contexto,
+                             ProgramadorAlertas programador) {
+        this.programador = programador;
         this.eventos = eventos;
         this.esquemas = esquemas;
         this.procesos = procesos;
@@ -63,7 +67,13 @@ public class VigilanciaService {
                 proceso, usuarios.obtenerDeMiDespacho(contexto.usuarioActual()),
                 fechaHora, lugar, observaciones);
 
-        return eventos.save(audiencia);
+        eventos.save(audiencia);
+
+        // RF-25: las tres alertas de P-RF03 quedan programadas AQUI, al
+        // registrar. No se deducen despues: ver la nota de la clase Alerta.
+        programador.programarPara(audiencia);
+
+        return audiencia;
     }
 
     @Transactional
@@ -71,7 +81,13 @@ public class VigilanciaService {
                                           String lugar, String observaciones) {
         Audiencia audiencia = exigirAudiencia(id);
         audiencia.reprogramar(fechaHora, lugar, observaciones);
-        return eventos.save(audiencia);
+        eventos.save(audiencia);
+
+        // Si cambia la fecha, los avisos anteriores ya no sirven. Las alertas
+        // ya enviadas no se tocan: son historia (RNF-09).
+        programador.reprogramarPara(audiencia);
+
+        return audiencia;
     }
 
     @Transactional
@@ -118,7 +134,10 @@ public class VigilanciaService {
         // registrado.
         termino.fijarAnticipaciones(esquemaDeMiDespacho().anticipaciones());
 
-        return eventos.save(termino);
+        eventos.save(termino);
+        programador.programarPara(termino);
+
+        return termino;
     }
 
     /** RF-22 · HU-23 · RN-39: marcarlo cumplido lo saca de la vigilancia. */
@@ -126,7 +145,13 @@ public class VigilanciaService {
     public Termino marcarTerminoCumplido(Long id) {
         Termino termino = exigirTermino(id);
         termino.marcarCumplido();
-        return eventos.save(termino);
+        eventos.save(termino);
+
+        // RF-27 · RN-39: deja de sonar. El ruido de avisos sobre algo ya
+        // resuelto es lo que hace que el abogado empiece a ignorarlos.
+        programador.descartarPendientes(termino.id(), "El término se marcó como cumplido.");
+
+        return termino;
     }
 
     @Transactional
@@ -140,7 +165,12 @@ public class VigilanciaService {
     public Termino actualizarTermino(Long id, String descripcion, LocalDate fechaVencimiento) {
         Termino termino = exigirTermino(id);
         termino.actualizar(descripcion, fechaVencimiento);
-        return eventos.save(termino);
+        eventos.save(termino);
+
+        termino.fijarAnticipaciones(esquemaDeMiDespacho().anticipaciones());
+        programador.reprogramarPara(termino);
+
+        return termino;
     }
 
     /**

@@ -133,6 +133,11 @@ public class ConfiguracionSeguridad {
                                          "/api/calendario", "/api/vencimientos")
                             .hasAnyAuthority("ROL_ABOGADO", "ROL_ADMIN_DESPACHO")
 
+                        // Las alertas fallidas debe poder verlas quien lleva
+                        // los casos: es el requisito RNF-08, no un diagnostico.
+                        .requestMatchers("/api/alertas/**")
+                            .hasAnyAuthority("ROL_ABOGADO", "ROL_ADMIN_DESPACHO")
+
                         // El esquema de alertas lo configura el administrador
                         // del despacho (RF-34); los abogados solo lo consultan.
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/esquema-alertas")
