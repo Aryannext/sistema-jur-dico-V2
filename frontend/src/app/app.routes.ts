@@ -91,6 +91,17 @@ export const routes: Routes = [
         title: 'Reportes · Iuris',
         loadComponent: () => import('./despacho/reportes/reportes').then(m => m.Reportes),
       },
+      {
+        path: 'configuracion/catalogos',
+        title: 'Catálogos · Iuris',
+        loadComponent: () => import('./configuracion/catalogos').then(m => m.Catalogos),
+      },
+      {
+        path: 'configuracion/alertas',
+        title: 'Configuración de alertas · Iuris',
+        loadComponent: () => import('./configuracion/alertas').then(m => m.Alertas),
+      },
+      { path: 'configuracion', pathMatch: 'full', redirectTo: 'configuracion/catalogos' },
       { path: '', pathMatch: 'full', redirectTo: 'vencimientos' },
     ],
   },

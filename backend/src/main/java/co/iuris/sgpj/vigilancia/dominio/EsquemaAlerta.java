@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * Cuántas alertas se emiten por término y con cuánta anticipación.
@@ -92,8 +93,30 @@ public class EsquemaAlerta {
     public final void reemplazarDias(Collection<Integer> diasAnticipacion) {
         Set<Integer> ordenados = validar(diasAnticipacion);
 
-        this.items.clear();
-        ordenados.forEach(dias -> this.items.add(new ItemEsquemaAlerta(this, dias)));
+        // Se CONSERVAN los items cuyo día sigue estando, en lugar de vaciar la
+        // lista y recrearla entera.
+        //
+        // Vaciarla parecía más simple y estaba mal: al guardar, Hibernate
+        // ejecuta los INSERT antes que los DELETE, así que insertar «1 día
+        // antes» mientras la fila vieja de «1 día antes» todavía existe viola
+        // la restricción uk_item_esquema (esquema_id, dias_anticipacion) y la
+        // operación entera falla con un 500.
+        //
+        // Solo ocurría cuando el esquema nuevo compartía algún día con el
+        // anterior —cambiar [15,5,1] por [10,3,1] fallaba; por [10,3] no—, que
+        // es justo el caso normal: quien ajusta sus avisos suele conservar
+        // alguno. Reutilizar el item que ya dice lo mismo evita el choque, y
+        // además es lo correcto en el dominio: la fila que significa «un día
+        // antes» no necesita destruirse para volver a significar lo mismo.
+        this.items.removeIf(item -> !ordenados.contains(item.diasAnticipacion()));
+
+        Set<Integer> conservados = this.items.stream()
+                .map(ItemEsquemaAlerta::diasAnticipacion)
+                .collect(Collectors.toSet());
+
+        ordenados.stream()
+                .filter(dias -> !conservados.contains(dias))
+                .forEach(dias -> this.items.add(new ItemEsquemaAlerta(this, dias)));
     }
 
     /** Las anticipaciones, listas para que el motor calcule los momentos de aviso. */

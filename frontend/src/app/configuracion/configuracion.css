@@ -1,0 +1,177 @@
+/* Configuración del despacho: catálogos y alertas.
+   Lo compartido viene de src/styles.css, generado desde diseno/mockups/_base/. */
+
+:host { display: block; }
+
+main.estrecho { max-width: 860px; }
+
+/* Los selectores de catálogo son botones, no divs pintados. */
+button.sel { font: inherit; cursor: pointer; }
+button.sel:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
+
+.para-que {
+  font-size: 14px;
+  color: var(--apagado);
+  margin: -8px 0 18px;
+}
+
+.agregar {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+.agregar .campo { flex: 1; }
+.agregar .btn { height: 46px; }
+
+.campo input {
+  font: inherit; color: inherit; background: transparent;
+  border: 0; outline: none; width: 100%; padding: 0;
+}
+.campo input::placeholder { color: var(--apagado); }
+
+.orden {
+  color: var(--apagado);
+  font-weight: 700;
+}
+
+.tabla .p.apagado { color: var(--apagado); }
+
+.editar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.editar .caja-c { flex: 1; background: var(--sup); }
+.editar .btn { padding: 9px 15px; font-size: 13.5px; }
+
+.acciones-fila {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.acciones-fila .btn { padding: 7px 13px; font-size: 13px; }
+.acciones-fila .girando { width: 14px; height: 14px; }
+
+/* --- Alertas ------------------------------------------------- */
+
+.explica {
+  font-size: 14px;
+  color: var(--medio);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.opciones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.chip {
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  background: var(--sup);
+  border: 1px solid var(--hilo);
+  border-radius: 99px;
+  padding: 9px 16px;
+  color: var(--medio);
+  cursor: pointer;
+}
+.chip:hover { border-color: var(--marca-media); }
+.chip.on {
+  background: var(--marca);
+  border-color: var(--marca);
+  color: #fff;
+  font-weight: 700;
+}
+.chip:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
+
+.otro {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  margin-top: 18px;
+  max-width: 340px;
+}
+.otro .campo { flex: 1; }
+.otro .btn { height: 46px; }
+
+/* Lo elegido se muestra como frase, no como lista de números: es lo que el
+   abogado tiene que poder verificar de un vistazo antes de guardar. */
+.resultado {
+  background: var(--marca-suave);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-top: 20px;
+}
+.resultado > b {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--marca);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+.resultado.vacio {
+  background: var(--alto-suave);
+}
+.resultado.vacio > b { color: var(--alto); }
+.resultado.vacio > span {
+  display: block;
+  font-size: 13.5px;
+  color: #8C4136;
+  margin-top: 5px;
+}
+
+.elegidos {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 11px;
+}
+.marca-dia {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--sup);
+  border-radius: 99px;
+  padding: 7px 9px 7px 15px;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.marca-dia button {
+  background: none;
+  border: 0;
+  padding: 3px;
+  border-radius: 50%;
+  color: var(--apagado);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.marca-dia button:hover { color: var(--alto); background: var(--alto-suave); }
+
+.frase {
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--tinta);
+  font-weight: 600;
+  background: var(--fondo);
+  border-left: 3px solid var(--marca);
+  border-radius: 0 10px 10px 0;
+  padding: 14px 18px;
+}
+
+.franja.verde { background: #E4F1EA; color: #245C43; }
+.franja.verde b { color: var(--tinta); }
+
+.girando.claro {
+  border-color: rgba(255, 255, 255, .35);
+  border-top-color: #fff;
+}
+
+@media (max-width: 900px) {
+  .agregar { flex-direction: column; align-items: stretch; }
+  .editar { flex-wrap: wrap; }
+}

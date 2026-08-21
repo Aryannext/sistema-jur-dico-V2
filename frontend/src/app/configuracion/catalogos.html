@@ -1,0 +1,161 @@
+<main>
+  <div class="pag">
+    <div>
+      <h1>Catálogos del despacho</h1>
+      <p>Las listas con las que trabaja su firma · cada despacho define las suyas</p>
+    </div>
+  </div>
+
+  <div class="pes">
+    <a routerLink="/configuracion/catalogos" routerLinkActive="on">Catálogos</a>
+    <a routerLink="/configuracion/alertas" routerLinkActive="on">Alertas</a>
+    <a routerLink="/usuarios" routerLinkActive="on">Usuarios</a>
+  </div>
+
+  <div class="filtros">
+    @for (c of catalogos; track c.tipo) {
+      <button class="sel" type="button" [class.act]="elegido() === c.tipo" (click)="elegir(c.tipo)">
+        {{ c.nombre }}
+      </button>
+    }
+  </div>
+
+  <p class="para-que">{{ ficha().para }}</p>
+
+  <form class="caja agregar" (submit)="agregar($event)" novalidate>
+    <div class="campo">
+      <label for="nuevo">Agregar un valor a «{{ ficha().nombre }}»</label>
+      <div class="caja-c">
+        <input id="nuevo" type="text" [value]="nuevo()" (input)="escribirNuevo($event)"
+               [placeholder]="elegido() === 'JUZGADO' ? 'Juzgado 1.º Civil del Circuito de Neiva' : 'Nombre del valor'"
+               maxlength="120" [disabled]="guardando()">
+      </div>
+    </div>
+    <button class="btn" type="submit" [disabled]="!puedeAgregar()">
+      @if (guardando()) {
+        <span class="girando claro"></span> Agregando…
+      } @else {
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Agregar
+      }
+    </button>
+  </form>
+
+  @if (error(); as fallo) {
+    <p class="franja roja" role="alert" style="margin-bottom:20px">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <span>{{ fallo }}</span>
+    </p>
+  }
+
+  <section class="caja">
+    <header>
+      <h3>{{ ficha().nombre }}</h3>
+      <span>{{ activos() }} activo(s) de {{ valores().length }}</span>
+    </header>
+
+    @if (cargando()) {
+      <div class="cargando"><span class="girando"></span> Consultando…</div>
+
+    } @else if (valores().length === 0) {
+      <div class="vacio">
+        <div class="bola">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg>
+        </div>
+        <b>Este catálogo está vacío</b>
+        @if (elegido() === 'JUZGADO') {
+          <!-- Y empieza vacío a propósito: una lista nacional de juzgados
+               sería mantenimiento permanente que nadie pidió y que se
+               desactualiza sola. La del despacho se construye con el uso. -->
+          <span>Empieza vacío a propósito: se llena con los juzgados ante los que usted litiga, no con los del país entero.</span>
+        } @else {
+          <span>Agregue el primer valor arriba para poder empezar a clasificar.</span>
+        }
+      </div>
+
+    } @else {
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th style="padding-top:21px;width:70px">Orden</th>
+            <th style="padding-top:21px">Valor</th>
+            <th style="padding-top:21px">Estado</th>
+            <th style="padding-top:21px" class="der"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (v of valores(); track v.id) {
+            <tr>
+              <td><span class="num orden">{{ v.orden }}</span></td>
+              <td>
+                @if (editando() === v.id) {
+                  <form class="editar" (submit)="renombrar(v, $event)">
+                    <div class="caja-c">
+                      <input type="text" [value]="nombreEditado()" (input)="escribirEditado($event)"
+                             maxlength="120" autofocus>
+                    </div>
+                    <button class="btn" type="submit" [disabled]="ocupado() === v.id">Guardar</button>
+                    <button class="btn fantasma" type="button" (click)="editando.set(null)">Cancelar</button>
+                  </form>
+                } @else {
+                  <div class="p" [class.apagado]="!v.activo">{{ v.nombre }}</div>
+                  @if (!v.activo) {
+                    <div class="s">No aparece al clasificar cosas nuevas</div>
+                  }
+                }
+              </td>
+              <td>
+                @if (v.protegido) {
+                  <!-- Activo y Archivado los exige P-RF05 para los reportes:
+                       si se pudieran desactivar, el reporte de RF-32 se
+                       quedaría sin las dos categorías que la propuesta nombra. -->
+                  <span class="eti marca">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>
+                    Obligatorio
+                  </span>
+                } @else if (v.activo) {
+                  <span class="eti verde"><i></i>Activo</span>
+                } @else {
+                  <span class="eti gris">Inactivo</span>
+                }
+              </td>
+              <td class="der">
+                @if (editando() !== v.id) {
+                  <div class="acciones-fila">
+                    <button class="btn fantasma" type="button" (click)="abrirEdicion(v)"
+                            [disabled]="ocupado() === v.id">
+                      Renombrar
+                    </button>
+                    @if (!v.protegido) {
+                      <button class="btn fantasma" type="button" (click)="cambiarEstado(v)"
+                              [disabled]="ocupado() === v.id">
+                        @if (ocupado() === v.id) {
+                          <span class="girando"></span>
+                        } @else if (v.activo) {
+                          Desactivar
+                        } @else {
+                          Reactivar
+                        }
+                      </button>
+                    }
+                  </div>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+
+  <div class="dos" style="margin-top:22px;grid-template-columns:1fr 1fr">
+    <p class="franja ambar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <span><b>Aquí no hay botón de borrar.</b> Un valor se desactiva: deja de ofrecerse para clasificar cosas nuevas, pero lo que ya lo tiene lo conserva. Si desapareciera, esos procesos se quedarían sin clasificación.</span>
+    </p>
+    <p class="franja marca">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/></svg>
+      <span><b>Renombrar sí es seguro.</b> Conserva el identificador, así que todo lo ya clasificado sigue apuntando al mismo valor — solo cambia cómo se llama.</span>
+    </p>
+  </div>
+</main>

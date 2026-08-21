@@ -1,0 +1,139 @@
+<main class="estrecho">
+  <div class="pag">
+    <div>
+      <h1>Configuración de alertas</h1>
+      <p>Con cuánta anticipación quiere que le avisemos de cada término</p>
+    </div>
+  </div>
+
+  <div class="pes">
+    <a routerLink="/configuracion/catalogos" routerLinkActive="on">Catálogos</a>
+    <a routerLink="/configuracion/alertas" routerLinkActive="on">Alertas</a>
+    <a routerLink="/usuarios" routerLinkActive="on">Usuarios</a>
+  </div>
+
+  @if (cargando()) {
+    <div class="caja"><div class="cargando"><span class="girando"></span> Consultando su configuración…</div></div>
+
+  } @else {
+    <section class="caja" style="margin-bottom:24px">
+      <header>
+        <h3>Términos judiciales</h3>
+        <span>{{ elegidos().size }} aviso(s) por término</span>
+      </header>
+
+      <div style="padding:20px 24px 24px">
+
+        @if (hecho()) {
+          <p class="franja verde" role="status" style="margin-bottom:18px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7"/></svg>
+            <span><b>Guardado.</b> Se aplica a los términos que registre desde ahora.</span>
+          </p>
+        }
+
+        <p class="explica">Marque cuándo quiere el aviso. Cada término que registre generará estos correos automáticamente.</p>
+
+        <div class="opciones">
+          @for (d of sugeridos; track d) {
+            <button type="button" class="chip" [class.on]="elegidos().has(d)"
+                    (click)="alternar(d)" [disabled]="guardando()">
+              {{ comoSeLee(d) }}
+            </button>
+          }
+        </div>
+
+        <form class="otro" (submit)="agregarPersonalizado($event)">
+          <div class="campo">
+            <label for="otro">¿Otra anticipación?</label>
+            <div class="caja-c">
+              <input id="otro" type="number" min="1" max="365" [value]="personalizado()"
+                     (input)="escribirPersonalizado($event)" placeholder="días antes"
+                     [disabled]="guardando()">
+            </div>
+          </div>
+          <button class="btn fantasma" type="submit" [disabled]="personalizado() === ''">Añadir</button>
+        </form>
+
+        <!-- Lo elegido se muestra como frase, no como lista de números: es lo
+             que el abogado tiene que poder verificar de un vistazo. -->
+        <div class="resultado" [class.vacio]="sinNinguno()">
+          @if (sinNinguno()) {
+            <b>Sin ningún aviso configurado</b>
+            <span>Los términos se registrarían y el sistema no avisaría de ninguno.</span>
+          } @else {
+            <b>Quedará así</b>
+            <div class="elegidos">
+              @for (d of ordenados(); track d) {
+                <span class="marca-dia">
+                  {{ comoSeLee(d) }}
+                  <button type="button" (click)="quitar(d)" [attr.aria-label]="'Quitar ' + comoSeLee(d)"
+                          [disabled]="guardando()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                  </button>
+                </span>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- RN-37b, dicho antes de que el backend lo rechace. -->
+        @if (sinNinguno()) {
+          <p class="franja roja" role="alert" style="margin-top:18px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+            <span><b>Debe quedar al menos un aviso.</b> Un despacho sin ninguno tendría un sistema de vigilancia que no vigila — y nadie se enteraría hasta que se venciera algo.</span>
+          </p>
+        }
+
+        @if (error(); as fallo) {
+          <p class="franja roja" role="alert" style="margin-top:18px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+            <span>{{ fallo }}</span>
+          </p>
+        }
+      </div>
+
+      <div class="pie-form">
+        @if (hayCambios()) {
+          <button class="btn fantasma" type="button" (click)="descansar()" [disabled]="guardando()">
+            Descartar cambios
+          </button>
+        }
+        <button class="btn" type="button" (click)="guardar()" [disabled]="!puedeGuardar()">
+          @if (guardando()) {
+            <span class="girando claro"></span> Guardando…
+          } @else {
+            Guardar configuración
+          }
+        </button>
+      </div>
+    </section>
+
+    <section class="caja" style="margin-bottom:24px">
+      <header><h3>Audiencias</h3><span>no configurables</span></header>
+      <div style="padding:16px 24px 22px">
+        <!-- Se dice que no se configuran, en lugar de omitirlas: su ausencia
+             parecería un olvido, y el abogado se preguntaría si su audiencia
+             está vigilada. -->
+        <p class="franja marca">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
+          <span>Cada audiencia genera siempre <b>tres avisos</b>: 48 horas antes, 24 horas antes y el mismo día. No se configuran porque son los que fija la propuesta del sistema — y son los que ningún despacho quiere reducir.</span>
+        </p>
+      </div>
+    </section>
+
+    <section class="caja">
+      <header><h3>Qué dice hoy su configuración</h3></header>
+      <div style="padding:16px 24px 22px">
+        @if (esquema(); as e) {
+          <!-- La frase la redacta el BACKEND. Si viviera aquí, cambiar el
+               motor no obligaría a tocarla y acabaría describiendo algo que
+               ya no ocurre. -->
+          <p class="frase">«{{ e.explicacion }}»</p>
+          <p style="font-size:13px;color:var(--apagado);line-height:1.6;margin-top:12px">
+            Esta frase la escribe el propio sistema a partir de lo que tiene guardado, no esta pantalla. Si dice algo distinto de lo que usted marcó, es que aún no ha guardado.
+          </p>
+        }
+      </div>
+    </section>
+  }
+</main>
