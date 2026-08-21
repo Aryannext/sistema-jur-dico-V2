@@ -23,6 +23,19 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
 
     List<Cliente> findByDespachoIdOrderByNombreAsc(Long despachoId);
 
+    /**
+     * El cliente al que pertenece un usuario del portal.
+     *
+     * <p>Es la consulta que sostiene todo el portal: un usuario con rol CLIENTE
+     * no representa a sí mismo, representa a un {@code Cliente} concreto del
+     * despacho. Sin esta correspondencia no habría forma de saber qué
+     * expedientes puede ver (RN-41).
+     */
+    @EntityGraph(attributePaths = "despacho")
+    Optional<Cliente> findByUsuarioPortalId(Long usuarioId);
+
+    boolean existsByUsuarioPortalId(Long usuarioId);
+
     boolean existsByDespachoIdAndDocumentoIdentidad(Long despachoId, String documentoIdentidad);
 
     boolean existsByDespachoIdAndDocumentoIdentidadAndIdNot(

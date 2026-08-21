@@ -25,6 +25,23 @@ public interface ProcesoRepository extends JpaRepository<Proceso, Long> {
 
     Optional<Proceso> findByDespachoIdAndRadicado(Long despachoId, String radicado);
 
+    /**
+     * Procesos de un cliente, para el portal.
+     *
+     * <p>Filtra por cliente <strong>y</strong> por despacho: el cliente
+     * pertenece a un despacho, y pedir ambos hace imposible que un
+     * identificador de cliente de otro despacho devuelva algo (RN-41).
+     */
+    @EntityGraph(attributePaths = {"juzgado", "tipoProceso", "estadoProcesal", "abogadoResponsable"})
+    @Query("""
+            select p from Proceso p
+            where p.clienteTitular.id = :clienteId
+              and p.clienteTitular.usuarioPortal.id = :usuarioPortalId
+            order by p.fechaCreacion desc
+            """)
+    List<Proceso> delClienteConPortal(@Param("clienteId") Long clienteId,
+                                      @Param("usuarioPortalId") Long usuarioPortalId);
+
     /** RN-15 · CA-10.1: los procesos de un cliente. */
     @EntityGraph(attributePaths = {"juzgado", "tipoProceso", "estadoProcesal", "abogadoResponsable"})
     List<Proceso> findByDespachoIdAndClienteTitularIdOrderByFechaCreacionDesc(

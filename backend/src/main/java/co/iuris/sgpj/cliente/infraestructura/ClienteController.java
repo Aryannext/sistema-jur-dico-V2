@@ -1,12 +1,14 @@
 package co.iuris.sgpj.cliente.infraestructura;
 
 import co.iuris.sgpj.cliente.aplicacion.ClienteService;
+import co.iuris.sgpj.portal.aplicacion.AccesoClienteService;
 import co.iuris.sgpj.cliente.dominio.Cliente;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,9 +33,11 @@ import java.util.List;
 public class ClienteController {
 
     private final ClienteService servicio;
+    private final AccesoClienteService acceso;
 
-    public ClienteController(ClienteService servicio) {
+    public ClienteController(ClienteService servicio, AccesoClienteService acceso) {
         this.servicio = servicio;
+        this.acceso = acceso;
     }
 
     public record ClienteRequest(
@@ -93,6 +97,44 @@ public class ClienteController {
     @GetMapping("/{id}")
     public ClienteResponse obtener(@PathVariable Long id) {
         return ClienteResponse.desde(servicio.obtenerDeMiDespacho(id));
+    }
+
+    /**
+     * RF-07 · HU-07 · CA-07.1: habilitar el acceso al portal.
+     *
+     * <p>CA-07.2: no existe autorregistro. Este es el <strong>único</strong>
+     * camino por el que un cliente obtiene acceso, y pasa por el despacho.
+     */
+    @PostMapping("/{id}/acceso-portal")
+    public AccesoResponse habilitarAcceso(@PathVariable Long id,
+                                          @Valid @RequestBody AccesoRequest peticion) {
+        var resultado = acceso.habilitar(id, peticion.correo(), peticion.contrasena());
+
+        return new AccesoResponse(
+                resultado.cliente().id(),
+                resultado.cliente().nombre(),
+                resultado.usuario().correo(),
+                true);
+    }
+
+    /** CA-07.3: revocar el acceso sin borrar al cliente ni sus procesos. */
+    @DeleteMapping("/{id}/acceso-portal")
+    public AccesoResponse revocarAcceso(@PathVariable Long id) {
+        var cliente = acceso.revocar(id);
+        return new AccesoResponse(cliente.id(), cliente.nombre(), null, false);
+    }
+
+    public record AccesoRequest(
+            @NotBlank(message = "El correo es obligatorio.")
+            @Email(message = "El correo no tiene un formato válido.")
+            String correo,
+
+            @NotBlank(message = "La contraseña es obligatoria.")
+            @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres.")
+            String contrasena) {
+    }
+
+    public record AccesoResponse(Long clienteId, String nombre, String correo, boolean tieneAcceso) {
     }
 
     @PutMapping("/{id}")

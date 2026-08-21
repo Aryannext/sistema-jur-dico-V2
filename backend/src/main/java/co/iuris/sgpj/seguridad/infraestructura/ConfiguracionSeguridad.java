@@ -101,6 +101,13 @@ public class ConfiguracionSeguridad {
                         // Único punto público: iniciar sesión.
                         .requestMatchers("/api/autenticacion/entrar", "/api/autenticacion/csrf").permitAll()
 
+                        // El portal del cliente: SOLO el rol CLIENTE, y solo
+                        // aqui. Tener su propia rama de rutas es lo que impide
+                        // que un cliente alcance por descuido un endpoint del
+                        // despacho (RN-11, RN-41).
+                        .requestMatchers("/api/portal/**")
+                            .hasAuthority("ROL_CLIENTE")
+
                         // Los usuarios de un despacho los gestiona su
                         // administrador. La ruta ya NO lleva el despacho: sale
                         // de la sesion (ADR-03, control 1).
