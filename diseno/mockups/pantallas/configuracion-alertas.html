@@ -1,0 +1,124 @@
+<!--@ marco:despacho | activo:Configuración | nombre:ConfiguracionAlertas -->
+<main style="max-width:1080px">
+  <div class="pag">
+    <div>
+      <h1>Configuraci&oacute;n de alertas</h1>
+      <p>Cu&aacute;ndo avisa el sistema y a qui&eacute;n &middot; despacho Perdomo &amp; R&iacute;os</p>
+    </div>
+    <button class="btn">Guardar cambios</button>
+  </div>
+
+  <div class="pes">
+    <a href="#">Datos del despacho</a>
+    <a class="on" href="#">Alertas</a>
+    <a href="#">Cat&aacute;logos</a>
+    <a href="#">Usuarios</a>
+  </div>
+
+  <section class="caja" style="margin-bottom:24px">
+    <header>
+      <h3>T&eacute;rminos judiciales</h3>
+      <span>3 avisos por t&eacute;rmino</span>
+    </header>
+    <div style="padding:18px 24px 24px">
+      <p style="font-size:14px;color:var(--apagado);line-height:1.6;margin-bottom:18px">
+        Cada t&eacute;rmino que registre genera estos avisos autom&aacute;ticamente. Puede agregar o quitar los que quiera.
+      </p>
+
+      <div style="display:flex;flex-direction:column;gap:11px">
+        <div class="opt on" style="align-items:center">
+          <span class="mar cua"></span>
+          <div style="flex:1"><b>10 d&iacute;as antes</b><span>Para preparar con tiempo lo que hay que radicar.</span></div>
+          <span style="color:var(--apagado)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </span>
+        </div>
+        <div class="opt on" style="align-items:center">
+          <span class="mar cua"></span>
+          <div style="flex:1"><b>3 d&iacute;as antes</b><span>El recordatorio que la mayor&iacute;a de despachos usa.</span></div>
+          <span style="color:var(--apagado)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </span>
+        </div>
+        <div class="opt on" style="align-items:center">
+          <span class="mar cua"></span>
+          <div style="flex:1"><b>El d&iacute;a del vencimiento</b><span>&Uacute;ltimo aviso antes de que se pierda la oportunidad.</span></div>
+          <span style="color:var(--apagado)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <button class="btn fantasma" style="margin-top:14px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Agregar otro aviso
+      </button>
+
+      <p class="franja ambar" style="margin-top:20px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        <span><b>Quitar todos los avisos no est&aacute; permitido.</b> Un despacho sin ning&uacute;n aviso configurado tendr&iacute;a un sistema de vigilancia que no vigila &mdash; y nadie se dar&iacute;a cuenta hasta que se venciera algo. Debe quedar al menos uno.</span>
+      </p>
+    </div>
+  </section>
+
+  <section class="caja" style="margin-bottom:24px">
+    <header><h3>Audiencias</h3><span>2 avisos por audiencia</span></header>
+    <div style="padding:18px 24px 24px">
+      <div style="display:flex;flex-direction:column;gap:11px">
+        <div class="opt on" style="align-items:center">
+          <span class="mar cua"></span>
+          <div style="flex:1"><b>2 d&iacute;as antes</b><span>Tiempo para confirmar sala, testigos y desplazamiento.</span></div>
+          <span style="color:var(--apagado)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </span>
+        </div>
+        <div class="opt on" style="align-items:center">
+          <span class="mar cua"></span>
+          <div style="flex:1"><b>El mismo d&iacute;a, a primera hora</b><span>Llega con el barrido de las 6:00 a.m.</span></div>
+          <span style="color:var(--apagado)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="dos" style="grid-template-columns:1fr 1fr">
+    <section class="caja">
+      <header><h3>A qui&eacute;n le llega</h3></header>
+      <div style="padding:4px 24px 22px">
+        <div class="interr">
+          <div><b>Al abogado responsable</b><span>Quien tiene el proceso a cargo.</span></div>
+          <span class="palanca on"></span>
+        </div>
+        <div class="interr">
+          <div><b>Al administrador del despacho</b><span>Copia de todo, para no depender de una sola persona.</span></div>
+          <span class="palanca on"></span>
+        </div>
+        <div class="interr">
+          <div><b>Al cliente</b><span>Los t&eacute;rminos son gesti&oacute;n interna del despacho.</span></div>
+          <span class="palanca"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="caja">
+      <header><h3>Cu&aacute;ndo revisa el sistema</h3></header>
+      <div style="padding:18px 24px 22px">
+        <div class="campo">
+          <label>Hora del barrido diario</label>
+          <div class="caja-c">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+            6:00 a.m.
+            <svg style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <span class="ayuda">Se revisan todos los t&eacute;rminos y audiencias, y salen los correos del d&iacute;a.</span>
+        </div>
+        <p class="franja marca" style="margin-top:18px">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/></svg>
+          <span>Si un correo no sale, el sistema <b>lo reintenta</b>. Si aun as&iacute; falla, queda marcado y visible en el historial &mdash; nunca se descarta en silencio.</span>
+        </p>
+      </div>
+    </section>
+  </div>
+</main>

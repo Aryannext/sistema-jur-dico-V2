@@ -79,3 +79,7 @@ $RECYCLE.BIN/
 # --- OneDrive (D-22: la carpeta está sincronizada) ---
 *.tmp
 ~$*
+
+# Mockups: los .dc.html y la pagina publicada se GENERAN desde diseno/mockups/_base
+diseno/mockups/*.dc.html
+diseno/mockups/iuris-panel-vencimientos.html

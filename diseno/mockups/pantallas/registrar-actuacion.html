@@ -1,0 +1,112 @@
+<!--@ marco:despacho | activo:Procesos | nombre:RegistrarActuacion -->
+<main style="max-width:980px">
+  <div class="migas">
+    <a href="#">Procesos</a>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+    <a href="#">41001 31 03 001 2024 00123 00</a>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+    <b>Nueva pieza</b>
+  </div>
+
+  <div class="pag">
+    <div>
+      <h1>Agregar al expediente</h1>
+      <p>Ejecutivo singular &middot; Inversiones Surcolombiana S.A.S.</p>
+    </div>
+  </div>
+
+  <section class="caja">
+    <div style="padding:24px 24px 4px">
+      <div class="campo ancho" style="margin-bottom:22px">
+        <label>&iquest;Qu&eacute; va a registrar?</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:2px">
+          <div class="opt on">
+            <span class="mar cua"></span>
+            <div><b>Actuaci&oacute;n</b><span>Algo que ocurri&oacute; en el proceso</span></div>
+          </div>
+          <div class="opt">
+            <span class="mar cua"></span>
+            <div><b>Documento</b><span>Un archivo del expediente</span></div>
+          </div>
+          <div class="opt">
+            <span class="mar cua"></span>
+            <div><b>Nota interna</b><span>Solo para el despacho</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form">
+        <div class="campo">
+          <label>Tipo de actuaci&oacute;n</label>
+          <div class="caja-c">
+            Notificaci&oacute;n
+            <svg style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <span class="ayuda">Los tipos los administra su despacho, no vienen fijos.</span>
+        </div>
+
+        <div class="campo">
+          <label>Fecha de la actuaci&oacute;n</label>
+          <div class="caja-c">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
+            20 de agosto de 2025
+          </div>
+        </div>
+
+        <div class="campo ancho">
+          <label>T&iacute;tulo</label>
+          <div class="caja-c">Notificaci&oacute;n por aviso a la parte demandada</div>
+        </div>
+
+        <div class="campo ancho">
+          <label>Descripci&oacute;n <em>opcional</em></label>
+          <div class="caja-c alto">Se surti&oacute; la notificaci&oacute;n personal mediante aviso remitido a la direcci&oacute;n registrada en el certificado de existencia y representaci&oacute;n. Corre el t&eacute;rmino de traslado.</div>
+        </div>
+
+        <div class="campo ancho">
+          <label>Archivo adjunto <em>opcional</em></label>
+          <div class="caja-c" style="justify-content:space-between">
+            <span style="display:flex;align-items:center;gap:10px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--alto)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13.5 3.5V9H19"/></svg>
+              <b style="font-weight:600">Acta de notificaci&oacute;n.pdf</b>
+              <span style="color:var(--apagado);font-size:13px">418 KB</span>
+            </span>
+            <span style="color:var(--apagado)">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+            </span>
+          </div>
+          <span class="ayuda">PDF, Word o imagen, hasta 20 MB. El archivo se guarda cifrado.</span>
+        </div>
+      </div>
+
+      <div class="campo ancho" style="margin:24px 0 22px">
+        <label>&iquest;El cliente puede ver esta pieza en su portal?</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:2px">
+          <div class="opt on">
+            <span class="mar"></span>
+            <div><b>S&iacute;, es visible</b><span>Aparece en el portal del cliente junto al resto del expediente.</span></div>
+          </div>
+          <div class="opt">
+            <span class="mar"></span>
+            <div><b>No, solo el despacho</b><span>Queda en el expediente interno y el cliente nunca la recibe.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <p class="franja ambar" style="margin-bottom:24px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5v4.5"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        <span><b>Esta decisi&oacute;n no se puede deshacer m&aacute;s tarde sin dejar rastro.</b> Si marca la pieza como visible, el cliente puede haberla consultado ya. La visibilidad se elige al crear, no despu&eacute;s: as&iacute; nadie publica algo por descuido y luego lo retira esperando que nadie lo haya visto.</span>
+      </p>
+    </div>
+
+    <div class="pie-form">
+      <button class="btn fantasma">Cancelar</button>
+      <button class="btn">Guardar en el expediente</button>
+    </div>
+  </section>
+
+  <p class="franja marca" style="margin-top:20px">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/></svg>
+    <span>Qui&eacute;n registr&oacute; la pieza y cu&aacute;ndo <b>no se pregunta en el formulario</b>: lo pone el sistema. Un dato que el usuario escribe es un dato que el usuario puede escribir mal.</span>
+  </p>
+</main>

@@ -1,0 +1,129 @@
+<!--@ marco:plataforma | activo:Despachos | nombre:Despachos -->
+<main>
+  <div class="pag">
+    <div>
+      <h1>Despachos</h1>
+      <p>14 despachos en la plataforma &middot; 12 activos</p>
+    </div>
+    <div class="util">
+      <div class="buscar">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        Buscar despacho o NIT
+      </div>
+      <button class="btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Registrar despacho
+      </button>
+    </div>
+  </div>
+
+  <section class="caja" style="margin-bottom:24px">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th style="padding-top:21px">Despacho</th>
+          <th style="padding-top:21px" class="der">Usuarios</th>
+          <th style="padding-top:21px" class="der">Procesos</th>
+          <th style="padding-top:21px">Alta</th>
+          <th style="padding-top:21px">Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="per">
+              <span class="av-i">PR</span>
+              <div><div class="p">Perdomo &amp; R&iacute;os</div><div class="s">NIT 901.220.114-6 &middot; Neiva</div></div>
+            </div>
+          </td>
+          <td class="der"><b class="num">4</b></td>
+          <td class="der"><b class="num">31</b></td>
+          <td><span style="font-size:14px">mar 2024</span></td>
+          <td><span class="eti verde"><i></i>Activo</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="per">
+              <span class="av-i">CJ</span>
+              <div><div class="p">Consultorio Jur&iacute;dico Surcolombiano</div><div class="s">NIT 891.180.021-4 &middot; Neiva</div></div>
+            </div>
+          </td>
+          <td class="der"><b class="num">11</b></td>
+          <td class="der"><b class="num">86</b></td>
+          <td><span style="font-size:14px">ene 2024</span></td>
+          <td><span class="eti verde"><i></i>Activo</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="per">
+              <span class="av-i">LM</span>
+              <div><div class="p">Lozano Manrique Abogados</div><div class="s">NIT 900.771.309-2 &middot; Pitalito</div></div>
+            </div>
+          </td>
+          <td class="der"><b class="num">2</b></td>
+          <td class="der"><b class="num">18</b></td>
+          <td><span style="font-size:14px">jun 2025</span></td>
+          <td><span class="eti verde"><i></i>Activo</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="per">
+              <span class="av-i gris">GT</span>
+              <div><div class="p" style="color:var(--apagado)">G&oacute;mez Tovar &amp; Asociados</div><div class="s">NIT 901.005.882-0 &middot; Garz&oacute;n</div></div>
+            </div>
+          </td>
+          <td class="der"><span class="num" style="color:var(--apagado)">3</span></td>
+          <td class="der"><span class="num" style="color:var(--apagado)">22</span></td>
+          <td><span style="font-size:14px;color:var(--apagado)">ago 2024</span></td>
+          <td><span class="eti gris">Inactivo</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="per">
+              <span class="av-i gris">VC</span>
+              <div><div class="p" style="color:var(--apagado)">Vargas Cede&ntilde;o Jur&iacute;dico</div><div class="s">NIT 900.418.771-5 &middot; La Plata</div></div>
+            </div>
+          </td>
+          <td class="der"><span class="num" style="color:var(--apagado)">1</span></td>
+          <td class="der"><span class="num" style="color:var(--apagado)">7</span></td>
+          <td><span style="font-size:14px;color:var(--apagado)">nov 2024</span></td>
+          <td><span class="eti gris">Inactivo</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="dos" style="grid-template-columns:1fr 1fr">
+    <section class="caja">
+      <header><h3>Qu&eacute; significa &laquo;inactivo&raquo;</h3></header>
+      <div style="padding:14px 24px 22px">
+        <p class="franja ambar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>
+          <span><b>Nadie del despacho puede entrar</b> &mdash; ni el administrador, ni los abogados, ni sus clientes. El bloqueo es total y surte efecto de inmediato, aunque tengan la sesi&oacute;n abierta.</span>
+        </p>
+        <p style="font-size:13.5px;color:var(--apagado);line-height:1.6;margin-top:16px">
+          Pero <b style="color:var(--tinta)">no se borra nada</b>. Los 22 procesos de G&oacute;mez Tovar siguen ah&iacute;, intactos. Si el despacho vuelve, encuentra todo como lo dej&oacute;.
+        </p>
+        <p style="font-size:13.5px;color:var(--apagado);line-height:1.6;margin-top:12px">
+          Un despacho inactivo casi siempre es uno que se atras&oacute; con el pago. Borrarle los expedientes por eso ser&iacute;a desproporcionado &mdash; y probablemente ilegal.
+        </p>
+      </div>
+    </section>
+
+    <section class="caja">
+      <header><h3>El &uacute;ltimo correo que sale</h3></header>
+      <div style="padding:14px 24px 22px">
+        <p class="franja roja">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="13" rx="2.2"/><path d="M4 6.5 12 13l8-6.5"/></svg>
+          <span>Al desactivar, el despacho recibe un aviso: <b>&laquo;la vigilancia de sus audiencias y t&eacute;rminos queda suspendida&raquo;</b>.</span>
+        </p>
+        <p style="font-size:13.5px;color:var(--apagado);line-height:1.6;margin-top:16px">
+          Es una notificaci&oacute;n de corte, no una funci&oacute;n de la plataforma &mdash; por eso convive con el bloqueo total. Sin ella, el despacho seguir&iacute;a confiando en un sistema que ya dej&oacute; de avisarle, y se enterar&iacute;a el d&iacute;a que se le venciera un t&eacute;rmino.
+        </p>
+        <p style="font-size:13.5px;color:var(--apagado);line-height:1.6;margin-top:12px">
+          <b style="color:var(--tinta)">Es el aviso m&aacute;s importante del sistema</b> y es el &uacute;nico que se env&iacute;a cuando ya nadie puede entrar.
+        </p>
+      </div>
+    </section>
+  </div>
+</main>

@@ -1,0 +1,44 @@
+{
+  "artboards": [
+    { "file": "Ingreso.dc.html",              "title": "1 · Ingreso",                   "x": 0,    "y": 0,    "w": 1400, "h": 920 },
+    { "file": "Main.dc.html",                 "title": "2 · Panel de vencimientos",     "x": 1520, "y": 0,    "w": 1400, "h": 1010 },
+    { "file": "Procesos.dc.html",             "title": "3 · Procesos y búsqueda",       "x": 3040, "y": 0,    "w": 1400, "h": 1010 },
+
+    { "file": "Expediente.dc.html",           "title": "4 · Expediente del proceso",    "x": 0,    "y": 1330, "w": 1400, "h": 1200 },
+    { "file": "RegistrarActuacion.dc.html",   "title": "5 · Registrar una pieza",       "x": 1520, "y": 1330, "w": 1400, "h": 1180 },
+    { "file": "Terminos.dc.html",             "title": "6 · Términos del proceso",      "x": 3040, "y": 1330, "w": 1400, "h": 1080 },
+
+    { "file": "Audiencias.dc.html",           "title": "7 · Calendario de audiencias",  "x": 0,    "y": 2660, "w": 1400, "h": 1100 },
+    { "file": "Clientes.dc.html",             "title": "8 · Clientes",                  "x": 1520, "y": 2660, "w": 1400, "h": 1010 },
+    { "file": "FichaCliente.dc.html",         "title": "9 · Ficha del cliente",         "x": 3040, "y": 2660, "w": 1400, "h": 1010 },
+
+    { "file": "AccesoCliente.dc.html",        "title": "10 · Habilitar el portal",      "x": 0,    "y": 3990, "w": 1400, "h": 1220 },
+    { "file": "Reportes.dc.html",             "title": "11 · Reportes",                 "x": 1520, "y": 3990, "w": 1400, "h": 1150 },
+    { "file": "ConfiguracionAlertas.dc.html", "title": "12 · Configuración de alertas", "x": 3040, "y": 3990, "w": 1400, "h": 1150 },
+
+    { "file": "HistorialAlertas.dc.html",     "title": "13 · Historial de alertas",     "x": 0,    "y": 5320, "w": 1400, "h": 1010 },
+    { "file": "Catalogos.dc.html",            "title": "14 · Catálogos del despacho",   "x": 1520, "y": 5320, "w": 1400, "h": 1050 },
+    { "file": "Usuarios.dc.html",             "title": "15 · Usuarios y roles",         "x": 3040, "y": 5320, "w": 1400, "h": 1000 },
+
+    { "file": "PortalProcesos.dc.html",       "title": "16 · Portal · sus procesos",    "x": 0,    "y": 6650, "w": 1400, "h": 1010 },
+    { "file": "PortalDetalle.dc.html",        "title": "17 · Portal · el proceso",      "x": 1520, "y": 6650, "w": 1400, "h": 1010 },
+    { "file": "Despachos.dc.html",            "title": "18 · Plataforma · despachos",   "x": 3040, "y": 6650, "w": 1400, "h": 1010 }
+  ],
+  "annotations": [
+    {
+      "id": "como-leerlo",
+      "x": 0,
+      "y": -320,
+      "w": 900,
+      "text": "IURIS · SGPJ — mockups del sistema completo. 18 pantallas.\n\nTres bloques, tres barras laterales distintas:\n\n1–15 · El despacho. Lo que ve el abogado y el administrador.\n16–17 · El portal del cliente. Solo lectura: no hay un solo botón que envíe, suba o modifique nada.\n18 · La plataforma. Lo que ve el administrador de Iuris; solo activa y desactiva despachos.\n\nDatos coherentes entre todas: el mismo despacho, los mismos cinco procesos, las mismas fechas — incluidos los festivos colombianos del 7 y el 18 de agosto de 2025, que son la razón por la que un término vence el 15 y no el 18.\n\nEl estilo, la tipografía y las barras laterales viven en _base/ y las 18 pantallas se generan desde ahí con construir.mjs. Cambiar el verde de marca es cambiar una línea."
+    },
+    {
+      "id": "comparacion-portal",
+      "x": 3040,
+      "y": 7790,
+      "w": 620,
+      "text": "Compare la 4 con la 17: es el MISMO proceso.\n\nEn la 4 (el despacho) hay cuatro piezas, una de ellas una nota interna en ámbar marcada «Solo el despacho».\n\nEn la 17 (el cliente) hay tres. La nota no está — y no porque la pantalla la esconda: el filtro ocurre antes de enviarle los datos. Si fuera cosa de la pantalla, bastaría abrir las herramientas del navegador para leerla."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

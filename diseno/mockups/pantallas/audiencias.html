@@ -1,0 +1,191 @@
+<!--@ marco:despacho | activo:Audiencias | nombre:Audiencias -->
+<style>
+  .mes{background:var(--sup);border-radius:18px;box-shadow:var(--sombra);overflow:hidden}
+  .mes-cab{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px}
+  .mes-cab h2{font-size:20px;font-weight:800;letter-spacing:-.03em}
+  .flechas{display:flex;gap:7px}
+  .flechas span{width:34px;height:34px;border-radius:10px;border:1px solid var(--hilo);display:grid;
+                place-items:center;color:var(--medio)}
+  .sem-cab{display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--hilo-suave)}
+  .sem-cab div{padding:11px 0;text-align:center;font-size:11.5px;font-weight:700;letter-spacing:.09em;
+               text-transform:uppercase;color:var(--apagado)}
+  .rejilla-mes{display:grid;grid-template-columns:repeat(7,1fr)}
+  .dia-c{min-height:112px;padding:9px 10px;border-top:1px solid var(--hilo-suave);
+         border-right:1px solid var(--hilo-suave);display:flex;flex-direction:column;gap:5px}
+  .dia-c:nth-child(7n){border-right:0}
+  .dia-c.finde{background:#FAFBFA}
+  .dia-c.fuera{background:#FAFBFA;color:var(--hilo)}
+  .dia-c .n{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .dia-c.fuera .n{color:#C6CEC9;font-weight:600}
+  .dia-c.hoy .n{background:var(--marca);color:#fff;width:27px;height:27px;border-radius:50%;
+                display:grid;place-items:center;margin:-3px 0 0 -3px}
+  .fest{font-size:10.5px;font-weight:700;color:var(--medio-av);letter-spacing:-.01em;line-height:1.25}
+  .dia-c.festivo{background:var(--medio-suave)}
+  .cita-c{background:var(--marca);color:#fff;border-radius:8px;padding:5px 8px;font-size:11.5px;
+          font-weight:700;line-height:1.35;letter-spacing:-.01em}
+  .cita-c em{display:block;font-style:normal;font-weight:600;opacity:.82;font-size:10.5px}
+  .term-c{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--medio);
+          line-height:1.3}
+  .term-c i{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:var(--hilo)}
+  .term-c i.roj{background:var(--alto)}
+  .term-c i.amb{background:var(--medio-av)}
+  .leyenda{display:flex;gap:20px;flex-wrap:wrap;padding:16px 24px;border-top:1px solid var(--hilo-suave);
+           font-size:12.5px;color:var(--apagado);font-weight:600}
+  .leyenda span{display:flex;align-items:center;gap:8px}
+  .leyenda i{width:9px;height:9px;border-radius:50%;background:var(--hilo)}
+  .leyenda i.cua{border-radius:3px;background:var(--marca);width:12px;height:12px}
+  .leyenda i.roj{background:var(--alto)} .leyenda i.amb{background:var(--medio-av)}
+  .leyenda i.fes{background:var(--medio-suave);border:1px solid #E4D2AE;border-radius:3px;width:12px;height:12px}
+</style>
+
+<main>
+  <div class="pag">
+    <div>
+      <h1>Audiencias</h1>
+      <p>Agosto de 2025 &middot; 3 audiencias programadas este mes</p>
+    </div>
+    <div class="util">
+      <div class="sel">Todos los abogados <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+      <button class="btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Programar audiencia
+      </button>
+    </div>
+  </div>
+
+  <div class="dos">
+    <section class="mes">
+      <div class="mes-cab">
+        <h2>Agosto 2025</h2>
+        <div class="flechas">
+          <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg></span>
+          <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span>
+        </div>
+      </div>
+
+      <div class="sem-cab">
+        <div>Lun</div><div>Mar</div><div>Mi&eacute;</div><div>Jue</div><div>Vie</div><div>S&aacute;b</div><div>Dom</div>
+      </div>
+
+      <div class="rejilla-mes">
+        <div class="dia-c fuera"><span class="n">28</span></div>
+        <div class="dia-c fuera"><span class="n">29</span></div>
+        <div class="dia-c fuera"><span class="n">30</span></div>
+        <div class="dia-c fuera"><span class="n">31</span></div>
+        <div class="dia-c"><span class="n">1</span></div>
+        <div class="dia-c finde"><span class="n">2</span></div>
+        <div class="dia-c finde"><span class="n">3</span></div>
+
+        <div class="dia-c"><span class="n">4</span></div>
+        <div class="dia-c"><span class="n">5</span></div>
+        <div class="dia-c"><span class="n">6</span></div>
+        <div class="dia-c festivo"><span class="n">7</span><span class="fest">Batalla de Boyac&aacute;</span></div>
+        <div class="dia-c"><span class="n">8</span>
+          <span class="term-c"><i></i>Alerta enviada</span>
+        </div>
+        <div class="dia-c finde"><span class="n">9</span></div>
+        <div class="dia-c finde"><span class="n">10</span></div>
+
+        <div class="dia-c"><span class="n">11</span></div>
+        <div class="dia-c"><span class="n">12</span></div>
+        <div class="dia-c"><span class="n">13</span></div>
+        <div class="dia-c"><span class="n">14</span></div>
+        <div class="dia-c"><span class="n">15</span>
+          <span class="term-c"><i class="roj"></i>Contestar demanda</span>
+        </div>
+        <div class="dia-c finde"><span class="n">16</span></div>
+        <div class="dia-c finde"><span class="n">17</span></div>
+
+        <div class="dia-c festivo"><span class="n">18</span><span class="fest">Asunci&oacute;n de la Virgen</span></div>
+        <div class="dia-c"><span class="n">19</span>
+          <span class="term-c"><i class="roj"></i>Alegatos</span>
+        </div>
+        <div class="dia-c hoy"><span class="n">20</span>
+          <span class="term-c"><i class="amb"></i>Apelaci&oacute;n</span>
+        </div>
+        <div class="dia-c"><span class="n">21</span>
+          <span class="cita-c">Conciliaci&oacute;n<em>9:00 a.m. &middot; Fam. 3</em></span>
+        </div>
+        <div class="dia-c"><span class="n">22</span>
+          <span class="term-c"><i class="amb"></i>Aportar pruebas</span>
+        </div>
+        <div class="dia-c finde"><span class="n">23</span></div>
+        <div class="dia-c finde"><span class="n">24</span></div>
+
+        <div class="dia-c"><span class="n">25</span>
+          <span class="term-c"><i></i>Traslado</span>
+        </div>
+        <div class="dia-c"><span class="n">26</span>
+          <span class="cita-c">Audiencia inicial<em>10:30 a.m. &middot; Civil 1</em></span>
+        </div>
+        <div class="dia-c"><span class="n">27</span></div>
+        <div class="dia-c"><span class="n">28</span>
+          <span class="cita-c">Juzgamiento<em>2:30 p.m. &middot; Penal 2</em></span>
+          <span class="term-c"><i></i>Subsanar</span>
+        </div>
+        <div class="dia-c"><span class="n">29</span></div>
+        <div class="dia-c finde"><span class="n">30</span></div>
+        <div class="dia-c finde"><span class="n">31</span>
+          <span class="term-c"><i></i>T&iacute;tulo valor</span>
+        </div>
+      </div>
+
+      <div class="leyenda">
+        <span><i class="cua"></i>Audiencia</span>
+        <span><i class="roj"></i>T&eacute;rmino vencido</span>
+        <span><i class="amb"></i>T&eacute;rmino pr&oacute;ximo</span>
+        <span><i></i>T&eacute;rmino pendiente</span>
+        <span><i class="fes"></i>Festivo (no cuenta para t&eacute;rminos)</span>
+      </div>
+    </section>
+
+    <div>
+      <section class="caja" style="margin-bottom:24px">
+        <header><h3>Pr&oacute;ximas</h3><span>3</span></header>
+        <div class="cita">
+          <div class="dia"><b>21</b><span>ago</span></div>
+          <div class="c"><b>Audiencia de conciliaci&oacute;n</b>
+            <span>Divorcio de mutuo acuerdo &middot; Luz Dary Cu&eacute;llar</span>
+            <span>Juzgado 3.&ordm; de Familia &middot; Sala 2</span>
+            <span class="hr">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>
+              9:00 a.m. &middot; Marcela R&iacute;os
+            </span></div>
+        </div>
+        <div class="cita">
+          <div class="dia"><b>26</b><span>ago</span></div>
+          <div class="c"><b>Audiencia inicial &mdash; art. 372 C.G.P.</b>
+            <span>Ejecutivo singular &middot; Inversiones Surcolombiana</span>
+            <span>Juzgado 1.&ordm; Civil del Circuito</span>
+            <span class="hr">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>
+              10:30 a.m. &middot; Juli&aacute;n Perdomo
+            </span></div>
+        </div>
+        <div class="cita">
+          <div class="dia"><b>28</b><span>ago</span></div>
+          <div class="c"><b>Audiencia de juzgamiento</b>
+            <span>Querella &middot; &Oacute;scar Trujillo Losada</span>
+            <span>Juzgado 2.&ordm; Penal Municipal</span>
+            <span class="hr">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>
+              2:30 p.m. &middot; Juli&aacute;n Perdomo
+            </span></div>
+        </div>
+      </section>
+
+      <section class="caja">
+        <header><h3>Por qu&eacute; salen los festivos</h3></header>
+        <div style="padding:2px 24px 22px">
+          <p class="franja ambar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
+            <span>El <b>18 de agosto</b> es festivo en Colombia: la Asunci&oacute;n se traslada al lunes siguiente. Un t&eacute;rmino no puede vencer ese d&iacute;a, y el calendario lo muestra para que nadie cuente mal a ojo.</span>
+          </p>
+          <p style="font-size:13.5px;color:var(--apagado);line-height:1.6;margin-top:14px">
+            Las audiencias y los t&eacute;rminos comparten calendario a prop&oacute;sito. Son cosas distintas en el derecho &mdash;una es una cita, el otro es un plazo&mdash; pero para quien organiza su semana ocupan el mismo lugar: <b style="color:var(--tinta)">d&iacute;as en los que algo hay que hacer.</b>
+          </p>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>

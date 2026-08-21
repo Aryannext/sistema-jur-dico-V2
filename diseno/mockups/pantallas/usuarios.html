@@ -1,0 +1,142 @@
+<!--@ marco:despacho | activo:Configuración | nombre:Usuarios -->
+<main style="max-width:1120px">
+  <div class="pag">
+    <div>
+      <h1>Usuarios y roles</h1>
+      <p>Qui&eacute;n entra al sistema y qu&eacute; puede hacer &middot; despacho Perdomo &amp; R&iacute;os</p>
+    </div>
+    <button class="btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Invitar usuario
+    </button>
+  </div>
+
+  <div class="pes">
+    <a href="#">Datos del despacho</a>
+    <a href="#">Alertas</a>
+    <a href="#">Cat&aacute;logos</a>
+    <a class="on" href="#">Usuarios <span class="n">4</span></a>
+  </div>
+
+  <section class="caja" style="margin-bottom:24px">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th style="padding-top:21px">Usuario</th>
+          <th style="padding-top:21px">Roles</th>
+          <th style="padding-top:21px" class="der">Procesos a cargo</th>
+          <th style="padding-top:21px">&Uacute;ltimo ingreso</th>
+          <th style="padding-top:21px">Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="per">
+              <span class="av-i">MR</span>
+              <div>
+                <div class="p">Marcela R&iacute;os Andrade</div>
+                <div class="s">mrios@perdomorios.co</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span class="eti marca">Administradora</span>
+              <span class="eti">Abogada</span>
+            </div>
+          </td>
+          <td class="der"><b class="num" style="font-size:15px">14</b></td>
+          <td><span style="font-size:14px">hoy, 7:12 a.m.</span></td>
+          <td><span class="eti verde"><i></i>Activa</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="per">
+              <span class="av-i">JP</span>
+              <div>
+                <div class="p">Juli&aacute;n Perdomo Vargas</div>
+                <div class="s">jperdomo@perdomorios.co</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span class="eti marca">Administrador</span>
+              <span class="eti">Abogado</span>
+            </div>
+          </td>
+          <td class="der"><b class="num" style="font-size:15px">8</b></td>
+          <td><span style="font-size:14px">ayer, 6:40 p.m.</span></td>
+          <td><span class="eti verde"><i></i>Activo</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="per">
+              <span class="av-i">AC</span>
+              <div>
+                <div class="p">Andr&eacute;s Charry Sol&iacute;s</div>
+                <div class="s">acharry@perdomorios.co</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="eti">Abogado</span></td>
+          <td class="der"><b class="num" style="font-size:15px">2</b></td>
+          <td><span style="font-size:14px">18 ago, 3:05 p.m.</span></td>
+          <td><span class="eti verde"><i></i>Activo</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="per">
+              <span class="av-i gris">SG</span>
+              <div>
+                <div class="p" style="color:var(--apagado)">Sandra G&oacute;mez Tovar</div>
+                <div class="s">sgomez@perdomorios.co</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="eti gris">Asistente</span></td>
+          <td class="der"><span style="color:var(--apagado)">&mdash;</span></td>
+          <td><span style="font-size:14px;color:var(--apagado)">30 jul, 9:20 a.m.</span></td>
+          <td><span class="eti gris">Desactivada</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="dos" style="grid-template-columns:1fr 1fr">
+    <section class="caja">
+      <header><h3>Qu&eacute; puede hacer cada rol</h3></header>
+      <div style="padding:4px 24px 22px">
+        <div class="interr">
+          <div><b>Administrador del despacho</b><span>Usuarios, cat&aacute;logos, configuraci&oacute;n de alertas y acceso de clientes.</span></div>
+        </div>
+        <div class="interr">
+          <div><b>Abogado</b><span>Procesos, expedientes, t&eacute;rminos, audiencias y reportes.</span></div>
+        </div>
+        <div class="interr">
+          <div><b>Asistente</b><span>Registrar piezas y consultar; no cierra t&eacute;rminos ni cambia el estado del proceso.</span></div>
+        </div>
+        <p style="font-size:13.5px;color:var(--apagado);line-height:1.6;margin-top:14px">
+          Los dos primeros roles <b style="color:var(--tinta)">recaen en la misma persona</b> cuando el abogado trabaja solo. Son distintos porque en un despacho de tres no lo son.
+        </p>
+      </div>
+    </section>
+
+    <section class="caja">
+      <header><h3>Desactivar un usuario</h3></header>
+      <div style="padding:14px 24px 22px">
+        <p class="franja ambar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          <span><b>Surte efecto de inmediato,</b> aunque la persona tenga la sesi&oacute;n abierta. No hay que esperar a que cierre el navegador: la siguiente cosa que intente hacer ya no se la permite el sistema.</span>
+        </p>
+        <p style="font-size:13.5px;color:var(--apagado);line-height:1.6;margin-top:16px">
+          Desactivar <b style="color:var(--tinta)">no borra</b> nada de lo que la persona registr&oacute;. Su nombre sigue apareciendo en las piezas del expediente que ella cre&oacute; &mdash; si se borrara, el expediente dejar&iacute;a de servir como respaldo.
+        </p>
+        <p style="font-size:13.5px;color:var(--apagado);line-height:1.6;margin-top:12px">
+          Si el usuario ten&iacute;a procesos a cargo, hay que reasignarlos antes. Un proceso sin abogado responsable es un proceso que nadie vigila.
+        </p>
+      </div>
+    </section>
+  </div>
+</main>

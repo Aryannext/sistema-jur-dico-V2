@@ -1,0 +1,125 @@
+<!--@ marco:despacho | activo:Configuración | nombre:Catalogos -->
+<main style="max-width:1120px">
+  <div class="pag">
+    <div>
+      <h1>Cat&aacute;logos del despacho</h1>
+      <p>Las listas con las que trabaja su firma &middot; cada despacho define las suyas</p>
+    </div>
+    <button class="btn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Agregar valor
+    </button>
+  </div>
+
+  <div class="pes">
+    <a href="#">Datos del despacho</a>
+    <a href="#">Alertas</a>
+    <a class="on" href="#">Cat&aacute;logos</a>
+    <a href="#">Usuarios <span class="n">4</span></a>
+  </div>
+
+  <div class="filtros">
+    <div class="sel act">Tipo de proceso <span>7</span></div>
+    <div class="sel">Estado procesal <span>5</span></div>
+    <div class="sel">Tipo de actuaci&oacute;n <span>9</span></div>
+    <div class="sel">Juzgado <span>12</span></div>
+  </div>
+
+  <section class="caja" style="margin-bottom:24px">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th style="padding-top:21px;width:70px">Orden</th>
+          <th style="padding-top:21px">Valor</th>
+          <th style="padding-top:21px" class="der">En uso</th>
+          <th style="padding-top:21px">Estado</th>
+          <th style="padding-top:21px" class="der"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="num" style="color:var(--apagado);font-weight:700">1</span></td>
+          <td><div class="p">Ejecutivo singular</div></td>
+          <td class="der"><b class="num">9</b> <span style="color:var(--apagado);font-size:13px">procesos</span></td>
+          <td><span class="eti verde"><i></i>Activo</span></td>
+          <td class="der"><a href="#" style="color:var(--marca);font-weight:700;font-size:13.5px;text-decoration:none">Editar</a></td>
+        </tr>
+        <tr>
+          <td><span class="num" style="color:var(--apagado);font-weight:700">2</span></td>
+          <td><div class="p">Ejecutivo hipotecario</div></td>
+          <td class="der"><b class="num">5</b> <span style="color:var(--apagado);font-size:13px">procesos</span></td>
+          <td><span class="eti verde"><i></i>Activo</span></td>
+          <td class="der"><a href="#" style="color:var(--marca);font-weight:700;font-size:13.5px;text-decoration:none">Editar</a></td>
+        </tr>
+        <tr>
+          <td><span class="num" style="color:var(--apagado);font-weight:700">3</span></td>
+          <td><div class="p">Verbal</div></td>
+          <td class="der"><b class="num">7</b> <span style="color:var(--apagado);font-size:13px">procesos</span></td>
+          <td><span class="eti verde"><i></i>Activo</span></td>
+          <td class="der"><a href="#" style="color:var(--marca);font-weight:700;font-size:13.5px;text-decoration:none">Editar</a></td>
+        </tr>
+        <tr>
+          <td><span class="num" style="color:var(--apagado);font-weight:700">4</span></td>
+          <td><div class="p">Verbal sumario</div></td>
+          <td class="der"><b class="num">4</b> <span style="color:var(--apagado);font-size:13px">procesos</span></td>
+          <td><span class="eti verde"><i></i>Activo</span></td>
+          <td class="der"><a href="#" style="color:var(--marca);font-weight:700;font-size:13.5px;text-decoration:none">Editar</a></td>
+        </tr>
+        <tr>
+          <td><span class="num" style="color:var(--apagado);font-weight:700">5</span></td>
+          <td><div class="p">Ordinario laboral</div></td>
+          <td class="der"><b class="num">3</b> <span style="color:var(--apagado);font-size:13px">procesos</span></td>
+          <td><span class="eti verde"><i></i>Activo</span></td>
+          <td class="der"><a href="#" style="color:var(--marca);font-weight:700;font-size:13.5px;text-decoration:none">Editar</a></td>
+        </tr>
+        <tr>
+          <td><span class="num" style="color:var(--apagado);font-weight:700">6</span></td>
+          <td><div class="p">Penal &mdash; querella</div></td>
+          <td class="der"><b class="num">3</b> <span style="color:var(--apagado);font-size:13px">procesos</span></td>
+          <td><span class="eti verde"><i></i>Activo</span></td>
+          <td class="der"><a href="#" style="color:var(--marca);font-weight:700;font-size:13.5px;text-decoration:none">Editar</a></td>
+        </tr>
+        <tr>
+          <td><span class="num" style="color:var(--apagado);font-weight:700">7</span></td>
+          <td>
+            <div class="p" style="color:var(--apagado)">Restituci&oacute;n de inmueble</div>
+            <div class="s">No aparece al crear procesos nuevos</div>
+          </td>
+          <td class="der"><span style="color:var(--apagado)">0 procesos</span></td>
+          <td><span class="eti gris">Inactivo</span></td>
+          <td class="der"><a href="#" style="color:var(--marca);font-weight:700;font-size:13.5px;text-decoration:none">Reactivar</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="dos" style="grid-template-columns:1fr 1fr">
+    <section class="caja">
+      <header><h3>Por qu&eacute; no hay bot&oacute;n de borrar</h3></header>
+      <div style="padding:14px 24px 22px">
+        <p class="franja ambar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          <span>Un valor en uso <b>no se borra, se desactiva</b>: deja de ofrecerse al crear cosas nuevas, pero los procesos que ya lo tienen lo conservan.</span>
+        </p>
+        <p style="font-size:13.5px;color:var(--apagado);line-height:1.6;margin-top:16px">
+          Si &laquo;Ejecutivo singular&raquo; desapareciera, nueve procesos se quedar&iacute;an sin tipo &mdash; y el reporte por tipo empezar&iacute;a a mentir. Por eso la columna <b style="color:var(--tinta)">&laquo;En uso&raquo;</b> est&aacute; ah&iacute;: antes de tocar un valor usted ve a cu&aacute;ntos expedientes le afecta.
+        </p>
+      </div>
+    </section>
+
+    <section class="caja">
+      <header><h3>Cada despacho, sus listas</h3></header>
+      <div style="padding:14px 24px 22px">
+        <p style="font-size:13.5px;color:var(--apagado);line-height:1.6">
+          Los cuatro cat&aacute;logos son <b style="color:var(--tinta)">de su despacho</b>, no de la plataforma. Otra firma puede llamar distinto a lo mismo, o trabajar tipos de proceso que usted nunca ve.
+        </p>
+        <p style="font-size:13.5px;color:var(--apagado);line-height:1.6;margin-top:12px">
+          El de <b style="color:var(--tinta)">juzgados</b> tambi&eacute;n: se llenan los del circuito donde usted litiga, no los del pa&iacute;s entero. Una lista nacional de juzgados en un desplegable es una lista que nadie recorre.
+        </p>
+        <p style="font-size:13.5px;color:var(--apagado);line-height:1.6;margin-top:12px">
+          Al crear el despacho vienen unos valores sembrados para arrancar. Se pueden renombrar todos.
+        </p>
+      </div>
+    </section>
+  </div>
+</main>

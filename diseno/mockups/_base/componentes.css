@@ -1,0 +1,149 @@
+/* Componentes compartidos por las pantallas de Iuris.
+   Todo sale de los mismos tokens de estilos.css: si cambia el color de marca,
+   cambia aqui tambien sin tocar una linea. */
+
+/* ---------- Cabecera de pagina ---------- */
+.pag{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:26px;gap:24px}
+.pag h1{font-size:29px;font-weight:800;letter-spacing:-.032em;line-height:1.2}
+.pag p{color:var(--apagado);font-size:14.5px;margin-top:5px}
+.migas{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--apagado);margin-bottom:9px}
+.migas a{color:var(--apagado);text-decoration:none;font-weight:600}
+.migas b{color:var(--medio);font-weight:600}
+
+.btn.fantasma{background:var(--sup);color:var(--medio);border:1px solid var(--hilo);font-weight:600}
+.btn.suave{background:var(--marca-suave);color:var(--marca);border:0}
+
+/* ---------- Filtros ---------- */
+.filtros{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.sel{display:flex;align-items:center;gap:9px;background:var(--sup);border:1px solid var(--hilo);
+     border-radius:11px;padding:9px 14px;font-size:14px;font-weight:600;color:var(--medio)}
+.sel span{color:var(--apagado);font-weight:500}
+.sel.act{border-color:var(--marca);background:var(--marca-suave);color:var(--marca)}
+.cuenta{margin-left:auto;color:var(--apagado);font-size:13.5px;font-variant-numeric:tabular-nums}
+
+/* ---------- Tabla ---------- */
+.tabla{width:100%;border-collapse:collapse}
+.tabla thead th{text-align:left;font-size:12px;font-weight:700;letter-spacing:.05em;
+                text-transform:uppercase;color:var(--apagado);padding:0 24px 13px;white-space:nowrap}
+.tabla tbody td{padding:16px 24px;border-top:1px solid var(--hilo-suave);vertical-align:middle}
+.tabla tbody tr:hover{background:var(--fondo)}
+.tabla .p{font-size:15.5px;font-weight:700;letter-spacing:-.015em}
+.tabla .s{font-size:13px;color:var(--apagado);margin-top:2px}
+.num{font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.rad-t{font-size:13px;color:#8E9995;font-variant-numeric:tabular-nums;white-space:nowrap}
+.der{text-align:right}
+
+/* ---------- Etiquetas de estado ---------- */
+.eti{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:4px 11px;
+     font-size:12.5px;font-weight:700;white-space:nowrap;background:var(--hilo-suave);color:var(--medio)}
+.eti.verde{background:#E4F1EA;color:var(--calma)}
+.eti.marca{background:var(--marca-suave);color:var(--marca)}
+.eti.ambar{background:var(--medio-suave);color:var(--medio-av)}
+.eti.roja{background:var(--alto-suave);color:var(--alto)}
+.eti.gris{background:var(--hilo-suave);color:var(--apagado)}
+.eti i{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+
+/* ---------- Avatar ---------- */
+.per{display:flex;align-items:center;gap:11px}
+.av-i{width:34px;height:34px;border-radius:50%;background:var(--marca-media);color:var(--marca);
+      display:grid;place-items:center;font-weight:800;font-size:12.5px;flex-shrink:0}
+.av-i.gris{background:var(--hilo-suave);color:var(--apagado)}
+
+/* ---------- Pestanas ---------- */
+.pes{display:flex;gap:4px;border-bottom:1px solid var(--hilo);margin-bottom:24px}
+.pes a{padding:11px 16px;font-size:14.5px;font-weight:600;color:var(--apagado);text-decoration:none;
+       border-bottom:2px solid transparent;margin-bottom:-1px}
+.pes a.on{color:var(--marca);border-bottom-color:var(--marca);font-weight:700}
+.pes a .n{margin-left:7px;font-size:12px;color:var(--apagado);font-weight:700}
+
+/* ---------- Formularios ---------- */
+.form{display:grid;grid-template-columns:1fr 1fr;gap:20px 22px}
+.campo{display:flex;flex-direction:column;gap:7px}
+.campo.ancho{grid-column:1/-1}
+.campo label{font-size:13.5px;font-weight:700;letter-spacing:-.005em}
+.campo label em{font-style:normal;color:var(--apagado);font-weight:500;margin-left:6px}
+.campo .caja-c{background:var(--sup);border:1px solid var(--hilo);border-radius:11px;padding:12px 15px;
+               font-size:14.5px;color:var(--tinta);display:flex;align-items:center;gap:9px;min-height:46px}
+.campo .caja-c.vacio{color:var(--apagado)}
+.campo .caja-c.alto{align-items:flex-start;min-height:96px;line-height:1.6}
+.campo .caja-c svg{color:var(--apagado)}
+.campo .ayuda{font-size:12.5px;color:var(--apagado);line-height:1.5}
+.campo .ayuda.ojo{color:var(--medio-av)}
+
+.opt{display:flex;gap:11px;align-items:flex-start;background:var(--sup);border:1px solid var(--hilo);
+     border-radius:12px;padding:14px 16px;cursor:default}
+.opt.on{border-color:var(--marca);background:var(--marca-suave)}
+.mar{width:19px;height:19px;border-radius:50%;border:2px solid var(--hilo);flex-shrink:0;margin-top:1px}
+.opt.on .mar{border-color:var(--marca);background:var(--marca);box-shadow:inset 0 0 0 3.5px #fff}
+.mar.cua{border-radius:6px}
+.opt b{display:block;font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+.opt span{font-size:13px;color:var(--apagado);line-height:1.5}
+
+.interr{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 0;
+        border-top:1px solid var(--hilo-suave)}
+.interr:first-child{border-top:0}
+.interr b{font-size:14.5px;font-weight:700}
+.interr span{display:block;font-size:13px;color:var(--apagado);line-height:1.5;margin-top:2px}
+.palanca{width:44px;height:25px;border-radius:99px;background:var(--hilo);position:relative;flex-shrink:0}
+.palanca:after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;
+               background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.palanca.on{background:var(--marca)}
+.palanca.on:after{left:22px}
+
+.pie-form{display:flex;justify-content:flex-end;gap:11px;padding:20px 24px;
+          border-top:1px solid var(--hilo-suave);background:var(--fondo)}
+
+/* ---------- Linea de tiempo del expediente ---------- */
+.hilo-t{position:relative;padding-left:40px}
+.hilo-t:before{content:"";position:absolute;left:15px;top:12px;bottom:12px;width:2px;background:var(--hilo)}
+.pieza{position:relative;margin-bottom:16px}
+.pieza:last-child{margin-bottom:0}
+.pieza .mota{position:absolute;left:-40px;top:2px;width:32px;height:32px;border-radius:50%;
+             background:var(--sup);border:2px solid var(--hilo);display:grid;place-items:center;
+             color:var(--apagado)}
+.pieza.doc .mota{border-color:var(--marca-media);background:var(--marca-suave);color:var(--marca)}
+.pieza.act .mota{border-color:var(--marca);background:var(--marca);color:#fff}
+.pieza.nota .mota{border-color:var(--medio-suave);background:var(--medio-suave);color:var(--medio-av)}
+.pieza .ficha{background:var(--sup);border-radius:14px;box-shadow:var(--sombra);padding:17px 20px}
+.pieza.nota .ficha{background:var(--medio-suave);box-shadow:none;border:1px dashed #E4D2AE}
+.pieza .arr{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:7px}
+.pieza .arr b{font-size:15.5px;font-weight:700;letter-spacing:-.015em}
+.pieza .cuerpo{font-size:14px;color:var(--medio);line-height:1.6}
+.pieza .sello{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--apagado);
+              margin-top:11px;padding-top:11px;border-top:1px solid var(--hilo-suave)}
+.pieza.nota .sello{border-top-color:#E9DBBC}
+.adj{display:inline-flex;align-items:center;gap:9px;background:var(--fondo);border:1px solid var(--hilo);
+     border-radius:10px;padding:9px 13px;font-size:13.5px;font-weight:600;margin-top:11px}
+.adj span{color:var(--apagado);font-weight:500;font-size:12.5px}
+
+/* ---------- Barras de reporte ---------- */
+.br{margin-bottom:17px}
+.br:last-child{margin-bottom:0}
+.br .fil{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;margin-bottom:7px}
+.br .fil b{font-weight:700}
+.br .fil span{color:var(--apagado);font-weight:700;font-variant-numeric:tabular-nums}
+.via{height:9px;border-radius:5px;background:var(--hilo-suave);overflow:hidden}
+.via i{display:block;height:100%;border-radius:5px;background:var(--marca)}
+.via i.cero{background:var(--hilo)}
+.via i.amb{background:var(--medio-av)}
+.via i.roj{background:var(--alto)}
+
+/* ---------- Vacio ---------- */
+.vacio{text-align:center;padding:44px 30px}
+.vacio .bola{width:52px;height:52px;border-radius:16px;background:var(--marca-suave);color:var(--marca);
+             display:grid;place-items:center;margin:0 auto 15px}
+.vacio b{display:block;font-size:16.5px;font-weight:700;letter-spacing:-.02em}
+.vacio span{display:block;font-size:14px;color:var(--apagado);margin-top:5px;line-height:1.6;
+            max-width:380px;margin-left:auto;margin-right:auto}
+
+/* ---------- Pantallas sin marco (ingreso) ---------- */
+.app.suelta{grid-template-columns:1fr}
+
+/* ---------- Aviso en linea ---------- */
+.franja{display:flex;gap:13px;align-items:flex-start;border-radius:14px;padding:15px 18px;
+        font-size:13.5px;line-height:1.6}
+.franja.marca{background:var(--marca-suave);color:var(--medio)}
+.franja.ambar{background:var(--medio-suave);color:#7A5210}
+.franja.roja{background:var(--alto-suave);color:#8C4136}
+.franja b{font-weight:700;color:var(--tinta)}
+.franja svg{flex-shrink:0;margin-top:1px}
