@@ -50,6 +50,30 @@ export class Autenticacion {
   readonly esAbogado = computed(
     () => this._sesion()?.roles.includes('ABOGADO') ?? false);
 
+  readonly esCliente = computed(
+    () => this._sesion()?.roles.includes('CLIENTE') ?? false);
+
+  /**
+   * Solo cliente y nada más.
+   *
+   * <p>Se comprueba así y no con {@code esCliente()} a secas porque un usuario
+   * podría acumular roles (RN-08). Quien además es abogado trabaja en el
+   * despacho; el portal es para quien SOLO es cliente.
+   */
+  readonly soloCliente = computed(() => {
+    const roles = this._sesion()?.roles ?? [];
+    return roles.length > 0 && roles.every(r => r === 'CLIENTE');
+  });
+
+  /**
+   * Dónde aterriza cada quien al entrar.
+   *
+   * <p>Mandar a todo el mundo al panel del despacho dejaba al cliente en una
+   * pantalla que le devuelve 403 en cada consulta: vería el sistema roto
+   * cuando lo que pasa es que ese sitio no es suyo.
+   */
+  readonly rutaInicial = computed(() => this.soloCliente() ? '/portal' : '/vencimientos');
+
   /**
    * Pregunta al backend quién está dentro.
    *

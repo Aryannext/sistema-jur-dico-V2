@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { exigeAnonimo, exigeSesion } from './nucleo/sesion.guard';
+import { exigeAnonimo, exigeCliente, exigeDespacho, exigeSesion } from './nucleo/sesion.guard';
 
 /**
  * Las rutas del despacho.
@@ -19,7 +19,7 @@ export const routes: Routes = [
   },
   {
     path: '',
-    canActivate: [exigeSesion],
+    canActivate: [exigeDespacho],
     loadComponent: () => import('./despacho/marco/marco').then(m => m.Marco),
     children: [
       {
@@ -77,11 +77,6 @@ export const routes: Routes = [
           import('./despacho/clientes/ficha-cliente').then(m => m.FichaCliente),
       },
       {
-        path: 'mi-cuenta',
-        title: 'Mi cuenta · Iuris',
-        loadComponent: () => import('./cuenta/mi-cuenta').then(m => m.MiCuenta),
-      },
-      {
         path: 'usuarios',
         title: 'Usuarios y roles · Iuris',
         loadComponent: () => import('./cuenta/usuarios').then(m => m.Usuarios),
@@ -107,9 +102,39 @@ export const routes: Routes = [
         title: 'Historial de alertas · Iuris',
         loadComponent: () => import('./despacho/alertas/historial').then(m => m.HistorialAlertas),
       },
+      {
+        path: 'mi-cuenta',
+        title: 'Mi cuenta · Iuris',
+        loadComponent: () => import('./cuenta/mi-cuenta').then(m => m.MiCuenta),
+      },
       { path: '', pathMatch: 'full', redirectTo: 'vencimientos' },
     ],
   },
+  {
+    path: 'portal',
+    canActivate: [exigeCliente],
+    loadComponent: () => import('./portal/marco-portal').then(m => m.MarcoPortal),
+    children: [
+      {
+        path: 'procesos',
+        title: 'Mis procesos · Iuris',
+        loadComponent: () => import('./portal/mis-procesos').then(m => m.MisProcesos),
+      },
+      {
+        path: 'procesos/:id',
+        title: 'Mi proceso · Iuris',
+        loadComponent: () => import('./portal/mi-proceso').then(m => m.MiProceso),
+      },
+      {
+        path: 'mi-cuenta',
+        title: 'Mi cuenta · Iuris',
+        loadComponent: () => import('./cuenta/mi-cuenta').then(m => m.MiCuenta),
+      },
+      { path: 'audiencias', pathMatch: 'full', redirectTo: 'procesos' },
+      { path: '', pathMatch: 'full', redirectTo: 'procesos' },
+    ],
+  },
+
   // Lo que no exista lleva al panel, no a una pantalla en blanco.
   { path: '**', redirectTo: '' },
 ];

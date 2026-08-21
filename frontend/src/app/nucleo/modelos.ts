@@ -157,3 +157,49 @@ export interface Alerta {
   intentos: number;
   detalleError: string | null;
 }
+
+// --- Portal del cliente -------------------------------------------
+//
+// Los modelos del portal son DISTINTOS y más estrechos que los del despacho,
+// y eso no es duplicación: es la garantía. La pieza que ve el cliente no
+// tiene campo `autor`, ni `visibleParaCliente`, ni `origen` — el backend no
+// se los envía, así que aquí no hay dónde ponerlos aunque alguien quisiera.
+// Reutilizar el modelo del despacho abriría un hueco por el que un día
+// entraría un dato interno.
+
+/** GET /api/portal/mi-perfil */
+export interface PerfilCliente {
+  nombre: string;
+  despacho: string;
+}
+
+/** GET /api/portal/mis-procesos */
+export interface ProcesoDelCliente {
+  id: number;
+  radicado: string;
+  juzgado: string;
+  tipoProceso: string;
+  estadoProcesal: string;
+  descripcion: string | null;
+  fechaInicio: string;
+}
+
+/** GET /api/portal/procesos/{id}/expediente — RF-29 · RF-30. */
+export interface PiezaDelCliente {
+  id: number;
+  tipo: 'DOCUMENTO' | 'ACTUACION';
+  tipoParaMostrar: string;
+  descripcion: string | null;
+  fechaActuacion: string | null;
+  clasificacion: string | null;
+  registradoEn: string;
+  descargable: boolean;
+}
+
+/** GET /api/portal/mis-audiencias */
+export interface AudienciaDelCliente {
+  id: number;
+  fechaHora: string;
+  lugar: string | null;
+  radicado: string;
+}
