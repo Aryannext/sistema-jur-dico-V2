@@ -52,6 +52,18 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./despacho/terminos/terminos').then(m => m.Terminos),
       },
+      {
+        path: 'audiencias',
+        title: 'Audiencias · Iuris',
+        loadComponent: () =>
+          import('./despacho/audiencias/calendario').then(m => m.Calendario),
+      },
+      {
+        path: 'procesos/:id/audiencias',
+        title: 'Audiencias del proceso · Iuris',
+        loadComponent: () =>
+          import('./despacho/audiencias/audiencias-proceso').then(m => m.AudienciasDeProceso),
+      },
       { path: '', pathMatch: 'full', redirectTo: 'vencimientos' },
     ],
   },

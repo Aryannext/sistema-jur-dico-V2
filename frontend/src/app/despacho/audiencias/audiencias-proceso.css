@@ -1,0 +1,75 @@
+/* Audiencias de un proceso. Lo compartido viene de src/styles.css, generado
+   desde diseno/mockups/_base/. */
+
+:host {
+  display: block;
+}
+
+.registrar {
+  margin-bottom: 24px;
+}
+
+/* Cuatro campos y el botón en una línea. Se ve de un golpe que programar una
+   audiencia es cosa de segundos, que es lo que hace que se registre en el
+   sistema en lugar de en un papel. */
+.campos {
+  display: grid;
+  grid-template-columns: 150px 120px 1fr 1fr auto;
+  gap: 16px;
+  align-items: end;
+  padding: 18px 24px 4px;
+}
+.campos .campo { min-width: 0; }
+.campos input {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  outline: none;
+  width: 100%;
+  padding: 0;
+}
+.campos input::placeholder { color: var(--apagado); }
+.campos .btn { height: 46px; }
+
+.registrar .pie-nota {
+  margin: 16px 24px 20px;
+}
+
+.cita.grande {
+  align-items: center;
+  padding: 18px 24px;
+}
+.cita.grande .c {
+  flex: 1;
+  min-width: 0;
+}
+.cita .c .eti {
+  display: inline-flex;
+}
+
+.asistencia {
+  display: flex;
+  gap: 9px;
+  flex-shrink: 0;
+}
+.asistencia .btn {
+  padding: 8px 14px;
+  font-size: 13.5px;
+}
+
+/* Las celebradas van con el bloque de fecha apagado: son historial, no
+   agenda, y no deben competir por la atención con lo que aún no ha pasado. */
+.dia.apagado {
+  background: var(--hilo-suave);
+}
+.dia.apagado b,
+.dia.apagado span {
+  color: var(--apagado);
+}
+
+@media (max-width: 1000px) {
+  .campos { grid-template-columns: 1fr 1fr; }
+  .cita.grande { flex-wrap: wrap; }
+  .asistencia { width: 100%; }
+}

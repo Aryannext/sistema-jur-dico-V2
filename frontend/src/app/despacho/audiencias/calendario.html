@@ -1,0 +1,125 @@
+<main>
+  <div class="pag">
+    <div>
+      <h1>Audiencias</h1>
+      <p>{{ vigilancia.proximasAudiencias().length }} audiencia(s) programada(s) · los términos también salen aquí</p>
+    </div>
+    <div class="util">
+      @if (!esMesActual()) {
+        <button class="btn fantasma" type="button" (click)="volverAHoy()">Volver a hoy</button>
+      }
+      <button class="btn fantasma" type="button" (click)="refrescar()" [disabled]="vigilancia.cargando()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5A8 8 0 1 0 18.5 16"/><path d="M20 6v5.5h-5.5"/></svg>
+        Actualizar
+      </button>
+    </div>
+  </div>
+
+  <div class="dos">
+    <section class="mes">
+      <div class="mes-cab">
+        <h2>{{ titulo() }}</h2>
+        <div class="flechas">
+          <button type="button" (click)="mesAnterior()" aria-label="Mes anterior">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg>
+          </button>
+          <button type="button" (click)="mesSiguiente()" aria-label="Mes siguiente">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="sem-cab">
+        <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
+      </div>
+
+      <div class="rejilla-mes">
+        @for (semana of semanas(); track $index) {
+          @for (casilla of semana; track casilla.fecha.getTime()) {
+            <div class="dia-c"
+                 [class.fuera]="!casilla.delMes"
+                 [class.finde]="casilla.finDeSemana && casilla.delMes"
+                 [class.festivo]="casilla.festivo && casilla.delMes"
+                 [class.hoy]="casilla.hoy">
+              <span class="n">{{ casilla.dia }}</span>
+
+              @if (casilla.festivo && casilla.delMes) {
+                <span class="fest">{{ casilla.festivo }}</span>
+              }
+
+              @for (a of casilla.audiencias; track a.id) {
+                <a class="cita-c" [routerLink]="['/procesos', a.procesoId]">
+                  {{ a.que }}<em>{{ a.hora }}</em>
+                </a>
+              }
+
+              @for (t of casilla.terminos; track t.id) {
+                <a class="term-c" [routerLink]="['/procesos', t.procesoId, 'terminos']">
+                  <i [class]="t.urgencia"></i>{{ t.que }}
+                </a>
+              }
+            </div>
+          }
+        }
+      </div>
+
+      <div class="leyenda">
+        <span><i class="cua"></i>Audiencia</span>
+        <span><i class="roj"></i>Término vencido</span>
+        <span><i class="amb"></i>Término por vencer</span>
+        <span><i class="fes"></i>Festivo</span>
+      </div>
+    </section>
+
+    <div>
+      <section class="caja" style="margin-bottom:24px">
+        <header><h3>Próximas audiencias</h3><span>{{ vigilancia.proximasAudiencias().length }}</span></header>
+
+        @for (a of vigilancia.proximasAudiencias(); track a.id) {
+          <div class="cita">
+            <div class="dia">
+              <b>{{ diaDe(a.fechaHora) }}</b>
+              <span>{{ mesDe(a.fechaHora) }}</span>
+            </div>
+            <div class="c">
+              <b>{{ a.observaciones || 'Audiencia' }}</b>
+              @if (a.lugar) { <span>{{ a.lugar }}</span> }
+              <span>Radicado {{ a.radicado }}</span>
+              <span class="hr">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>
+                {{ fechaHoraCorta(a.fechaHora) }}
+              </span>
+              <a class="ir" [routerLink]="['/procesos', a.procesoId]" style="margin-top:8px">
+                Abrir expediente
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+              </a>
+            </div>
+          </div>
+        } @empty {
+          <div class="vacio">
+            <div class="bola">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
+            </div>
+            <b>Sin audiencias programadas</b>
+            <span>Las que registre en sus procesos aparecerán aquí, con sus tres avisos automáticos.</span>
+          </div>
+        }
+      </section>
+
+      <section class="caja">
+        <header><h3>Sobre los festivos</h3></header>
+        <div style="padding:14px 24px 22px">
+          <!-- Se dice sin adornos lo que el sistema hace y lo que NO hace.
+               Dejar creer que cuenta días hábiles sería peor que no marcarlos. -->
+          <p class="franja ambar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
+            <span>Los festivos se marcan según la <b>Ley Emiliani</b>, que traslada varios al lunes siguiente. Sirven para no fijar un plazo en un día inhábil.</span>
+          </p>
+          <p style="font-size:13.5px;color:var(--apagado);line-height:1.6;margin-top:14px">
+            <b style="color:var(--tinta)">El sistema no cuenta días hábiles.</b> La fecha de vencimiento de un término es la que usted escribe, y esa es la que se vigila. Si el juzgado cuenta distinto, manda el juzgado.
+          </p>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>

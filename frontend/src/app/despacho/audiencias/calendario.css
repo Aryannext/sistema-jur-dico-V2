@@ -1,0 +1,89 @@
+/* Calendario del despacho.
+   Origen: diseno/mockups/pantallas/audiencias.html — el bloque <style> de esa
+   pantalla, copiado tal cual. Lo compartido (tokens, tipografia, componentes)
+   llega por src/styles.css, que se genera. Esto es lo propio de ESTA pantalla.
+   Debajo van los anadidos que una lamina no necesita: navegacion de mes,
+   enlaces reales y foco visible. */
+
+:host { display: block; }
+.mes{background:var(--sup);border-radius:18px;box-shadow:var(--sombra);overflow:hidden}
+  .mes-cab{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px}
+  .mes-cab h2{font-size:20px;font-weight:800;letter-spacing:-.03em}
+  .flechas{display:flex;gap:7px}
+  .flechas span{width:34px;height:34px;border-radius:10px;border:1px solid var(--hilo);display:grid;
+                place-items:center;color:var(--medio)}
+  .sem-cab{display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--hilo-suave)}
+  .sem-cab div{padding:11px 0;text-align:center;font-size:11.5px;font-weight:700;letter-spacing:.09em;
+               text-transform:uppercase;color:var(--apagado)}
+  .rejilla-mes{display:grid;grid-template-columns:repeat(7,1fr)}
+  .dia-c{min-height:112px;padding:9px 10px;border-top:1px solid var(--hilo-suave);
+         border-right:1px solid var(--hilo-suave);display:flex;flex-direction:column;gap:5px}
+  .dia-c:nth-child(7n){border-right:0}
+  .dia-c.finde{background:#FAFBFA}
+  .dia-c.fuera{background:#FAFBFA;color:var(--hilo)}
+  .dia-c .n{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .dia-c.fuera .n{color:#C6CEC9;font-weight:600}
+  .dia-c.hoy .n{background:var(--marca);color:#fff;width:27px;height:27px;border-radius:50%;
+                display:grid;place-items:center;margin:-3px 0 0 -3px}
+  .fest{font-size:10.5px;font-weight:700;color:var(--medio-av);letter-spacing:-.01em;line-height:1.25}
+  .dia-c.festivo{background:var(--medio-suave)}
+  .cita-c{background:var(--marca);color:#fff;border-radius:8px;padding:5px 8px;font-size:11.5px;
+          font-weight:700;line-height:1.35;letter-spacing:-.01em}
+  .cita-c em{display:block;font-style:normal;font-weight:600;opacity:.82;font-size:10.5px}
+  .term-c{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--medio);
+          line-height:1.3}
+  .term-c i{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:var(--hilo)}
+  .term-c i.roj{background:var(--alto)}
+  .term-c i.amb{background:var(--medio-av)}
+  .leyenda{display:flex;gap:20px;flex-wrap:wrap;padding:16px 24px;border-top:1px solid var(--hilo-suave);
+           font-size:12.5px;color:var(--apagado);font-weight:600}
+  .leyenda span{display:flex;align-items:center;gap:8px}
+  .leyenda i{width:9px;height:9px;border-radius:50%;background:var(--hilo)}
+  .leyenda i.cua{border-radius:3px;background:var(--marca);width:12px;height:12px}
+  .leyenda i.roj{background:var(--alto)} .leyenda i.amb{background:var(--medio-av)}
+  .leyenda i.fes{background:var(--medio-suave);border:1px solid #E4D2AE;border-radius:3px;width:12px;height:12px}
+
+/* --- Lo que la lamina no tenia -------------------------------- */
+
+/* Las flechas del mes son botones de verdad: se alcanzan con el tabulador. */
+.flechas button {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--hilo);
+  background: var(--sup);
+  display: grid;
+  place-items: center;
+  color: var(--medio);
+  cursor: pointer;
+}
+.flechas button:hover {
+  border-color: var(--marca);
+  color: var(--marca);
+}
+
+/* Las marcas del calendario llevan a alguna parte: la audiencia al
+   expediente, el termino a sus plazos. En el mockup eran adornos. */
+a.cita-c, a.term-c {
+  text-decoration: none;
+  display: block;
+}
+a.cita-c:hover { filter: brightness(1.12); }
+a.term-c {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--medio);
+}
+a.term-c:hover { color: var(--tinta); }
+
+/* La rejilla siempre tiene seis semanas, aunque el mes quepa en cinco: si
+   cambiara de alto al pasar de mes, lo de abajo saltaria en cada clic. */
+.rejilla-mes { grid-auto-rows: minmax(112px, auto); }
+
+.dia-c.hoy .n { background: var(--marca); color: #fff; }
+
+@media (max-width: 1200px) {
+  .dos { grid-template-columns: 1fr; }
+  .dia-c { min-height: 92px; font-size: 12px; }
+}
