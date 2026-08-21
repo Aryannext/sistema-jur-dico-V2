@@ -1,0 +1,36 @@
+/* Añadidos del panel real. Lo compartido viene de src/styles.css, generado
+   desde diseno/mockups/_base/. */
+
+:host {
+  display: block;
+}
+
+/* En el mockup la fecha del término vencido no hacía falta porque el texto
+   la llevaba dentro. Aquí el texto dice «hace 5 días» y la fecha exacta
+   sigue haciendo falta: para responderle al juzgado no sirve «hace unos
+   días». */
+.fecha-seca {
+  font-size: 12.5px;
+  color: var(--apagado);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.term .rad {
+  font-size: 12.5px;
+  color: #9AA5A1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Con un solo término vencido la tarjeta no debe ocupar media pantalla
+   estirada: se queda a su ancho y la otra mitad respira. */
+.par:has(> .caso:only-child) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+@media (max-width: 1100px) {
+  .dos { grid-template-columns: 1fr; }
+  .par { grid-template-columns: 1fr; }
+  .cifras { grid-template-columns: 1fr; }
+}

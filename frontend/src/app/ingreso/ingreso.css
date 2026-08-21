@@ -1,0 +1,140 @@
+/* Estilos propios de la pantalla de ingreso.
+   Origen: diseno/mockups/pantallas/ingreso.html
+   Lo compartido -tokens, tipografia, componentes- llega por src/styles.css,
+   que se genera desde los mockups. Aqui solo va lo que es de ESTA pantalla. */
+
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.app.suelta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+}
+
+.lienzo {
+  background: var(--marca);
+  color: #fff;
+  padding: 56px 60px;
+  display: flex;
+  flex-direction: column;
+}
+.lienzo .sello {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, .14);
+  display: grid;
+  place-items: center;
+  margin-bottom: auto;
+}
+.lienzo h2 {
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -.04em;
+  line-height: 1.16;
+  max-width: 13ch;
+  text-wrap: balance;
+}
+.lienzo p {
+  font-size: 16px;
+  line-height: 1.65;
+  color: #BEDCD4;
+  margin-top: 20px;
+  max-width: 42ch;
+}
+.lienzo .firma {
+  margin-top: 38px;
+  padding-top: 26px;
+  border-top: 1px solid rgba(255, 255, 255, .16);
+  font-size: 13.5px;
+  color: #9CC8BD;
+  line-height: 1.6;
+}
+
+.puerta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px;
+  background: var(--fondo);
+}
+.caja-ent {
+  width: 100%;
+  max-width: 396px;
+}
+.caja-ent h1 {
+  font-size: 31px;
+  font-weight: 800;
+  letter-spacing: -.035em;
+}
+.caja-ent .bien {
+  color: var(--apagado);
+  font-size: 14.5px;
+  margin: 6px 0 30px;
+}
+.caja-ent .campo {
+  margin-bottom: 18px;
+}
+.campo label.con-enlace {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.link-fino {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--marca);
+  text-decoration: none;
+}
+
+/* El ojo para ver la contraseña. Existe porque escribir una clave larga a
+   ciegas en un teclado de portátil es la primera causa de "no me deja
+   entrar" — y el usuario acaba culpando al sistema. */
+.ojo {
+  margin-left: auto;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--apagado);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.ojo:hover { color: var(--medio); }
+
+.btn.lleno {
+  width: 100%;
+  justify-content: center;
+  padding: 14px;
+  font-size: 15px;
+  margin-top: 6px;
+}
+.girando.claro {
+  border-color: rgba(255, 255, 255, .35);
+  border-top-color: #fff;
+}
+
+.franja.roja {
+  margin-top: 20px;
+}
+
+.pie-ent {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid var(--hilo);
+  font-size: 13px;
+  color: var(--apagado);
+  line-height: 1.6;
+}
+.pie-ent b { color: var(--tinta); }
+
+/* En pantallas estrechas el panel de la izquierda estorba: lo que hay que
+   hacer ahí es entrar, no leer la promesa del producto. */
+@media (max-width: 900px) {
+  .app.suelta { grid-template-columns: 1fr; }
+  .lienzo { display: none; }
+  .puerta { padding: 32px 20px; }
+}

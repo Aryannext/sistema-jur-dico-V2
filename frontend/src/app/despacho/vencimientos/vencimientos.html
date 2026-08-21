@@ -1,0 +1,177 @@
+<main>
+  <div class="saludo">
+    <div>
+      <h1>{{ saludo() }}, {{ primerNombre() }}</h1>
+      <p>{{ hoy() }} · el sistema revisa sus términos todos los días a las 6:00 a.m.</p>
+    </div>
+    <div class="util">
+      <button class="btn fantasma" type="button" (click)="refrescar()" [disabled]="vigilancia.cargando()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5A8 8 0 1 0 18.5 16"/><path d="M20 6v5.5h-5.5"/></svg>
+        Actualizar
+      </button>
+    </div>
+  </div>
+
+  @if (vigilancia.cargando() && !vigilancia.resumen()) {
+    <div class="caja">
+      <div class="cargando"><span class="girando"></span> Consultando sus vencimientos…</div>
+    </div>
+
+  } @else if (vigilancia.error(); as fallo) {
+    <!-- No se muestran datos viejos junto a un aviso pequeño: un panel de
+         vencimientos desactualizado que parece al día es peor que uno que
+         reconoce que falló. -->
+    <section class="caja">
+      <div class="vacio">
+        <div class="bola" style="background:var(--alto-suave);color:var(--alto)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        </div>
+        <b>No se pudieron cargar sus vencimientos</b>
+        <span>{{ fallo }}</span>
+        <button class="btn" type="button" (click)="refrescar()" style="margin:18px auto 0">Reintentar</button>
+      </div>
+    </section>
+
+  } @else {
+
+    <!-- Lo único que de verdad importa al abrir -->
+    @if (vigilancia.vencidos().length > 0) {
+      <section class="critico">
+        <div class="enc">
+          <div class="ico">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8v5"/><circle cx="12" cy="16.6" r="1.1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          </div>
+          <h2>
+            @if (vigilancia.vencidos().length === 1) {
+              Un término vencido
+            } @else {
+              {{ vigilancia.vencidos().length }} términos vencidos
+            }
+          </h2>
+        </div>
+        <p class="dice">Pasaron su fecha sin que nadie registrara el cumplimiento. Siguen aquí hasta que se cierren.</p>
+
+        <div class="par">
+          @for (termino of vigilancia.vencidos(); track termino.id) {
+            <article class="caso">
+              <div class="q">{{ termino.descripcion }}</div>
+              <div class="d">
+                <b>Radicado {{ termino.radicado }}</b>
+                @if (termino.destinatarioAlertas) {
+                  <br>Responsable: {{ termino.destinatarioAlertas }}
+                }
+              </div>
+              <div class="abajo">
+                <span class="cuanto">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>
+                  {{ cuanto(termino) }}
+                </span>
+                <span class="fecha-seca">{{ fechaCorta(termino.fechaVencimiento) }}</span>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    }
+
+    <div class="cifras">
+      <dl class="cif">
+        <div class="bola amb">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3.5 2"/></svg>
+        </div>
+        <div>
+          <dt>Términos por vencer</dt>
+          <dd>{{ vigilancia.porVencer().length }}</dd>
+        </div>
+      </dl>
+      <dl class="cif">
+        <div class="bola">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
+        </div>
+        <div>
+          <dt>Audiencias programadas</dt>
+          <dd>{{ vigilancia.proximasAudiencias().length }}</dd>
+        </div>
+      </dl>
+      <dl class="cif">
+        <div class="bola">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5a2 2 0 0 1 2-2H10l2 2.5h6.5a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg>
+        </div>
+        <div>
+          <dt>Procesos activos</dt>
+          <dd>
+            {{ vigilancia.resumen()?.procesosNoArchivados ?? 0 }}
+            <em>de {{ vigilancia.resumen()?.totalProcesos ?? 0 }}</em>
+          </dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="dos">
+      <section class="caja">
+        <header>
+          <h3>Lo que viene</h3>
+          <span>{{ vigilancia.porVencer().length }} término(s)</span>
+        </header>
+
+        @for (termino of vigilancia.porVencer(); track termino.id) {
+          <div class="term">
+            <span class="sem" [class]="'sem ' + urgencia(termino)"></span>
+            <div class="txt">
+              <b>{{ termino.descripcion }}</b>
+              <span>{{ termino.estadoDescripcion }}@if (termino.destinatarioAlertas) { · {{ termino.destinatarioAlertas }}}</span>
+            </div>
+            <div class="rad">{{ termino.radicado }}</div>
+            <div class="cd">
+              <b [class.urge]="urgencia(termino) !== 'ok'">{{ cuanto(termino) }}</b>
+              <span>{{ fechaCorta(termino.fechaVencimiento) }}</span>
+            </div>
+          </div>
+        } @empty {
+          <div class="vacio">
+            <div class="bola">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7"/></svg>
+            </div>
+            <b>No hay términos por vencer</b>
+            <span>Cuando registre uno en un proceso, aparecerá aquí y el sistema empezará a avisarle.</span>
+          </div>
+        }
+      </section>
+
+      <div>
+        <section class="caja">
+          <header>
+            <h3>Agenda</h3>
+            <span>{{ vigilancia.proximasAudiencias().length }}</span>
+          </header>
+
+          @for (audiencia of vigilancia.proximasAudiencias(); track audiencia.id) {
+            <div class="cita">
+              <div class="dia">
+                <b>{{ diaDe(audiencia.fechaHora) }}</b>
+                <span>{{ mesDe(audiencia.fechaHora) }}</span>
+              </div>
+              <div class="c">
+                <b>{{ audiencia.observaciones || 'Audiencia' }}</b>
+                @if (audiencia.lugar) { <span>{{ audiencia.lugar }}</span> }
+                <span>Radicado {{ audiencia.radicado }}</span>
+                <span class="hr">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>
+                  {{ fechaHoraCorta(audiencia.fechaHora) }}
+                </span>
+              </div>
+            </div>
+          } @empty {
+            <div class="vacio">
+              <div class="bola">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
+              </div>
+              <b>Sin audiencias programadas</b>
+              <span>Las que registre en sus procesos aparecerán aquí, con sus tres avisos automáticos.</span>
+            </div>
+          }
+        </section>
+      </div>
+    </div>
+  }
+</main>

@@ -1,0 +1,78 @@
+<div class="app suelta">
+  <div class="lienzo">
+    <div class="sello">
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3v18M5 7h14M7 7l-3 7h6zM17 7l-3 7h6z"/><path d="M4 14a3 3 0 0 0 6 0M14 14a3 3 0 0 0 6 0"/>
+      </svg>
+    </div>
+
+    <h2>El término no espera a que usted se acuerde.</h2>
+    <p>Iuris vigila los plazos y las audiencias de su despacho, y avisa antes &mdash; no después. Los expedientes quedan en un solo lugar, y sus clientes consultan lo suyo sin llamar a preguntar.</p>
+
+    <div class="firma">
+      Sistema de gestión de procesos jurídicos<br>
+      Neiva, Huila &middot; Colombia
+    </div>
+  </div>
+
+  <div class="puerta">
+    <form class="caja-ent" (submit)="entrar($event)" novalidate>
+      <h1>Entrar</h1>
+      <p class="bien">Con el correo que le dio su despacho.</p>
+
+      <div class="campo">
+        <label for="correo">Correo</label>
+        <div class="caja-c">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m3.7 7 8.3 6 8.3-6"/></svg>
+          <input id="correo" name="correo" type="email" autocomplete="username"
+                 placeholder="nombre@sudespacho.co" [value]="correo()"
+                 (input)="escribirCorreo($event)" [disabled]="enviando()" autofocus>
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="clave" class="con-enlace">
+          Contraseña
+          <a class="link-fino" href="#" (click)="$event.preventDefault()">¿La olvidó?</a>
+        </label>
+        <div class="caja-c">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>
+          <input id="clave" name="contrasena" [type]="verClave() ? 'text' : 'password'"
+                 autocomplete="current-password" placeholder="Su contraseña"
+                 [value]="contrasena()" (input)="escribirContrasena($event)"
+                 [disabled]="enviando()">
+          <button type="button" class="ojo" (click)="verClave.set(!verClave())"
+                  [attr.aria-label]="verClave() ? 'Ocultar la contraseña' : 'Mostrar la contraseña'">
+            @if (verClave()) {
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 6.3A9.8 9.8 0 0 1 12 6.2c5 0 9 4.3 9 5.8 0 .7-.9 2-2.3 3.2M6.4 8.2C4.3 9.6 3 11.3 3 12c0 1.5 4 5.8 9 5.8 1.2 0 2.3-.25 3.3-.65"/></svg>
+            } @else {
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="2.6"/></svg>
+            }
+          </button>
+        </div>
+      </div>
+
+      <button class="btn lleno" type="submit" [disabled]="enviando()">
+        @if (enviando()) {
+          <span class="girando claro"></span> Entrando…
+        } @else {
+          Entrar
+        }
+      </button>
+
+      <!-- El aviso ocupa sitio solo cuando hay algo que decir, y se anuncia
+           a los lectores de pantalla: quien no ve la pantalla también tiene
+           que enterarse de que la contraseña no era. -->
+      @if (error(); as mensaje) {
+        <p class="franja roja" role="alert">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          <span>{{ mensaje }}</span>
+        </p>
+      }
+
+      <p class="pie-ent">
+        <b>No hay botón de «crear cuenta»</b>, y no es un olvido. Los usuarios los crea el despacho, y a los clientes los habilita su abogado. Si alguien pudiera registrarse solo, cualquiera reclamaría el expediente de otra persona.
+      </p>
+    </form>
+  </div>
+</div>
