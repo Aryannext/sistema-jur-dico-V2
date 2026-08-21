@@ -37,3 +37,23 @@ sgpj.administrador-inicial.nombre=Administrador de Plataforma
 # proposito: no hay clave por defecto porque estaria en el repositorio.
 # Generar:  openssl rand -base64 32
 sgpj.documentos.clave=CAMBIE-ESTA-CLAVE-BASE64-DE-32-BYTES
+
+# --- Correo de las alertas (D-03) ----------------------------
+# En local dejelo en "registro": las alertas se escriben en el log
+# con todo su contenido y no se envia nada a nadie. El flujo completo
+# -programar, barrer, emitir, marcar enviada- se ejercita igual.
+#
+#   registro = escribe en el log, NO envia
+#   smtp     = envio real (OBLIGATORIO en el VPS, D-23)
+#   fallo    = falla siempre, para verificar RNF-08
+sgpj.correo.modo=registro
+
+# Para probar el envio real desde su maquina, descomente y complete.
+# Con Gmail hace falta una "contrasena de aplicacion", no la del
+# correo. Ojo: esto envia correos DE VERDAD a direcciones reales.
+#sgpj.correo.modo=smtp
+#sgpj.correo.remitente=alertas@sudominio.co
+#spring.mail.host=smtp.gmail.com
+#spring.mail.port=587
+#spring.mail.username=CAMBIE-ESTE-CORREO
+#spring.mail.password=CAMBIE-ESTA-CLAVE-DE-APLICACION

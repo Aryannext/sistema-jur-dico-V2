@@ -1,10 +1,21 @@
 package co.iuris.sgpj.alertas.infraestructura;
 
 import co.iuris.sgpj.alertas.aplicacion.EmisorCorreo;
+import jakarta.annotation.PostConstruct;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * Emisor de correo con tres modos de operación.
@@ -37,11 +48,21 @@ public class EmisorCorreoConfigurable implements EmisorCorreo {
     private final String modo;
     private final String remitente;
 
+    /**
+     * Se pide como proveedor y no como dependencia directa porque
+     * {@link JavaMailSender} solo existe si hay {@code spring.mail.host}
+     * configurado. En modo registro no lo hay, y exigirlo impediría arrancar el
+     * sistema en desarrollo — que es donde más se arranca.
+     */
+    private final ObjectProvider<JavaMailSender> proveedorCorreo;
+
     public EmisorCorreoConfigurable(
             @Value("${sgpj.correo.modo:registro}") String modo,
-            @Value("${sgpj.correo.remitente:alertas@iuris.co}") String remitente) {
+            @Value("${sgpj.correo.remitente:alertas@iuris.co}") String remitente,
+            ObjectProvider<JavaMailSender> proveedorCorreo) {
         this.modo = modo == null ? "registro" : modo.trim().toLowerCase();
         this.remitente = remitente;
+        this.proveedorCorreo = proveedorCorreo;
 
         if ("registro".equals(this.modo)) {
             registro.warn("""
@@ -49,6 +70,44 @@ public class EmisorCorreoConfigurable implements EmisorCorreo {
                     Es lo correcto en desarrollo. En el VPS debe ser sgpj.correo.modo=smtp,
                     o ninguna alerta llegará a ningún abogado.""");
         }
+    }
+
+    /**
+     * Avisa al arrancar si el modo es {@code smtp} pero no hay servidor.
+     *
+     * <p>Deliberadamente <strong>no impide arrancar</strong>. Dejar el sistema
+     * caído por una mala configuración del correo sería peor: el despacho
+     * tampoco podría consultar sus expedientes. El fallo queda visible en dos
+     * sitios —aquí al arrancar, y en cada alerta, que se marca FALLIDA— y el
+     * resto del sistema sigue en pie.
+     */
+    @PostConstruct
+    void avisarSiFaltaServidor() {
+        if ("smtp".equals(modo) && servidorUtilizable() == null) {
+            registro.error("""
+                    El correo está en modo SMTP pero no hay servidor configurado (falta spring.mail.host).
+                    NINGUNA alerta va a salir: todas quedarán marcadas como FALLIDAS.
+                    Configure el servidor, o cambie sgpj.correo.modo mientras tanto.""");
+        }
+    }
+
+    /**
+     * El emisor solo si sirve para algo, o {@code null}.
+     *
+     * <p>No basta con que el bean exista. Un {@code spring.mail.host} vacío
+     * cuenta como propiedad definida, así que Spring crea igualmente un emisor
+     * <em>sin servidor</em>: el sistema arrancaba sin avisar de nada y las
+     * alertas fallaban después con un mensaje de JavaMail que no le dice a
+     * nadie qué configurar. Se comprobó que pasaba. Por eso se mira el host y
+     * no solo la presencia del bean.
+     */
+    private JavaMailSender servidorUtilizable() {
+        JavaMailSender emisor = proveedorCorreo.getIfAvailable();
+        if (emisor instanceof JavaMailSenderImpl concreto
+                && !StringUtils.hasText(concreto.getHost())) {
+            return null;
+        }
+        return emisor;
     }
 
     @Override
@@ -74,16 +133,45 @@ public class EmisorCorreoConfigurable implements EmisorCorreo {
     /**
      * Envío real por SMTP.
      *
-     * <p>Pendiente de implementar hasta que exista servidor de correo. Falla de
-     * forma explícita en lugar de no hacer nada: si alguien configurara
-     * {@code modo=smtp} sin haberlo terminado, las alertas quedarían marcadas
-     * como fallidas y visibles —que es lo correcto— en vez de darse por
-     * enviadas sin haber salido, que sería el fallo silencioso de R-02.
+     * <p>Se envía como <strong>MIME con UTF-8 declarado</strong>, y no como
+     * mensaje simple. No es un lujo: el asunto dice «El término vence en 3
+     * días» y el cuerpo nombra al cliente. Un correo que llega con «Peña»
+     * convertido en símbolos es un correo que el abogado no termina de leer, y
+     * esa alerta se pierde igual que si no hubiera salido.
+     *
+     * <p>Cualquier fallo del proveedor se traduce a {@link FalloDeEnvio} para
+     * que el motor no tenga que conocer las excepciones de JavaMail. Traducir
+     * —en vez de dejar escapar la original— es lo que hace que el reintento y
+     * el marcado como FALLIDA funcionen igual con cualquier implementación.
      */
     private void enviarPorSmtp(String destinatario, String asunto, String cuerpo) {
-        throw new FalloDeEnvio(
-                "El envío por SMTP aún no está implementado. Configure sgpj.correo.modo=registro "
-                        + "mientras tanto, o complete esta implementación antes de desplegar.");
+        JavaMailSender emisor = servidorUtilizable();
+        if (emisor == null) {
+            throw new FalloDeEnvio(
+                    "El modo es smtp pero no hay servidor de correo configurado "
+                            + "(falta spring.mail.host).");
+        }
+
+        try {
+            MimeMessage mensaje = emisor.createMimeMessage();
+            MimeMessageHelper redactor =
+                    new MimeMessageHelper(mensaje, false, StandardCharsets.UTF_8.name());
+
+            redactor.setFrom(remitente);
+            redactor.setTo(destinatario);
+            redactor.setSubject(asunto);
+            redactor.setText(cuerpo, false);
+
+            emisor.send(mensaje);
+            registro.info("Alerta enviada por SMTP a {}", destinatario);
+
+        } catch (MailException | MessagingException fallo) {
+            // Se conserva la causa: cuando un despacho pregunte por qué no le
+            // llegó el aviso, «falló el envío» no es una respuesta.
+            throw new FalloDeEnvio(
+                    "No se pudo enviar el correo a " + destinatario + ": " + fallo.getMessage(),
+                    fallo);
+        }
     }
 
     public String modo() {

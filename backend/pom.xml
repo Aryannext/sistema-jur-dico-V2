@@ -53,11 +53,35 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!--
+		  Correo: es el canal de las alertas (D-03), y las alertas son la
+		  razon de ser del sistema. Sin esto el motor calcula, persiste y
+		  reintenta, pero nadie fuera de la pantalla se entera.
+		-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+
+		<!--
+		  Servidor SMTP de verdad, en memoria, para las pruebas. No hace
+		  falta Docker ni un buzon real. La alternativa era simular el
+		  JavaMailSender, y eso probaria que llamamos al metodo: no que el
+		  correo sale, ni que las tildes llegan enteras.
+		-->
+		<dependency>
+			<groupId>com.icegreen</groupId>
+			<artifactId>greenmail-junit5</artifactId>
+			<version>2.1.12</version>
+			<scope>test</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
