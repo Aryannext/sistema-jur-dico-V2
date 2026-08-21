@@ -102,11 +102,21 @@ public interface ProcesoRepository extends JpaRepository<Proceso, Long> {
      * El {@code despachoId} <strong>no</strong> es opcional: es lo que impide
      * que la búsqueda se convierta en la vía más fácil de fugar datos entre
      * despachos (RN-45).
+     *
+     * <h2>Por qué el radicado lleva {@code cast(... as string)}</h2>
+     *
+     * <p>Sin el cast, buscar <em>sin</em> radicado reventaba con
+     * {@code function lower(bytea) does not exist}: PostgreSQL no puede deducir
+     * el tipo de un parámetro nulo y lo toma por binario. Es decir, <strong>
+     * listar todos los procesos —la consulta más frecuente del sistema—
+     * devolvía 500</strong>, y ninguna prueba lo veía porque todas pasaban al
+     * menos un filtro. El cast le dice a la base de qué tipo es ese nulo.
      */
     @Query("""
             select p from Proceso p
             where p.despacho.id = :despachoId
-              and (:radicado is null or lower(p.radicado) like lower(concat('%', :radicado, '%')))
+              and (cast(:radicado as string) is null
+                   or lower(p.radicado) like lower(concat('%', cast(:radicado as string), '%')))
               and (:clienteId is null or p.clienteTitular.id = :clienteId)
               and (:juzgadoId is null or p.juzgado.id = :juzgadoId)
               and (:tipoProcesoId is null or p.tipoProceso.id = :tipoProcesoId)

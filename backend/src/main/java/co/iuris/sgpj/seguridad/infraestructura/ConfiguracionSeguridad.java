@@ -151,6 +151,18 @@ public class ConfiguracionSeguridad {
                         .requestMatchers("/api/reportes/**")
                             .hasAnyAuthority("ROL_ABOGADO", "ROL_ADMIN_DESPACHO")
 
+                        // Bitacora de auditoria (RF-08 · HU-08): la consulta el
+                        // administrador del despacho, que es quien tiene que
+                        // responder si se cuestiona el manejo de informacion
+                        // reservada.
+                        //
+                        // El abogado queda fuera a proposito: la bitacora
+                        // registra tambien SUS accesos, y darle la llave al
+                        // auditado no le permitiria borrar nada -eso no puede
+                        // nadie- pero si saber que quedo registrado de el.
+                        .requestMatchers("/api/bitacora/**")
+                            .hasAuthority("ROL_ADMIN_DESPACHO")
+
                         // El esquema de alertas lo configura el administrador
                         // del despacho (RF-34); los abogados solo lo consultan.
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/esquema-alertas")

@@ -54,6 +54,17 @@ public class ContextoSeguridad {
         return detallesAutenticados().usuarioId();
     }
 
+    /**
+     * El correo del usuario autenticado.
+     *
+     * <p>Lo necesita la bitácora de auditoría (RF-08), que lo copia en cada
+     * asiento en lugar de referenciar al usuario: un asiento tiene que poder
+     * leerse aunque esa cuenta se desactive o cambie de correo.
+     */
+    public String correoActual() {
+        return detallesAutenticados().getUsername();
+    }
+
     public Set<CodigoRol> rolesActuales() {
         return detallesAutenticados().roles();
     }

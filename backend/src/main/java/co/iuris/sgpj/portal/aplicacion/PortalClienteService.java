@@ -1,5 +1,7 @@
 package co.iuris.sgpj.portal.aplicacion;
 
+import co.iuris.sgpj.bitacora.aplicacion.BitacoraService;
+import co.iuris.sgpj.bitacora.dominio.AccionAuditada;
 import co.iuris.sgpj.cliente.dominio.Cliente;
 import co.iuris.sgpj.cliente.infraestructura.ClienteRepository;
 import co.iuris.sgpj.expediente.aplicacion.AlmacenDocumentos;
@@ -53,16 +55,19 @@ public class PortalClienteService {
     private final VigilanciaRepository eventos;
     private final AlmacenDocumentos almacen;
     private final ContextoSeguridad contexto;
+    private final BitacoraService bitacora;
 
     public PortalClienteService(ClienteRepository clientes, ProcesoRepository procesos,
                                 PiezaRepository piezas, VigilanciaRepository eventos,
-                                AlmacenDocumentos almacen, ContextoSeguridad contexto) {
+                                AlmacenDocumentos almacen, ContextoSeguridad contexto,
+                                BitacoraService bitacora) {
         this.clientes = clientes;
         this.procesos = procesos;
         this.piezas = piezas;
         this.eventos = eventos;
         this.almacen = almacen;
         this.contexto = contexto;
+        this.bitacora = bitacora;
     }
 
     /**
@@ -110,9 +115,27 @@ public class PortalClienteService {
      * <p>Documentos y actuaciones, <strong>todos</strong> (D-12), sin selección
      * pieza por pieza. Notas, ninguna (RN-24).
      */
+    @Transactional
     public List<Pieza> miExpediente(Long procesoId) {
         Proceso proceso = miProceso(procesoId);
+        List<Pieza> visibles = visiblesDe(proceso);
 
+        // RF-08: el acceso del cliente se audita igual que el del despacho.
+        // Si mañana se cuestiona quién vio qué, «fue el propio cliente» tiene
+        // que poder demostrarse, no suponerse.
+        bitacora.registrar(proceso, AccionAuditada.CONSULTA_PORTAL);
+        return visibles;
+    }
+
+    /**
+     * Las piezas visibles, sin auditar.
+     *
+     * <p>La descarga necesita esta misma lista para comprobar que el documento
+     * es del expediente propio. Si la pidiera al método público, un solo acceso
+     * dejaría dos asientos —una consulta que nunca ocurrió y la descarga— y la
+     * bitácora contaría de más.
+     */
+    private List<Pieza> visiblesDe(Proceso proceso) {
         return piezas.deExpediente(proceso.expediente().id(), proceso.despacho().id()).stream()
                 .filter(Pieza::esVisibleParaCliente)
                 .toList();
@@ -132,14 +155,20 @@ public class PortalClienteService {
      * comprobación es la que impide descargar por identificador un documento de
      * otro cliente.
      */
+    @Transactional
     public DocumentoDescargado descargarMiDocumento(Long procesoId, Long piezaId) {
-        Documento documento = miExpediente(procesoId).stream()
+        Proceso proceso = miProceso(procesoId);
+
+        Documento documento = visiblesDe(proceso).stream()
                 .filter(p -> p.id().equals(piezaId))
                 .filter(Documento.class::isInstance)
                 .map(Documento.class::cast)
                 .findFirst()
                 .orElseThrow(() -> new AccessDeniedException(
                         "Ese documento no pertenece a su expediente."));
+
+        bitacora.registrar(proceso, documento.id(), documento.nombreOriginal(),
+                AccionAuditada.DESCARGA_PORTAL);
 
         return new DocumentoDescargado(
                 documento.nombreOriginal(),

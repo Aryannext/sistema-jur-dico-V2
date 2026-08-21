@@ -5,6 +5,8 @@ import co.iuris.sgpj.catalogo.dominio.TipoCatalogo;
 import co.iuris.sgpj.catalogo.dominio.ValorCatalogo;
 import co.iuris.sgpj.comun.dominio.RecursoNoEncontradoException;
 import co.iuris.sgpj.comun.dominio.ReglaDeNegocioException;
+import co.iuris.sgpj.bitacora.aplicacion.BitacoraService;
+import co.iuris.sgpj.bitacora.dominio.AccionAuditada;
 import co.iuris.sgpj.expediente.dominio.Actuacion;
 import co.iuris.sgpj.expediente.dominio.Documento;
 import co.iuris.sgpj.expediente.dominio.Nota;
@@ -40,16 +42,19 @@ public class ExpedienteService {
     private final CatalogoService catalogos;
     private final ContextoSeguridad contexto;
     private final AlmacenDocumentos almacen;
+    private final BitacoraService bitacora;
 
     public ExpedienteService(PiezaRepository piezas, ProcesoService procesos,
                              UsuarioService usuarios, CatalogoService catalogos,
-                             ContextoSeguridad contexto, AlmacenDocumentos almacen) {
+                             ContextoSeguridad contexto, AlmacenDocumentos almacen,
+                             BitacoraService bitacora) {
         this.piezas = piezas;
         this.procesos = procesos;
         this.usuarios = usuarios;
         this.catalogos = catalogos;
         this.contexto = contexto;
         this.almacen = almacen;
+        this.bitacora = bitacora;
     }
 
     /**
@@ -99,7 +104,14 @@ public class ExpedienteService {
         }
     }
 
-    /** RF-15: recuperar el contenido descifrado de un documento. */
+    /**
+     * RF-15: recuperar el contenido descifrado de un documento.
+     *
+     * <p>No es de solo lectura aunque lo parezca: deja asiento en la bitácora
+     * (RF-08), y ese asiento se escribe en esta misma transacción a propósito
+     * — no se descarga sin dejar rastro.
+     */
+    @Transactional
     public ContenidoDescargado descargarDocumento(Long piezaId) {
         Pieza pieza = obtenerDeMiDespacho(piezaId);
 
@@ -107,6 +119,15 @@ public class ExpedienteService {
             throw new ReglaDeNegocioException("RF-15", "La pieza indicada no es un documento.");
         }
         byte[] contenido = almacen.leerDescifrado(documento.identificadorAlmacen());
+
+        // RF-08: una descarga es sacar el archivo del despacho. Se audita
+        // aparte de la consulta porque no es lo mismo mirar un expediente en
+        // pantalla que llevarse el documento.
+        bitacora.registrar(
+                documento.expediente().proceso(),
+                documento.id(),
+                documento.nombreOriginal(),
+                AccionAuditada.DESCARGA_DOCUMENTO);
 
         return new ContenidoDescargado(
                 documento.nombreOriginal(), documento.tipoContenido(), contenido);
@@ -186,9 +207,31 @@ public class ExpedienteService {
         return piezas.save(nota);
     }
 
-    /** Todo el contenido del expediente, visto desde el despacho: incluye las notas. */
+    /**
+     * Todo el contenido del expediente, visto desde el despacho: incluye las notas.
+     *
+     * <p>Deja asiento en la bitácora (RF-08 · CA-08.1). Auditar la
+     * <em>lectura</em> es el punto: quien filtra un expediente no lo modifica,
+     * lo lee — y hasta aquí eso no dejaba ningún rastro.
+     */
+    @Transactional
     public List<Pieza> contenidoDelExpediente(Long procesoId) {
         Proceso proceso = procesos.obtenerDeMiDespacho(procesoId);
+        List<Pieza> contenido = piezasDe(proceso);
+
+        bitacora.registrar(proceso, AccionAuditada.CONSULTA_EXPEDIENTE);
+        return contenido;
+    }
+
+    /**
+     * Las piezas, sin auditar.
+     *
+     * <p>Existe para que {@link #contenidoVisibleParaCliente} no tenga que
+     * llamar al método público y acabe dejando dos asientos por un solo acceso.
+     * Una bitácora que cuenta de más es tan poco fiable como una que cuenta de
+     * menos.
+     */
+    private List<Pieza> piezasDe(Proceso proceso) {
         return piezas.deExpediente(proceso.expediente().id(), contexto.despachoActual());
     }
 
@@ -216,10 +259,15 @@ public class ExpedienteService {
      * recordar actualizar— sino {@code esVisibleParaCliente()}, que cada pieza
      * responde por sí misma.
      */
+    @Transactional
     public List<Pieza> contenidoVisibleParaCliente(Long procesoId) {
-        return contenidoDelExpediente(procesoId).stream()
+        Proceso proceso = procesos.obtenerDeMiDespacho(procesoId);
+        List<Pieza> visibles = piezasDe(proceso).stream()
                 .filter(Pieza::esVisibleParaCliente)
                 .toList();
+
+        bitacora.registrar(proceso, AccionAuditada.CONSULTA_EXPEDIENTE);
+        return visibles;
     }
 
     /**

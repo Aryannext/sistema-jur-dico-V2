@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Verifica en <strong>cada</strong> petición que el usuario y su despacho
- * siguen habilitados. RN-04 · RNF-02 · CA-02.1 · CA-03.1.
+ * siguen habilitados. RF-03 · RN-04 · RNF-02 · CA-02.1 · CA-03.1.
  *
  * <h2>Por qué existe</h2>
  *
