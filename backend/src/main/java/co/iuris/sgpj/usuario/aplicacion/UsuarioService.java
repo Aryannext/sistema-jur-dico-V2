@@ -163,6 +163,80 @@ public class UsuarioService {
         return usuario;
     }
 
+    /**
+     * RF-39 · HU-43: cambiar mi propia contraseña.
+     *
+     * <h2>Por qué se exige la actual</h2>
+     *
+     * <p>CA-43.2. Sin ella, una sesión abandonada en un equipo compartido
+     * bastaría para quedarse con la cuenta: quien pasara por delante fijaría
+     * una contraseña nueva y el dueño ya no podría entrar. Exigirla convierte
+     * el descuido en una molestia en lugar de en una pérdida.
+     *
+     * <h2>Lo que esto NO hace</h2>
+     *
+     * <p>La contraseña anterior deja de servir de inmediato, pero <strong>las
+     * sesiones ya abiertas siguen vivas</strong>. Cerrar las demás exigiría un
+     * registro de sesiones que hoy no existe. Se escribe aquí para que sea una
+     * limitación conocida y no una sorpresa: si alguien cambia su contraseña
+     * porque sospecha que se la robaron, el intruso conserva la sesión que ya
+     * tuviera abierta.
+     */
+    @Transactional
+    public Usuario cambiarMiContrasena(String contrasenaActual, String contrasenaNueva) {
+        Usuario usuario = usuarios.findWithDespachoAndRolesById(contexto.usuarioActual())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "No se encontró el usuario de la sesión."));
+
+        if (!contrasenas.coincide(contrasenaActual, usuario.passwordHash())) {
+            throw new ReglaDeNegocioException("RF-39",
+                    "La contraseña actual no es correcta.");
+        }
+
+        // Cambiar por la misma no es un cambio: dejaría a alguien creyendo que
+        // reaccionó a una filtración cuando la contraseña sigue siendo la que
+        // se filtró.
+        if (contrasenas.coincide(contrasenaNueva, usuario.passwordHash())) {
+            throw new ReglaDeNegocioException("RF-39",
+                    "La contraseña nueva debe ser distinta de la actual.");
+        }
+
+        usuario.cambiarPasswordHash(contrasenas.cifrar(contrasenaNueva));
+        return usuarios.save(usuario);
+    }
+
+    /**
+     * RF-40 · HU-44: restablecer la contraseña de un usuario de mi despacho.
+     *
+     * <p>Es la vía de vuelta para quien olvidó la suya. Sin ella la única
+     * salida sería desactivar la cuenta y crear otra, perdiendo el rastro de
+     * autoría que sostiene RF-38.
+     *
+     * <p>El aislamiento lo garantiza {@link #obtenerDeMiDespacho}: un
+     * identificador de otro despacho se deniega antes de tocar nada (CA-44.3).
+     * La vía de recuperación no puede ser la puerta trasera al despacho vecino.
+     *
+     * <h2>Por qué NO se puede usar sobre uno mismo</h2>
+     *
+     * <p>Un administrador que pudiera restablecerse a sí mismo estaría saltando
+     * la comprobación de RF-39, y con ella la única defensa contra la sesión
+     * abandonada: bastaría con encontrar su pantalla abierta para fijar una
+     * contraseña nueva sin conocer la anterior. Para cambiar la suya usa
+     * {@link #cambiarMiContrasena}, como todo el mundo.
+     */
+    @Transactional
+    public Usuario restablecerContrasena(Long usuarioId, String contrasenaNueva) {
+        if (usuarioId != null && usuarioId.equals(contexto.usuarioActual())) {
+            throw new ReglaDeNegocioException("RF-40",
+                    "Para cambiar su propia contraseña debe indicar la actual.");
+        }
+
+        Usuario usuario = obtenerDeMiDespacho(usuarioId);
+        usuario.cambiarPasswordHash(contrasenas.cifrar(contrasenaNueva));
+
+        return usuarios.save(usuario);
+    }
+
     /** CA-05.3: el listado se limita siempre al despacho de la sesión. */
     public List<Usuario> listarDeMiDespacho() {
         return usuarios.findByDespachoIdOrderByNombreAsc(contexto.despachoActual());

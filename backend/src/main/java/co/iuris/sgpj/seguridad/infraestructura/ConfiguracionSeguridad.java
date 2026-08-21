@@ -120,6 +120,19 @@ public class ConfiguracionSeguridad {
                         .requestMatchers("/api/usuarios/**")
                             .hasAuthority("ROL_ADMIN_DESPACHO")
 
+                        // RF-39 · D-24: cambiar la PROPIA contrasena lo puede
+                        // hacer cualquier usuario autenticado, cliente del
+                        // portal incluido. Por eso cuelga de una ruta aparte y
+                        // no de /api/usuarios/**, que es solo del
+                        // administrador: ahi dentro habria dejado fuera
+                        // justamente a quien mas lo necesita, el cliente, que
+                        // hoy usa la clave que le escribio su despacho.
+                        //
+                        // No lleva regla propia: basta con estar autenticado,
+                        // que es lo que exige el anyRequest() del final. Se
+                        // escribe este comentario para que la ausencia sea
+                        // deliberada y no parezca un olvido.
+
                         // Los catalogos los ADMINISTRA su administrador, pero
                         // los abogados necesitan LEERLOS para rellenar
                         // formularios. Por eso se separa lectura de escritura.
