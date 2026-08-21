@@ -10,7 +10,7 @@
 
 Ningún diagrama se dibujó desde cero. Cada uno tiene una **fuente documental** en las fases anteriores:
 
-> **Pendiente declarado (D-24).** Estos diagramas se dibujaron sobre las 42 historias de la Fase 4. Durante la construcción se añadieron **HU-43** y **HU-44** (cambio y restablecimiento de contraseña), que **todavía no están reflejadas** en el diagrama de casos de uso. Se anota aquí en lugar de dejar que el lector lo descubra comparando: un diagrama incompleto que no se sabe incompleto es peor que uno que lo declara.
+> **Pendiente de D-24, cerrado el 21/08/2026.** Estos diagramas se dibujaron sobre las 42 historias de la Fase 4, y **HU-43** y **HU-44** se añadieron después, durante la construcción. Ya están reflejadas: **CU-28** y **CU-29** en el diagrama de casos de uso, y **F26** en el funcional. Al cerrarlo apareció que el funcional también las había perdido, no solo el de casos de uso — el pendiente estaba declarado a medias.
 
 | Diagrama | Sale de |
 |---|---|
@@ -52,6 +52,8 @@ flowchart LR
         CU04["CU-04 Gestionar usuarios y roles"]
         CU05["CU-05 Habilitar acceso de cliente"]
         CU06["CU-06 Consultar bitácora de auditoría"]
+        CU28["CU-28 Cambiar mi contraseña"]
+        CU29["CU-29 Restablecer contraseña<br/>de un usuario"]
     end
 
     subgraph P3["Gestión de casos"]
@@ -97,7 +99,7 @@ flowchart LR
     end
 
     AP --> CU01 & CU02
-    AD --> CU04 & CU05 & CU06 & CU25 & CU26 & CU24
+    AD --> CU04 & CU05 & CU06 & CU25 & CU26 & CU24 & CU29
     AB --> CU07 & CU08 & CU09 & CU10 & CU11 & CU12
     AB --> CU13 & CU14 & CU15 & CU16 & CU17 & CU23 & CU05 & CU27
     CL --> CU22
@@ -105,6 +107,11 @@ flowchart LR
     AD --> CU03
     AB --> CU03
     CL --> CU03
+
+    AP --> CU28
+    AD --> CU28
+    AB --> CU28
+    CL --> CU28
 
     SYS --> CU18 & CU19 & CU20 & CU21
     CU27 -.consulta.-> RJ
@@ -129,6 +136,15 @@ flowchart LR
 
 **El actor Rama Judicial se dibuja con línea discontinua** porque es externo y no controlado: RN-49 exige que su caída no afecte a ningún otro paquete.
 
+**CU-28 es el único caso de uso al que apuntan los cuatro actores humanos**, el cliente incluido. No es casualidad: HU-43 nace de que el despacho fija la contraseña del cliente (RF-28), así que quien más necesita poder cambiarla es justamente el actor con menos permisos en todo el sistema.
+
+**Y el Administrador de Plataforma no apunta a CU-29**, aunque sea el rol más poderoso. Es deliberado, por **RN-10**: opera la plataforma, no los despachos. Restablecer la contraseña de un abogado le daría acceso efectivo a expedientes de un despacho ajeno, que es exactamente lo que **RN-02** prohíbe. La única vez que toca un usuario de despacho es al crear su primer administrador, y eso ocurre dentro de RF-01.
+
+| Caso de uso | Historia | Requisito | Quién |
+|---|---|---|---|
+| CU-28 Cambiar mi contraseña | HU-43 | RF-39 | Cualquier usuario autenticado |
+| CU-29 Restablecer contraseña | HU-44 | RF-40 | Solo Administrador de Despacho |
+
 ---
 
 ## 2. Diagrama Funcional (descomposición)
@@ -149,6 +165,7 @@ flowchart TD
     F2 --> F21["Usuarios y roles<br/>M2 · RF-05, RF-06"]
     F2 --> F22["Autenticación<br/>M2 · RF-04"]
     F2 --> F23["Auditoría<br/>M2 · RF-08"]
+    F2 --> F26["Contraseñas<br/>M2 · RF-39, RF-40"]
     F2 --> F24["Catálogos<br/>M11 · RF-33"]
     F2 --> F25["Esquema de alertas<br/>M11 · RF-34"]
 
