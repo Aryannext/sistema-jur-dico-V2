@@ -28,6 +28,18 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./despacho/vencimientos/vencimientos').then(m => m.Vencimientos),
       },
+      {
+        path: 'procesos',
+        title: 'Procesos · Iuris',
+        loadComponent: () =>
+          import('./despacho/procesos/procesos').then(m => m.ListaProcesos),
+      },
+      {
+        path: 'procesos/:id',
+        title: 'Expediente · Iuris',
+        loadComponent: () =>
+          import('./despacho/expediente/expediente').then(m => m.Expediente),
+      },
       { path: '', pathMatch: 'full', redirectTo: 'vencimientos' },
     ],
   },

@@ -63,3 +63,57 @@ export interface Conteo {
   nombre: string;
   cantidad: number;
 }
+
+/** Un valor de catálogo tal como lo devuelve el backend anidado. */
+export interface Referencia {
+  id: number;
+  nombre: string;
+}
+
+/** GET /api/procesos y /api/procesos/{id} — RF-11 · RF-31. */
+export interface Proceso {
+  id: number;
+  radicado: string;
+  juzgado: Referencia;
+  tipoProceso: Referencia;
+  estadoProcesal: Referencia;
+  clienteTitular: Referencia;
+  abogadoResponsable: Referencia | null;
+  descripcion: string | null;
+  archivado: boolean;
+  expedienteId: number;
+  fechaCreacion: string;
+}
+
+/**
+ * Una pieza del expediente. RF-15, RF-17, RF-18, RF-38.
+ *
+ * Las tres clases —documento, actuación y nota— llegan en la misma lista
+ * porque para quien lee el expediente son lo mismo: cosas que pasaron, en
+ * orden. `visibleParaCliente` lo decide el backend pieza por pieza (RN-24); el
+ * frontend no vuelve a razonarlo, solo lo muestra.
+ */
+export interface Pieza {
+  id: number;
+  tipo: 'DOCUMENTO' | 'ACTUACION' | 'NOTA';
+  tipoParaMostrar: string;
+  visibleParaCliente: boolean;
+  autor: string;
+  creadoEn: string;
+  descripcion: string | null;
+  /** Solo actuaciones: la fecha del hecho, distinta de cuándo se registró. */
+  fechaActuacion: string | null;
+  /** Actuaciones y documentos: el valor del catálogo del despacho. */
+  tipoActuacion: string | null;
+  origen: string | null;
+}
+
+/** GET /api/catalogos/{tipo}/activos — RF-33. */
+export interface ValorCatalogo {
+  id: number;
+  tipo: string;
+  nombre: string;
+  activo: boolean;
+  protegido: boolean;
+  orden: number;
+}

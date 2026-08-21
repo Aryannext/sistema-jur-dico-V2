@@ -1,0 +1,146 @@
+<main>
+  <div class="pag">
+    <div>
+      <h1>Procesos</h1>
+      <p>
+        @if (cargando()) {
+          Consultando…
+        } @else if (hayFiltros()) {
+          {{ procesos().length }} resultado(s) con los filtros puestos
+        } @else {
+          {{ procesos().length }} proceso(s) en su despacho
+        }
+      </p>
+    </div>
+    <div class="util">
+      <div class="buscar">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <input type="search" [value]="filtros().radicado" (input)="escribirRadicado($event)"
+               placeholder="Buscar por radicado" aria-label="Buscar por radicado">
+      </div>
+    </div>
+  </div>
+
+  <div class="filtros">
+    <label class="sel" [class.act]="filtros().estadoId !== null">
+      Estado
+      <select (change)="elegir('estadoId', $event)" aria-label="Filtrar por estado procesal">
+        <option value="">Todos</option>
+        @for (v of estados(); track v.id) {
+          <option [value]="v.id" [selected]="filtros().estadoId === v.id">{{ v.nombre }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="sel" [class.act]="filtros().tipoProcesoId !== null">
+      Tipo
+      <select (change)="elegir('tipoProcesoId', $event)" aria-label="Filtrar por tipo de proceso">
+        <option value="">Todos</option>
+        @for (v of tipos(); track v.id) {
+          <option [value]="v.id" [selected]="filtros().tipoProcesoId === v.id">{{ v.nombre }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="sel" [class.act]="filtros().juzgadoId !== null">
+      Juzgado
+      <select (change)="elegir('juzgadoId', $event)" aria-label="Filtrar por juzgado">
+        <option value="">Todos</option>
+        @for (v of juzgados(); track v.id) {
+          <option [value]="v.id" [selected]="filtros().juzgadoId === v.id">{{ v.nombre }}</option>
+        }
+      </select>
+    </label>
+
+    @if (hayFiltros()) {
+      <button class="btn fantasma quitar" type="button" (click)="limpiar()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        Quitar filtros
+      </button>
+    }
+  </div>
+
+  <section class="caja">
+    @if (cargando()) {
+      <div class="cargando"><span class="girando"></span> Consultando sus procesos…</div>
+
+    } @else if (error(); as fallo) {
+      <div class="vacio">
+        <div class="bola" style="background:var(--alto-suave);color:var(--alto)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        </div>
+        <b>No se pudieron cargar los procesos</b>
+        <span>{{ fallo }}</span>
+        <button class="btn" type="button" (click)="buscar()" style="margin:18px auto 0">Reintentar</button>
+      </div>
+
+    } @else if (procesos().length === 0) {
+      <!-- Se distingue «no hay nada» de «no hay nada CON ESTOS FILTROS».
+           Confundirlos haría creer a un despacho recién creado que el sistema
+           no funciona, y a uno lleno que perdió sus procesos. -->
+      <div class="vacio">
+        <div class="bola">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5a2 2 0 0 1 2-2H10l2 2.5h6.5a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg>
+        </div>
+        @if (hayFiltros()) {
+          <b>Ningún proceso coincide</b>
+          <span>Pruebe con menos filtros, o con un fragmento más corto del radicado.</span>
+          <button class="btn fantasma" type="button" (click)="limpiar()" style="margin:18px auto 0">Quitar los filtros</button>
+        } @else {
+          <b>Todavía no hay procesos</b>
+          <span>Cuando registre el primero aparecerá aquí, con su expediente creado automáticamente.</span>
+        }
+      </div>
+
+    } @else {
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th style="padding-top:21px">Proceso</th>
+            <th style="padding-top:21px">Cliente</th>
+            <th style="padding-top:21px">Juzgado</th>
+            <th style="padding-top:21px">Responsable</th>
+            <th style="padding-top:21px">Estado</th>
+            <th style="padding-top:21px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of procesos(); track p.id) {
+            <tr>
+              <td>
+                <div class="p">{{ p.tipoProceso.nombre }}</div>
+                <div class="rad-t">{{ p.radicado }}</div>
+                @if (p.descripcion) { <div class="s">{{ p.descripcion }}</div> }
+              </td>
+              <td><div style="font-size:14.5px;font-weight:600">{{ p.clienteTitular.nombre }}</div></td>
+              <td><div class="s" style="font-size:14px">{{ p.juzgado.nombre }}</div></td>
+              <td>
+                @if (p.abogadoResponsable) {
+                  <div style="font-size:14px">{{ p.abogadoResponsable.nombre }}</div>
+                } @else {
+                  <!-- Un proceso sin responsable no es un hueco cosmético:
+                       es un proceso que nadie vigila. -->
+                  <span class="eti ambar">Sin responsable</span>
+                }
+              </td>
+              <td><span class="eti" [class]="'eti ' + colorEstado(p.estadoProcesal.nombre)"><i></i>{{ p.estadoProcesal.nombre }}</span></td>
+              <td class="der">
+                <a class="ir" [routerLink]="['/procesos', p.id]">
+                  Abrir expediente
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+
+  @if (!cargando() && !error() && procesos().length > 0) {
+    <p class="franja marca" style="margin-top:22px">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/></svg>
+      <span>No hace falta escribir el radicado completo ni con los espacios: se busca por el fragmento que usted recuerde. <b>Un radicado de 23 dígitos que hay que teclear exacto es un buscador que nadie usa.</b></span>
+    </p>
+  }
+</main>

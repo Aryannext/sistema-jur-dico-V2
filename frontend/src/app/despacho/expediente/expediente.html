@@ -1,0 +1,175 @@
+<main>
+  <div class="migas">
+    <a routerLink="/procesos">Procesos</a>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+    <b>{{ proceso()?.radicado ?? 'Expediente' }}</b>
+  </div>
+
+  @if (cargando()) {
+    <div class="caja">
+      <div class="cargando"><span class="girando"></span> Abriendo el expediente…</div>
+    </div>
+
+  } @else if (error(); as fallo) {
+    <section class="caja">
+      <div class="vacio">
+        <div class="bola" style="background:var(--alto-suave);color:var(--alto)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        </div>
+        <b>No se pudo abrir el expediente</b>
+        <span>{{ fallo }}</span>
+        <a class="btn fantasma" routerLink="/procesos" style="margin:18px auto 0;width:fit-content">Volver a procesos</a>
+      </div>
+    </section>
+
+  } @else if (proceso(); as p) {
+
+    <div class="pag">
+      <div>
+        <h1>{{ p.tipoProceso.nombre }}</h1>
+        <p>{{ p.clienteTitular.nombre }} · {{ p.juzgado.nombre }}</p>
+      </div>
+      <div class="util">
+        <button class="btn fantasma" type="button" (click)="cargar()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5A8 8 0 1 0 18.5 16"/><path d="M20 6v5.5h-5.5"/></svg>
+          Actualizar
+        </button>
+      </div>
+    </div>
+
+    <div class="pes">
+      <a [class.on]="solapa() === 'todo'" (click)="verSolapa('todo')">Todo <span class="n">{{ cuantas().todo }}</span></a>
+      <a [class.on]="solapa() === 'ACTUACION'" (click)="verSolapa('ACTUACION')">Actuaciones <span class="n">{{ cuantas().ACTUACION }}</span></a>
+      <a [class.on]="solapa() === 'DOCUMENTO'" (click)="verSolapa('DOCUMENTO')">Documentos <span class="n">{{ cuantas().DOCUMENTO }}</span></a>
+      <a [class.on]="solapa() === 'NOTA'" (click)="verSolapa('NOTA')">Notas internas <span class="n">{{ cuantas().NOTA }}</span></a>
+    </div>
+
+    <div class="dos">
+      <section>
+        @if (mostradas().length === 0) {
+          <div class="caja">
+            <div class="vacio">
+              <div class="bola">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13.5 3.5V9H19"/></svg>
+              </div>
+              <b>Nada de esto todavía</b>
+              <span>El expediente se creó con el proceso y está vacío en esta sección.</span>
+            </div>
+          </div>
+
+        } @else {
+          <div class="hilo-t">
+            @for (pieza of mostradas(); track pieza.id) {
+              <article class="pieza" [class]="'pieza ' + clasePieza(pieza)">
+                <span class="mota">
+                  @switch (pieza.tipo) {
+                    @case ('NOTA') {
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5h14v11l-4.5 4.5H5z"/><path d="M19 15.5h-4.5V20"/></svg>
+                    }
+                    @case ('DOCUMENTO') {
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13.5 3.5V9H19"/></svg>
+                    }
+                    @default {
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7"/></svg>
+                    }
+                  }
+                </span>
+
+                <div class="ficha">
+                  <div class="arr">
+                    <b>{{ pieza.descripcion || pieza.tipoParaMostrar }}</b>
+
+                    <!-- La marca de visibilidad va arriba y siempre, incluso
+                         cuando es la obvia. Es lo que evita que alguien
+                         escriba una nota creyendo que es interna cuando no lo
+                         es, o al revés. -->
+                    @if (pieza.visibleParaCliente) {
+                      <span class="eti marca">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="2.6"/></svg>
+                        Visible para el cliente
+                      </span>
+                    } @else {
+                      <span class="eti ambar">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 6.3A9.8 9.8 0 0 1 12 6.2c5 0 9 4.3 9 5.8 0 .7-.9 2-2.3 3.2M6.4 8.2C4.3 9.6 3 11.3 3 12c0 1.5 4 5.8 9 5.8 1.2 0 2.3-.25 3.3-.65"/></svg>
+                        Solo el despacho
+                      </span>
+                    }
+                  </div>
+
+                  <div class="clase">
+                    {{ pieza.tipoParaMostrar }}@if (pieza.tipoActuacion) { · {{ pieza.tipoActuacion }}}
+                    @if (pieza.fechaActuacion) {
+                      · ocurrió el {{ fechaDelHecho(pieza.fechaActuacion) }}
+                    }
+                    @if (pieza.origen) { · {{ pieza.origen }} }
+                  </div>
+
+                  <!-- RF-38: quién y cuándo lo pone el sistema, no el usuario.
+                       Es lo que convierte el expediente en respaldo. -->
+                  <div class="sello">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"/></svg>
+                    {{ pieza.autor }} · {{ sello(pieza.creadoEn) }}
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+
+      <div>
+        <section class="caja" style="margin-bottom:24px">
+          <header><h3>Datos del proceso</h3></header>
+          <div style="padding:4px 24px 22px">
+            <div class="interr">
+              <div><b>Estado procesal</b></div>
+              <span class="eti" [class.verde]="!p.archivado" [class.gris]="p.archivado"><i></i>{{ p.estadoProcesal.nombre }}</span>
+            </div>
+            <div class="interr">
+              <div><b>Radicado</b></div>
+              <span class="rad-t" style="font-size:13px">{{ p.radicado }}</span>
+            </div>
+            <div class="interr">
+              <div><b>Responsable</b></div>
+              @if (p.abogadoResponsable) {
+                <span style="font-size:14px">{{ p.abogadoResponsable.nombre }}</span>
+              } @else {
+                <span class="eti ambar">Sin asignar</span>
+              }
+            </div>
+            <div class="interr">
+              <div><b>Cliente</b></div>
+              <span style="font-size:14px">{{ p.clienteTitular.nombre }}</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="caja">
+          <header><h3>Qué ve el cliente</h3></header>
+          <div style="padding:14px 24px 22px">
+            <div class="br">
+              <div class="fil"><b>Piezas visibles</b><span>{{ visibles() }} de {{ cuantas().todo }}</span></div>
+              <div class="via">
+                <i [style.width.%]="cuantas().todo ? (visibles() / cuantas().todo) * 100 : 0"></i>
+              </div>
+            </div>
+
+            <p class="franja marca" style="margin-top:16px">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 6.3A9.8 9.8 0 0 1 12 6.2c5 0 9 4.3 9 5.8 0 .7-.9 2-2.3 3.2M6.4 8.2C4.3 9.6 3 11.3 3 12c0 1.5 4 5.8 9 5.8 1.2 0 2.3-.25 3.3-.65"/></svg>
+              <span>
+                @if (internas() === 1) {
+                  <b>Una pieza no le aparece.</b>
+                } @else if (internas() > 1) {
+                  <b>{{ internas() }} piezas no le aparecen.</b>
+                } @else {
+                  <b>Todo lo de este expediente es visible para el cliente.</b>
+                }
+                El filtro ocurre antes de enviarle los datos &mdash; no es que la pantalla se las esconda.
+              </span>
+            </p>
+          </div>
+        </section>
+      </div>
+    </div>
+  }
+</main>
