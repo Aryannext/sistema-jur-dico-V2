@@ -10,7 +10,7 @@
 
 ### 1.1 Criterio de cantidad
 
-Se aplicó el criterio fijado: **pocos requisitos, cada uno muy bien definido**. El resultado es **38 RF y 16 RNF** — 54 requisitos.
+Se aplicó el criterio fijado: **pocos requisitos, cada uno muy bien definido**. El resultado es **40 RF y 16 RNF** — 56 requisitos.
 
 La contención se logró de tres formas, y conviene saber cuáles para no "descubrir" después requisitos que ya están dentro:
 
@@ -37,7 +37,7 @@ La propuesta trae sus propios códigos RF01–RF05 y RNF01–RNF03. **No son los
 |---|---|
 | **P-RF01 … P-RF05** | Los cinco enunciados de la propuesta **[P]** |
 | **P-RNF01 … P-RNF03** | Los tres enunciados no funcionales de la propuesta **[P]** |
-| **RF-01 … RF-38** | Los requisitos funcionales de ingeniería de este documento |
+| **RF-01 … RF-40** | Los requisitos funcionales de ingeniería de este documento |
 | **RNF-01 … RNF-16** | Los requisitos no funcionales de ingeniería de este documento |
 
 Un enunciado de la propuesta se desarrolla en varios requisitos de ingeniería. Por ejemplo, P-RF03 ("calendario de audiencias con alertas") se convierte en RF-18, RF-19, RF-22 y RF-23.
@@ -57,12 +57,12 @@ No es un error de la propuesta: es lo que ocurre siempre cuando se enumeran func
 
 ## 2. Módulos funcionales
 
-Los 38 RF se agrupan en 12 módulos. La agrupación no es decorativa: será la base de los componentes en la Fase 5 y de la arquitectura en la Fase 6.
+Los 40 RF se agrupan en 12 módulos. La agrupación no es decorativa: será la base de los componentes en la Fase 5 y de la arquitectura en la Fase 6.
 
 | Módulo | Nombre | RF | Sprint |
 |---|---|---|---|
 | **M1** | Plataforma y despachos | RF-01 → RF-03 | 1 |
-| **M2** | Seguridad, usuarios y roles | RF-04 → RF-08 | 1 |
+| **M2** | Seguridad, usuarios y roles | RF-04 → RF-08, RF-39, RF-40 | 1 |
 | **M3** | Clientes | RF-09 → RF-10 | 1 |
 | **M4** | Procesos y expedientes | RF-11 → RF-14 | 1 |
 | **M5** | Documentos, actuaciones y notas | RF-15 → RF-18, RF-38 | 2 |
@@ -97,6 +97,8 @@ Los 38 RF se agrupan en 12 módulos. La agrupación no es decorativa: será la b
 | **RF-06** | El sistema debe **autorizar cada operación** según la unión de los roles del usuario. | Los permisos se calculan por unión, nunca por un rol único. Un usuario con dos roles tiene los permisos de ambos. | RN-08 | **[D-07]** | 1 |
 | **RF-07** | El sistema debe permitir al despacho **habilitar el acceso al portal a un cliente** registrado. | El acceso lo habilita el despacho. **No existe autorregistro de clientes.** El cliente recibe su acceso; no lo solicita por sí mismo. | RN-43, RN-11 | **[P]** P-RNF03, **[D-15]** | 4 |
 | **RF-08** | El sistema debe **registrar en bitácora de auditoría** todo acceso al contenido de un expediente. | Registra quién, qué expediente y cuándo. Es consulta, no solo modificación: el acceso de lectura es precisamente lo que interesa auditar. La bitácora **no se puede alterar ni borrar** desde la aplicación. | RN-12 | **[D-11]** | 2 |
+| **RF-39** | El sistema debe permitir a **todo usuario autenticado cambiar su propia contraseña**, exigiéndole la actual. | Exigir la actual es lo que impide que una sesión abandonada en un equipo compartido se convierta en el secuestro de la cuenta. La contraseña anterior deja de servir en el mismo momento. Aplica a los cuatro roles, cliente incluido. | RN-53, RN-54 | **[D-24]** | 1 |
+| **RF-40** | El sistema debe permitir al **Administrador de Despacho restablecer la contraseña** de un usuario de su despacho, incluidos los clientes con acceso al portal, **sin conocer la anterior**. | Es la vía de vuelta para quien olvidó la suya: sin ella, la única salida sería desactivar la cuenta y crear otra, perdiendo su historial (RF-38). El administrador **fija** una nueva; nunca lee la anterior, porque no es legible (RNF-05). Solo alcanza a usuarios de su propio despacho. | RN-53, RN-54, RN-09, RN-13 | **[D-24]** | 1 |
 
 ### M3 · Clientes
 
@@ -262,8 +264,11 @@ Transparencia sobre el alcance añadido:
 | **[D-13] [D-16]** administración | RF-33, RF-34 | Catálogos y alertas configurables |
 | **[D-04]** Rama Judicial | RF-35, RF-36 | **Ampliación fuera de la propuesta** |
 | **[R-02] [R-05]** riesgos | RF-23, RF-27 · RNF-08, RNF-09, RNF-16 | Protegen la razón de ser del sistema |
+| **[D-24]** contraseñas | RF-39, RF-40 | Detectado durante la construcción |
 
-**23 de los 52 requisitos no tienen origen en la propuesta.** No es desviación: es la consecuencia trazable de las 16 decisiones tomadas y de los riesgos identificados. Cada uno tiene su origen documentado, y **solo 2 de los 23 (RF-35 y RF-36) amplían realmente el alcance funcional** — los otros 21 son la base que la propuesta daba por supuesta o la protección de los riesgos que ella misma señala.
+**28 de los 56 requisitos no tienen origen en la propuesta.** No es desviación: es la consecuencia trazable de las decisiones tomadas y de los riesgos identificados. Cada uno tiene su origen documentado, y **solo 2 de los 28 (RF-35 y RF-36) amplían realmente el alcance funcional** — los demás son la base que la propuesta daba por supuesta o la protección de los riesgos que ella misma señala.
+
+> **Corrección de una cifra.** Esta línea decía «23 de los 52» desde la Fase 3. Al recontar para incorporar RF-39 y RF-40 se comprobó que ya no cuadraba: la Fase 4 había añadido RF-37 y RF-38 sin actualizarla, y el recuento real era **26 de 54**. La cifra se corrige aquí y se registra el desajuste en lugar de reescribirla en silencio — un documento que se corrige a sí mismo sin decirlo deja de servir como trazabilidad.
 
 ### 5.3 Los requisitos que no se negocian
 
@@ -285,7 +290,7 @@ Si hubiera que recortar alcance, estos **no** entran en la conversación:
 
 | Sprint **[P]** | Alcance de la propuesta | Requisitos | Total |
 |---|---|---|---|
-| **1** | Registro de clientes y creación de expedientes | RF-01, RF-04 → RF-06, RF-09 → RF-14 · RNF-01, RNF-03, RNF-05, RNF-06 | **13** |
+| **1** | Registro de clientes y creación de expedientes | RF-01, RF-04 → RF-06, RF-09 → RF-14, RF-39, RF-40 · RNF-01, RNF-03, RNF-05, RNF-06 | **15** |
 | **2** | Documentación y actuaciones procesales | RF-02, RF-03, RF-08, RF-15 → RF-20, RF-33, RF-38 · RNF-02, RNF-04, RNF-07, RNF-13 | **15** |
 | **3** | Calendario de audiencias y control de términos | RF-21 → RF-27, RF-34, RF-37 · RNF-08 → RNF-11, RNF-16 | **13** |
 | **4** | Portal del cliente y reportes | RF-07, RF-28 → RF-32 · RNF-12, RNF-14, RNF-15 | **9** |

@@ -18,7 +18,7 @@
 | **Versión / fecha** | 1.1 · 2026-08-20 |
 | **Autor** | Equipo de desarrollo — rol de Analista y Arquitecto de Software |
 | **Norma de referencia** | ISO/IEC/IEEE 42010 — *Systems and software engineering — Architecture description* (edición vigente: 2022, revisión de la 42010:2011) |
-| **Alcance** | Los 38 RF y 16 RNF de la Fase 3, sobre las 56 reglas de negocio de la Fase 2 |
+| **Alcance** | Los 40 RF y 16 RNF de la Fase 3, sobre las 58 reglas de negocio de la Fase 2 |
 | **Origen del sistema** | Propuesta 24, Competencia 220501094 (`24_propuesta.pdf`) |
 
 ### 1.1 Qué exige la norma y dónde se cumple aquí
@@ -446,7 +446,7 @@ Escenarios de calidad en formato estímulo–respuesta–medida. Son la forma de
 
 ### ADR-01 · Monolito modular en capas, no microservicios
 
-**Contexto:** 38 RF, 12 módulos, 4 sprints de una semana **[P]**, un equipo pequeño.
+**Contexto:** 40 RF, 12 módulos, 4 sprints de una semana **[P]**, un equipo pequeño.
 
 **Decisión:** una única aplicación Spring Boot organizada en capas y módulos internos con fronteras explícitas.
 
@@ -659,7 +659,7 @@ Caso concreto: si `EsquemaAlerta.validar()` viviera en Angular, una llamada dire
       ↓
 56 Reglas de Negocio
       ↓
-54 Requisitos (38 RF + 16 RNF)
+56 Requisitos (40 RF + 16 RNF)
       ↓
 42 Historias de Usuario con criterios de aceptación
       ↓

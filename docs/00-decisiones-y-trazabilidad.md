@@ -288,7 +288,7 @@ El control 3 aporta la mayor parte del beneficio a una fracción del costo: atra
 - Español: `Despacho`, `Expediente`, `TerminoJudicial`, `buscarPorRadicado()`, tabla `proceso`.
 - Inglés: `DespachoRepository`, `DespachoService`, `DespachoController`.
 
-**Justificación:** mantiene dentro del código el vocabulario del glosario de la Fase 1 y de las 56 reglas de negocio —lo que preserva la trazabilidad hasta el código— sin separarse de las convenciones de Spring.
+**Justificación:** mantiene dentro del código el vocabulario del glosario de la Fase 1 y de las reglas de negocio —lo que preserva la trazabilidad hasta el código— sin separarse de las convenciones de Spring.
 
 **Consecuencia sobre el orden de construcción:** el **aislamiento multi-tenant no puede postergarse**. Añadirlo después obligaría a reescribir todo lo construido antes; por eso entra en el primer bloque junto con despachos, usuarios y autenticación.
 
@@ -331,6 +331,28 @@ La existencia de un **VPS único** como destino de despliegue es información nu
 - **RNF-14** — el respaldo no puede quedarse en el mismo VPS. Un respaldo que muere con la máquina que respalda no es un respaldo.
 
 Estos tres puntos se resuelven en un incremento de arquitectura previo al despliegue, no durante él.
+
+---
+
+### D-24 — Las contraseñas deben poder cambiarse: un hueco que la ingeniería de requisitos no vio
+
+**Contexto.** Al construir la pantalla de acceso de clientes se comprobó que el backend expone `POST /clientes/{id}/acceso-portal` recibiendo **correo y contraseña**: es el despacho quien fija la clave del cliente. Buscando cómo se cambia después, se encontró que **no existe ningún endpoint de cambio ni de restablecimiento de contraseña en todo el sistema** — ni para clientes, ni para abogados, ni para administradores.
+
+**Cómo se coló.** Las cuatro fases de requisitos derivaron cada RF de una RN, y cada RN de la propuesta o de una decisión. La propuesta habla de autenticar (P-RNF03) y de habilitar el acceso del cliente, pero **nunca menciona cambiar una contraseña**, así que no nació ninguna regla que lo exigiera. No fue un descuido de redacción: fue un hueco en el material de partida, y ninguna de las fases posteriores estaba mirando hacia ahí.
+
+Lo detectó la construcción del frontend, y solo porque hubo que escribir en pantalla qué le ocurre al cliente después de recibir su clave. **Redactar la interfaz obligó a decir la verdad sobre el sistema**, y la verdad no se sostenía.
+
+**Consecuencias del hueco, tal como estaba:**
+
+- El despacho conoce la contraseña de cada uno de sus clientes, **para siempre**.
+- Una credencial filtrada no se puede sustituir: la única salida sería desactivar la cuenta y crear otra, perdiendo su historial (RF-38).
+- Quien olvide su contraseña no tiene ninguna vía de vuelta. El enlace «¿La olvidó?» del ingreso no lleva a ninguna parte porque no hay adónde llevar.
+
+**Decisión.** Se añaden **RN-53** y **RN-54**, **RF-39** (cambiar la propia contraseña, exigiendo la actual) y **RF-40** (restablecer la de un usuario del despacho, sin conocer la anterior), con **HU-43** y **HU-44**. Se marcan **Sprint 1** porque pertenecen a M2 —la base de seguridad—, aunque se implementen ahora: el sprint dice a qué bloque pertenece el requisito, no cuándo se descubrió.
+
+**Por qué se documenta antes de programar.** Es la misma regla que se sigue desde la Fase 1: primero existe el requisito, después el código. Implementarlo primero y documentarlo después habría dejado dos requisitos sin RN de la que derivar, y la cadena de trazabilidad —que es lo que hace revisable este proyecto— tendría un eslabón fabricado a posteriori.
+
+**Lo que NO se decide aquí.** No se añade recuperación autónoma por correo («olvidé mi contraseña» sin intervención humana). Exigiría enlaces de un solo uso con caducidad y un canal de correo fiable, y el envío real acaba de implementarse. Queda **fuera de alcance declarado**: el camino de vuelta es que el administrador del despacho restablezca la clave (RF-40), que además es más difícil de suplantar en un despacho pequeño donde todos se conocen.
 
 ---
 
@@ -413,3 +435,4 @@ Cada fase se valida antes de abrir la siguiente. Cada artefacto de una fase refe
 | 2026-08-20 | **Fase 5** — 15 diagramas en 10 categorías. Apertura del asunto **A-04** (`PROCESO.juzgado` como texto libre degrada la búsqueda que exige P-RNF02). | Modelado de datos. |
 | 2026-08-20 | **Fase 6** — Descripción Arquitectónica ISO/IEC/IEEE 42010: 8 interesados, 12 preocupaciones, 7 puntos de vista, 8 decisiones arquitectónicas (ADR-01 a ADR-08), 6 riesgos arquitectónicos. Cierre del pendiente de la Fase 5 sobre emisión duplicada de alertas (**ADR-04**). | **Ingeniería de requerimientos y arquitectura completadas.** |
 | 2026-08-20 | Decisiones **D-17 a D-20**. Cierre de **A-04**, de los supuestos **S-03** y **S-04**, y de los riesgos **RA-3**, **RA-4** y **R-09**. Corrección de RNF-11 (tolerancia 1 h → 15 min). | Cierre de los cuatro pendientes que quedaban tras la Fase 6. **No queda ningún asunto abierto.** |
+| 2026-08-21 | Decisión **D-24**. Se añaden **RN-53** y **RN-54**, **RF-39** y **RF-40**, **HU-43** y **HU-44**: el sistema no tenía forma de cambiar ni restablecer una contraseña. Ahora **40 RF, 56 requisitos** y **44 historias**. Corregida la cifra de origen de §5.2, que llevaba desactualizada desde la Fase 4 (decía «23 de los 52»; el recuento real era 26 de 54, y con D-24 pasa a 28 de 56). | Lo detectó la **construcción del frontend**: escribir en pantalla qué le ocurre al cliente tras recibir su clave obligó a decir la verdad sobre el sistema, y la verdad no se sostenía. La propuesta nunca mencionó cambiar una contraseña, así que ninguna regla lo exigía. |

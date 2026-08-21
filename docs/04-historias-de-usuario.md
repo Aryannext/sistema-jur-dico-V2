@@ -37,7 +37,7 @@ Un criterio negativo es más difícil de probar que uno positivo y por eso se su
 | Épica | Nombre | Módulos | HU | Sprint |
 |---|---|---|---|---|
 | **EP1** | Plataforma y despachos | M1 | HU-01 → HU-03 | 1 · 2 |
-| **EP2** | Seguridad y acceso | M2 | HU-04 → HU-08 | 1 · 2 · 4 |
+| **EP2** | Seguridad y acceso | M2 | HU-04 → HU-08, HU-43, HU-44 | 1 · 2 · 4 |
 | **EP3** | Clientes, procesos y expedientes | M3, M4 | HU-09 → HU-14 | 1 |
 | **EP4** | Expediente digital | M5 | HU-15 → HU-19 | 2 |
 | **EP5** | Audiencias y términos | M6, M7 | HU-20 → HU-24 | 2 · 3 |
@@ -48,7 +48,7 @@ Un criterio negativo es más difícil de probar que uno positivo y por eso se su
 | **EP10** | Integración Rama Judicial | M12 | HU-39 → HU-40 | posterior |
 | **EP11** | Garantías transversales | — | HU-41 → HU-42 | 1 · 2 |
 
-**42 historias.** *(Los sprints reflejan la redistribución **D-20**; ver §13.3.)*
+**44 historias.** *(Los sprints reflejan la redistribución **D-20**; ver §13.3. Las dos últimas, HU-43 y HU-44, se añadieron durante la construcción: ver **D-24**.)*
 
 ---
 
@@ -138,6 +138,26 @@ Un criterio negativo es más difícil de probar que uno positivo y por eso se su
 2. **CA-08.2** — ⛔ *Dado* cualquier rol, incluido el Administrador de Despacho, *cuando* intenta modificar o borrar un asiento de la bitácora, *entonces* **no puede desde la aplicación**. Una bitácora que el auditado puede editar no sirve como evidencia.
 
 **Trazabilidad:** RF-08 · RNF-07 · RN-12 · **[D-11]** — *EP2 · Sprint 2 · Media*
+
+#### HU-43 · Cambiar mi propia contraseña
+> **Como** usuario del sistema —abogado, administrador o cliente—, **quiero** poder cambiar mi contraseña, **para** dejar de depender de la que me entregaron y poder reaccionar si creo que alguien la conoce.
+
+**Criterios de aceptación**
+1. **CA-43.1** — *Dado* que indico mi contraseña actual y una nueva, *cuando* guardo, *entonces* la nueva queda en vigor y **la anterior deja de servir de inmediato**.
+2. **CA-43.2** — ⛔ *Dado* que me equivoco al escribir la contraseña actual, *cuando* intento guardar, *entonces* **no se cambia nada**. Sin esto, una sesión abandonada en un equipo compartido bastaría para quedarse con la cuenta.
+3. **CA-43.3** — *Dado* que soy un cliente del portal, *cuando* entro con la contraseña que me dio el despacho, *entonces* **puedo cambiarla**, y a partir de ahí el despacho ya no la conoce.
+
+**Trazabilidad:** RF-39 · RNF-05 · RN-53, RN-54 · **[D-24]** — *EP2 · Sprint 1 · Alta*
+
+#### HU-44 · Restablecer la contraseña de alguien de mi despacho
+> **Como** Administrador de Despacho, **quiero** poder asignar una contraseña nueva a un usuario o a un cliente de mi despacho, **para** que quien la olvidó pueda volver a entrar sin perder su cuenta ni su historial.
+
+**Criterios de aceptación**
+1. **CA-44.1** — *Dado* un usuario de mi despacho, *cuando* le fijo una contraseña nueva, *entonces* puede entrar con ella y **conserva su cuenta, sus roles y todo lo que registró**.
+2. **CA-44.2** — ⛔ *Dado* que quiero saber cuál era su contraseña anterior, *cuando* la busco en el sistema, *entonces* **no está en ninguna parte**: restablecer es fijar una nueva, nunca leer la anterior.
+3. **CA-44.3** — ⛔ *Dado* un usuario de **otro** despacho, *cuando* intento restablecer su contraseña, *entonces* se deniega. La vía de recuperación no puede convertirse en la puerta trasera al despacho vecino.
+
+**Trazabilidad:** RF-40 · RNF-01, RNF-05 · RN-53, RN-54, RN-09, RN-13 · **[D-24]** — *EP2 · Sprint 1 · Alta*
 
 ---
 
@@ -547,8 +567,10 @@ Un criterio negativo es más difícil de probar que uno positivo y por eso se su
 | RF-17 | HU-17 | | RF-36 | HU-40 |
 | RF-18 | HU-18 | | RF-37 | HU-31 |
 | RF-19 | HU-20 | | RF-38 | HU-19 |
+| | | | RF-39 | **HU-43** |
+| | | | RF-40 | **HU-44** |
 
-**38 de 38 RF cubiertos.**
+**40 de 40 RF cubiertos.**
 
 | RNF | Historia | | RNF | Historia |
 |---|---|---|---|---|
@@ -617,7 +639,7 @@ Es el valor real de encadenar las fases: **la fase siguiente audita a la anterio
 La cadena está completa:
 
 ```
-Propuesta [P] → 16 Decisiones [D] → 56 Reglas RN → 54 Requisitos RF/RNF → 42 Historias HU
+Propuesta [P] → 17 Decisiones [D] → 58 Reglas RN → 56 Requisitos RF/RNF → 44 Historias HU
 ```
 
 Los diagramas ya no parten de cero:

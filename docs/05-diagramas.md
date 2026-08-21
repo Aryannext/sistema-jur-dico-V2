@@ -10,6 +10,8 @@
 
 Ningún diagrama se dibujó desde cero. Cada uno tiene una **fuente documental** en las fases anteriores:
 
+> **Pendiente declarado (D-24).** Estos diagramas se dibujaron sobre las 42 historias de la Fase 4. Durante la construcción se añadieron **HU-43** y **HU-44** (cambio y restablecimiento de contraseña), que **todavía no están reflejadas** en el diagrama de casos de uso. Se anota aquí en lugar de dejar que el lector lo descubra comparando: un diagrama incompleto que no se sabe incompleto es peor que uno que lo declara.
+
 | Diagrama | Sale de |
 |---|---|
 | 1 · Casos de uso | Actores (Fase 1 §6) + las 42 historias |

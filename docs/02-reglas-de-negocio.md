@@ -2,7 +2,7 @@
 
 **Proyecto:** Iuris / SGPJ — Sistema de Gestión de Procesos Jurídicos
 **Fuente base:** `24_propuesta.pdf` + [`00-decisiones-y-trazabilidad.md`](00-decisiones-y-trazabilidad.md) + [`01-idea-y-definicion-de-negocio.md`](01-idea-y-definicion-de-negocio.md)
-**Versión:** 1.2 · **Fecha:** 2026-08-20 · **Estado: CERRADA** — 56 reglas, decisiones D-13 a D-17 incorporadas
+**Versión:** 1.3 · **Fecha:** 2026-08-21 · **Estado: CERRADA** — 58 reglas, decisiones D-13 a D-17 incorporadas; **RN-53 y RN-54 añadidas por D-24** durante la construcción
 
 > Marcas de origen: **[P]** propuesta · **[D-nn]** decisión registrada · **[S]** supuesto por validar · **[R-nn]** riesgo que la regla trata.
 
@@ -109,6 +109,8 @@ Valores iniciales: **Auto · Traslado · Notificación · Audiencia · Recurso �
 | **RN-11** | El **Cliente** tiene acceso de **solo lectura**, y únicamente sobre su propio expediente. No crea, modifica ni elimina nada. | El portal informa; no permite intervenir en el proceso. | **[P]** RNF03 |
 | **RN-12** | Todo acceso al **contenido de un expediente** queda registrado en bitácora de auditoría: quién, qué expediente y cuándo. | Como el Administrador de Despacho puede no ser abogado, el acceso amplio debe ser al menos **verificable**. | **[D-11]** |
 | **RN-13** | Un usuario pertenece a **un solo despacho**. | Una misma persona que colabore con dos despachos requiere dos cuentas: los datos no pueden mezclarse (RN-02). | **[D-01] [D-14]** |
+| **RN-53** | Toda contraseña debe poder **sustituirse**: por su titular en cualquier momento, y por el Administrador de Despacho cuando el titular no puede hacerlo. | Una credencial que no se puede cambiar no se puede revocar sin destruir la cuenta. Y como es el despacho quien fija la primera contraseña del cliente (RN-43), sin esta regla el despacho conocería la de su cliente para siempre. | **[D-24]** |
+| **RN-54** | Nadie —tampoco el Administrador de Despacho ni el de Plataforma— puede **consultar** una contraseña existente. Restablecerla es fijar una nueva, nunca leer la anterior. | Se sigue de RNF-05: una contraseña que alguien puede leer deja de ser una credencial y pasa a ser un dato del despacho. | **[D-24]** |
 
 ### G3 · Clientes y procesos
 

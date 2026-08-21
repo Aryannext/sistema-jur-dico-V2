@@ -22,7 +22,7 @@
 | Mensajes al usuario | **Español siempre** | `"El radicado ya está registrado en su despacho"` |
 | Pruebas | Español descriptivo | `unDespachoNoPuedeVerProcesosDeOtroDespacho()` |
 
-**Por qué esta mezcla y no otra:** el glosario de la Fase 1 y las 56 reglas de negocio están en español. Traducir el dominio al inglés rompería la trazabilidad — nadie podría leer `RN-17` y encontrar la clase que la implementa. Los sufijos técnicos siguen la convención de Spring porque no pertenecen al dominio: son andamiaje.
+**Por qué esta mezcla y no otra:** el glosario de la Fase 1 y las reglas de negocio están en español. Traducir el dominio al inglés rompería la trazabilidad — nadie podría leer `RN-17` y encontrar la clase que la implementa. Los sufijos técnicos siguen la convención de Spring porque no pertenecen al dominio: son andamiaje.
 
 **Regla práctica:** *si la palabra aparece en el glosario de la Fase 1, va en español.*
 
