@@ -1,0 +1,229 @@
+<main>
+  <div class="migas">
+    <a routerLink="/clientes">Clientes</a>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+    <b>{{ cliente()?.nombre ?? 'Cliente' }}</b>
+  </div>
+
+  @if (cargando()) {
+    <div class="caja"><div class="cargando"><span class="girando"></span> Consultando la ficha…</div></div>
+
+  } @else if (error(); as fallo) {
+    <section class="caja">
+      <div class="vacio">
+        <div class="bola" style="background:var(--alto-suave);color:var(--alto)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        </div>
+        <b>No se pudo cargar el cliente</b>
+        <span>{{ fallo }}</span>
+        <a class="btn fantasma" routerLink="/clientes" style="margin:18px auto 0;width:fit-content">Volver a clientes</a>
+      </div>
+    </section>
+
+  } @else if (cliente(); as c) {
+
+    <div class="pag">
+      <div class="quien">
+        <span class="av-i grande" [class.gris]="!c.tieneAccesoAlPortal">{{ iniciales(c.nombre) }}</span>
+        <div>
+          <h1>{{ c.nombre }}</h1>
+          <p>
+            @if (c.documentoIdentidad) { {{ c.documentoIdentidad }} · }
+            cliente desde {{ desde(c.fechaRegistro) }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="dos">
+      <div>
+        <section class="caja" style="margin-bottom:24px">
+          <header>
+            <h3>Procesos del cliente</h3>
+            <span>{{ procesos().length }} · {{ activos() }} activo(s)</span>
+          </header>
+
+          @if (procesos().length === 0) {
+            <div class="vacio">
+              <div class="bola">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5a2 2 0 0 1 2-2H10l2 2.5h6.5a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg>
+              </div>
+              <b>Sin procesos todavía</b>
+              <span>Este cliente está registrado pero aún no tiene ningún proceso a su nombre.</span>
+            </div>
+          } @else {
+            <table class="tabla">
+              <tbody>
+                @for (p of procesos(); track p.id) {
+                  <tr>
+                    <td>
+                      <div class="p">{{ p.tipoProceso.nombre }}</div>
+                      <div class="rad-t">{{ p.radicado }}</div>
+                      <div class="s" style="margin-top:4px">{{ p.juzgado.nombre }}</div>
+                    </td>
+                    <td>
+                      @if (p.abogadoResponsable) {
+                        <span style="font-size:14px">{{ p.abogadoResponsable.nombre }}</span>
+                      } @else {
+                        <span class="eti ambar">Sin responsable</span>
+                      }
+                    </td>
+                    <td><span class="eti" [class]="'eti ' + colorEstado(p.estadoProcesal.nombre)"><i></i>{{ p.estadoProcesal.nombre }}</span></td>
+                    <td class="der">
+                      <a class="ir" [routerLink]="['/procesos', p.id]">
+                        Abrir
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+                      </a>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </section>
+
+        <section class="caja">
+          <header><h3>Datos de contacto</h3></header>
+          <div style="padding:4px 24px 22px">
+            <div class="interr">
+              <div><b>Documento</b></div>
+              <span style="font-size:14px">{{ c.documentoIdentidad || '—' }}</span>
+            </div>
+            <div class="interr">
+              <div><b>Correo</b></div>
+              <span style="font-size:14px">{{ c.correo || '—' }}</span>
+            </div>
+            <div class="interr">
+              <div><b>Teléfono</b></div>
+              <span class="num" style="font-size:14px">{{ c.telefono || '—' }}</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div>
+        <section class="caja">
+          <header>
+            <h3>Acceso al portal</h3>
+            @if (c.tieneAccesoAlPortal) {
+              <span class="eti verde"><i></i>Habilitado</span>
+            } @else {
+              <span class="eti gris">Sin acceso</span>
+            }
+          </header>
+
+          <div style="padding:16px 24px 22px">
+
+            <!-- Se muestra UNA vez, justo después de habilitar. Nadie puede
+                 volver a consultarla: se guarda con hash (RNF-05), así que ni
+                 el despacho ni el sistema la conocen a partir de ahora. -->
+            @if (claveEntregada(); as recien) {
+              <div class="entregada" role="status">
+                <b>Anote estas credenciales ahora</b>
+                <p>No se pueden volver a consultar: la contraseña se guarda cifrada y nadie puede leerla, tampoco nosotros.</p>
+                <dl>
+                  <div><dt>Correo</dt><dd>{{ correoAcceso() }}</dd></div>
+                  <div><dt>Contraseña</dt><dd class="clave">{{ recien }}</dd></div>
+                </dl>
+                <p class="cierre">Entrégueselas a su cliente por un medio que usted controle.</p>
+              </div>
+            }
+
+            @if (c.tieneAccesoAlPortal) {
+              <p style="font-size:13.5px;color:var(--medio);line-height:1.6;margin-bottom:16px">
+                Este cliente puede entrar al portal y ver <b>lo que el despacho publicó</b> de sus procesos: actuaciones, documentos y audiencias. Nunca las notas internas.
+              </p>
+
+              <button class="btn fantasma" type="button" style="width:100%;justify-content:center"
+                      (click)="revocar()" [disabled]="trabajando()">
+                @if (trabajando()) {
+                  <span class="girando"></span> Revocando…
+                } @else {
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 6.3A9.8 9.8 0 0 1 12 6.2c5 0 9 4.3 9 5.8 0 .7-.9 2-2.3 3.2M6.4 8.2C4.3 9.6 3 11.3 3 12c0 1.5 4 5.8 9 5.8 1.2 0 2.3-.25 3.3-.65"/></svg>
+                  Revocar el acceso
+                }
+              </button>
+
+              <p class="franja marca" style="margin-top:14px">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/></svg>
+                <span>Revocar <b>no borra nada</b>: el cliente deja de entrar y el expediente queda intacto.</span>
+              </p>
+
+            } @else if (abriendoAcceso()) {
+              <form (submit)="habilitar($event)" novalidate>
+                <div class="campo" style="margin-bottom:16px">
+                  <label for="correoAcceso">Correo con el que entrará</label>
+                  <div class="caja-c">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m3.7 7 8.3 6 8.3-6"/></svg>
+                    <input id="correoAcceso" type="email" [value]="correoAcceso()"
+                           (input)="escribir('correoAcceso', $event)" [disabled]="trabajando()">
+                  </div>
+                </div>
+
+                <div class="campo" style="margin-bottom:14px">
+                  <label for="clave" class="con-enlace">
+                    Contraseña
+                    <button type="button" class="link-fino" (click)="proponerClave()">Proponer una</button>
+                  </label>
+                  <div class="caja-c">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>
+                    <input id="clave" [type]="verClave() ? 'text' : 'password'" [value]="clave()"
+                           (input)="escribir('clave', $event)" [disabled]="trabajando()"
+                           placeholder="Al menos 8 caracteres">
+                    <button type="button" class="ojo" (click)="verClave.set(!verClave())"
+                            [attr.aria-label]="verClave() ? 'Ocultar' : 'Mostrar'">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="2.6"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Se dice lo que el sistema HACE, no lo que sería deseable.
+                     No hay correo de invitación ni forma de cambiar la clave
+                     después: prometerlo dejaría al cliente esperando un correo
+                     que nunca sale. -->
+                <p class="franja ambar" style="margin-bottom:16px">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+                  <span><b>Usted fija la contraseña y se la entrega al cliente.</b> El sistema no envía correo de invitación, y por ahora no hay forma de cambiarla después: elija una que pueda comunicarle sin problema.</span>
+                </p>
+
+                @if (errorAcceso(); as fallo) {
+                  <p class="franja roja" role="alert" style="margin-bottom:14px">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+                    <span>{{ fallo }}</span>
+                  </p>
+                }
+
+                <div style="display:flex;gap:10px">
+                  <button class="btn fantasma" type="button" (click)="abriendoAcceso.set(false)">Cancelar</button>
+                  <button class="btn" type="submit" [disabled]="!puedeHabilitar()" style="flex:1;justify-content:center">
+                    @if (trabajando()) {
+                      <span class="girando claro"></span> Habilitando…
+                    } @else {
+                      Habilitar el portal
+                    }
+                  </button>
+                </div>
+              </form>
+
+            } @else {
+              <p style="font-size:13.5px;color:var(--apagado);line-height:1.6;margin-bottom:16px">
+                Este cliente no tiene acceso al portal. Al habilitarlo podrá consultar sus procesos <b style="color:var(--tinta)">en modo solo lectura</b>: no puede enviar, subir ni modificar nada.
+              </p>
+
+              <button class="btn" type="button" style="width:100%;justify-content:center"
+                      (click)="abriendoAcceso.set(true)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>
+                Habilitar el portal
+              </button>
+
+              <p class="franja marca" style="margin-top:14px">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>
+                <span><b>El cliente no puede crearse una cuenta solo.</b> Únicamente el despacho sabe a quién representa; si cualquiera pudiera registrarse, un tercero reclamaría el expediente de otra persona.</span>
+              </p>
+            }
+          </div>
+        </section>
+      </div>
+    </div>
+  }
+</main>

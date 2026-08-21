@@ -1,0 +1,42 @@
+/* Lista de clientes. Lo compartido viene de src/styles.css, generado desde
+   diseno/mockups/_base/. */
+
+:host { display: block; }
+
+.buscar input {
+  font: inherit; color: var(--tinta); background: transparent;
+  border: 0; outline: none; width: 100%; padding: 0;
+}
+.buscar input::placeholder { color: var(--apagado); }
+.buscar:focus-within {
+  border-color: var(--marca);
+  box-shadow: 0 0 0 3px var(--marca-suave);
+}
+
+/* Los filtros son botones, no divs pintados: se alcanzan con el tabulador y
+   anuncian que hacen algo. */
+button.sel {
+  font: inherit;
+  cursor: pointer;
+}
+button.sel:focus-visible {
+  outline: 2px solid var(--marca);
+  outline-offset: 2px;
+}
+
+.registrar { margin-bottom: 20px; }
+.registrar .campos {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.4fr;
+  gap: 16px;
+  padding: 18px 24px 20px;
+}
+.registrar .campos input {
+  font: inherit; color: inherit; background: transparent;
+  border: 0; outline: none; width: 100%; padding: 0;
+}
+.registrar .campos input::placeholder { color: var(--apagado); }
+
+@media (max-width: 1000px) {
+  .registrar .campos { grid-template-columns: 1fr 1fr; }
+}

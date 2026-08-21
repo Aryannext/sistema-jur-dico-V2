@@ -64,6 +64,18 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./despacho/audiencias/audiencias-proceso').then(m => m.AudienciasDeProceso),
       },
+      {
+        path: 'clientes',
+        title: 'Clientes · Iuris',
+        loadComponent: () =>
+          import('./despacho/clientes/clientes').then(m => m.ListaClientes),
+      },
+      {
+        path: 'clientes/:id',
+        title: 'Ficha del cliente · Iuris',
+        loadComponent: () =>
+          import('./despacho/clientes/ficha-cliente').then(m => m.FichaCliente),
+      },
       { path: '', pathMatch: 'full', redirectTo: 'vencimientos' },
     ],
   },

@@ -1,0 +1,111 @@
+/* Ficha del cliente. Lo compartido viene de src/styles.css, generado desde
+   diseno/mockups/_base/. */
+
+:host { display: block; }
+
+.quien {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+.av-i.grande {
+  width: 58px;
+  height: 58px;
+  font-size: 19px;
+  border-radius: 18px;
+}
+
+.campo label.con-enlace {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.link-fino {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--marca);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.campo input {
+  font: inherit; color: inherit; background: transparent;
+  border: 0; outline: none; width: 100%; padding: 0;
+}
+.campo input::placeholder { color: var(--apagado); }
+.ojo {
+  margin-left: auto; background: none; border: 0; padding: 0;
+  color: var(--apagado); display: grid; place-items: center; cursor: pointer;
+}
+.ojo:hover { color: var(--medio); }
+
+/* Las credenciales recién creadas: se ven UNA vez y se ven bien.
+   Si esto pasara desapercibido, el despacho perdería la contraseña que
+   acaba de fijar y no habría forma de recuperarla — se guarda con hash. */
+.entregada {
+  background: var(--marca-suave);
+  border: 1px solid var(--marca-media);
+  border-radius: 14px;
+  padding: 17px 19px;
+  margin-bottom: 18px;
+}
+.entregada > b {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: var(--marca);
+}
+.entregada > p {
+  font-size: 13px;
+  color: var(--medio);
+  line-height: 1.55;
+  margin-top: 5px;
+}
+.entregada dl {
+  margin: 14px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.entregada dl > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 14px;
+  background: var(--sup);
+  border-radius: 9px;
+  padding: 9px 13px;
+}
+.entregada dt {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--apagado);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.entregada dd {
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+.entregada dd.clave {
+  font-weight: 800;
+  letter-spacing: .01em;
+  color: var(--marca);
+  user-select: all;
+}
+.entregada .cierre {
+  font-size: 12.5px;
+  color: var(--medio);
+  margin-top: 12px;
+}
+
+.tabla .rad-t { font-variant-numeric: tabular-nums; }
+
+@media (max-width: 1100px) {
+  .dos { grid-template-columns: 1fr; }
+}

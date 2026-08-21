@@ -1,0 +1,174 @@
+<main>
+  <div class="pag">
+    <div>
+      <h1>Clientes</h1>
+      <p>{{ clientes().length }} cliente(s) · {{ conPortal() }} con acceso al portal</p>
+    </div>
+    <div class="util">
+      <div class="buscar">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <input type="search" [value]="busqueda()" (input)="escribirBusqueda($event)"
+               placeholder="Buscar por nombre o documento" aria-label="Buscar cliente">
+      </div>
+      @if (!abierto()) {
+        <button class="btn" type="button" (click)="abrirFormulario()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Nuevo cliente
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (abierto()) {
+    <form class="caja registrar" (submit)="registrar($event)" novalidate>
+      <header><h3>Nuevo cliente</h3><span>solo el nombre es obligatorio</span></header>
+
+      <div class="campos">
+        <div class="campo">
+          <label for="nombre">Nombre o razón social</label>
+          <div class="caja-c">
+            <input id="nombre" type="text" [value]="nombre()" (input)="escribir('nombre', $event)"
+                   maxlength="200" [disabled]="guardando()" autofocus>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="doc">Documento <em>opcional</em></label>
+          <div class="caja-c">
+            <input id="doc" type="text" [value]="documento()" (input)="escribir('documento', $event)"
+                   placeholder="C.C. o NIT" maxlength="30" [disabled]="guardando()">
+          </div>
+        </div>
+        <div class="campo">
+          <label for="tel">Teléfono <em>opcional</em></label>
+          <div class="caja-c">
+            <input id="tel" type="tel" [value]="telefono()" (input)="escribir('telefono', $event)"
+                   maxlength="30" [disabled]="guardando()">
+          </div>
+        </div>
+        <div class="campo">
+          <label for="mail">Correo <em>opcional</em></label>
+          <div class="caja-c">
+            <input id="mail" type="email" [value]="correo()" (input)="escribir('correo', $event)"
+                   maxlength="150" [disabled]="guardando()">
+          </div>
+        </div>
+      </div>
+
+      @if (errorFormulario(); as fallo) {
+        <p class="franja roja" role="alert" style="margin:0 24px 18px">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          <span>{{ fallo }}</span>
+        </p>
+      }
+
+      <div class="pie-form">
+        <button class="btn fantasma" type="button" (click)="cerrarFormulario()">Cancelar</button>
+        <button class="btn" type="submit" [disabled]="!puedeGuardar()">
+          @if (guardando()) {
+            <span class="girando claro"></span> Guardando…
+          } @else {
+            Registrar cliente
+          }
+        </button>
+      </div>
+    </form>
+  }
+
+  <div class="filtros">
+    <button class="sel" type="button" [class.act]="filtro() === 'todos'" (click)="filtro.set('todos')">
+      Todos <span>{{ clientes().length }}</span>
+    </button>
+    <button class="sel" type="button" [class.act]="filtro() === 'con'" (click)="filtro.set('con')">
+      Con portal <span>{{ conPortal() }}</span>
+    </button>
+    <button class="sel" type="button" [class.act]="filtro() === 'sin'" (click)="filtro.set('sin')">
+      Sin portal <span>{{ sinPortal() }}</span>
+    </button>
+    <div class="cuenta">Mostrando {{ mostrados().length }}</div>
+  </div>
+
+  <section class="caja">
+    @if (cargando()) {
+      <div class="cargando"><span class="girando"></span> Consultando sus clientes…</div>
+
+    } @else if (error(); as fallo) {
+      <div class="vacio">
+        <div class="bola" style="background:var(--alto-suave);color:var(--alto)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        </div>
+        <b>No se pudieron cargar los clientes</b>
+        <span>{{ fallo }}</span>
+        <button class="btn" type="button" (click)="cargar()" style="margin:18px auto 0">Reintentar</button>
+      </div>
+
+    } @else if (mostrados().length === 0) {
+      <div class="vacio">
+        <div class="bola">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.5" cy="8.5" r="3.5"/><path d="M3.5 19.5c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M17 6.2a3.2 3.2 0 0 1 0 6.1M18.5 19.5c0-2.2-.7-3.9-2-5"/></svg>
+        </div>
+        @if (clientes().length === 0) {
+          <b>Todavía no hay clientes</b>
+          <span>Registre el primero y podrá crearle procesos y darle acceso al portal.</span>
+        } @else {
+          <b>Ninguno coincide</b>
+          <span>Pruebe con otro nombre, otro documento, o quite el filtro de portal.</span>
+        }
+      </div>
+
+    } @else {
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th style="padding-top:21px">Cliente</th>
+            <th style="padding-top:21px">Documento</th>
+            <th style="padding-top:21px">Contacto</th>
+            <th style="padding-top:21px">Portal</th>
+            <th style="padding-top:21px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of mostrados(); track c.id) {
+            <tr>
+              <td>
+                <div class="per">
+                  <span class="av-i" [class.gris]="!c.tieneAccesoAlPortal">{{ iniciales(c.nombre) }}</span>
+                  <div class="p">{{ c.nombre }}</div>
+                </div>
+              </td>
+              <td>
+                @if (c.documentoIdentidad) {
+                  <span class="num" style="font-size:14px">{{ c.documentoIdentidad }}</span>
+                } @else {
+                  <span style="color:var(--apagado)">—</span>
+                }
+              </td>
+              <td>
+                @if (c.correo) { <div style="font-size:14px">{{ c.correo }}</div> }
+                @if (c.telefono) { <div class="s">{{ c.telefono }}</div> }
+                @if (!c.correo && !c.telefono) { <span style="color:var(--apagado)">—</span> }
+              </td>
+              <td>
+                @if (c.tieneAccesoAlPortal) {
+                  <span class="eti verde"><i></i>Habilitado</span>
+                } @else {
+                  <span class="eti gris">Sin acceso</span>
+                }
+              </td>
+              <td class="der">
+                <a class="ir" [routerLink]="['/clientes', c.id]">
+                  Ver ficha
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+
+  <p class="franja marca" style="margin-top:22px">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/></svg>
+    <span><b>Aquí no hay botón de borrar cliente.</b> Un cliente con procesos es parte del historial del despacho; lo que se puede quitar es su acceso al portal, y eso no borra nada. «Sin acceso» significa que no entra, no que se fue.</span>
+  </p>
+</main>
