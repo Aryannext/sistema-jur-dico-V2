@@ -381,6 +381,28 @@ Y las alertas no llegan repartidas: `Termino.fechaObjetivo()` devuelve la fecha 
 
 ---
 
+### D-26 — El envío en paralelo es la salida de A-05, y agrupar el lote no lo era
+
+**Contexto.** D-25 dejó tres salidas para RNF-11 y dijo que no se podía elegir sin medir el envío real por SMTP. Se midió (`RendimientoSmtpTest`, resultados completos en `backend/src/test/resources/rendimiento/RESULTADOS.md`).
+
+**Cómo se midió, y por qué así.** Contra GreenMail detrás de un proxy TCP que inyecta latencia, **no contra un proveedor real**. Un proveedor habría dado el número de ese proveedor, ese día, desde esa red; y habría exigido mandar dos mil correos de prueba desde un dominio nuevo, que es la forma más rápida de acabar en una lista negra y que las alertas de verdad dejen de llegar. Lo que se midió en su lugar es **cuántos viajes de red hay por alerta**, que es propiedad del código y no del proveedor: con ese número, el tiempo con cualquier proveedor es una multiplicación.
+
+**El resultado corrigió la hipótesis de partida.** La suposición era que reutilizar la conexión resolvería el problema. No: son **14 viajes de red por alerta** enviando de una en una y **10 por alerta** agrupando el lote. Reutilizar la conexión ahorra solo **4 de 14** —el saludo y la despedida—, porque los otros diez son del protocolo: `MAIL FROM`, `RCPT TO`, `DATA` y el punto final son un viaje cada uno **por mensaje**. Agrupar mejora 1,4×, no el doble, y 1,4× no alcanza: a 100 ms de latencia el pico seguiría tardando 26 minutos.
+
+Enviar en paralelo sí: **6,6 minutos con 4 conexiones y 3,5 con 8**, a 100 ms. Los viajes de red no bajan —1.016 tramos con 4 conexiones frente a 1.004 con una—, simplemente dejan de esperarse en fila.
+
+**La cifra que decide.** Con el código de hoy, **cualquier proveedor a más de 50 ms de latencia incumple RNF-11**. De Neiva a un proveedor en Estados Unidos son 80–120 ms.
+
+**Decisión.** La salida de A-05 es **enviar en paralelo**, no subir el lote. Se descarta la segunda vía de D-25 (bajar el intervalo), que no ataca el problema: el cuello no es la frecuencia del barrido sino el caudal de cada uno.
+
+**Lo que sigue sin decidirse, y es del Product Owner.** Ocho conexiones despachando 2.499 correos en 3,5 minutos son **~12 por segundo**. Un servicio transaccional lo admite; el SMTP de una cuenta de Gmail no, ni de lejos. **El proveedor hay que elegirlo con ese número delante**, porque si limita a menos, el paralelismo no sirve de nada y habría que volver a la tercera vía de D-25 —repartir el instante de aviso, que cambia RN-19—.
+
+**Lo que NO se implementa aquí, y por qué.** `MotorAlertas.ejecutarBarrido()` envía dentro de **una sola transacción**. Enviar en paralelo desde ahí no es cambiar un bucle por un pool: la transacción y sus bloqueos quedarían abiertos esperando a la red, y las entidades de Hibernate no son seguras entre hilos. Separar el envío de la transacción es el trabajo real, y es justo donde puede reaparecer la emisión duplicada que ADR-04 evita hoy con `SKIP LOCKED`. Se hace como cambio propio, con sus pruebas, no de rebote en una medición.
+
+**Nota sobre la prueba.** La primera versión exigía que agrupar fuera **el doble** de rápido. Falló, y estuvo bien que fallara: la cifra era una suposición, no un requisito. Ahora comprueba lo estructural —cuántas conexiones abre cada estrategia— y la dirección de la mejora, y deja las cifras al informe. Una prueba que afirma una suposición solo comprueba que se sigue suponiendo lo mismo.
+
+---
+
 ## 5. Supuestos vigentes [S]
 
 Se trabaja con ellos hasta que se validen. Cada uno indica cuándo debe cerrarse.
@@ -413,7 +435,7 @@ No son vacíos de la propuesta ni supuestos: son **preguntas nuevas que nacieron
 
 | **A-04** | `PROCESO.juzgado` como texto libre degrada la búsqueda que exige P-RNF02 | Modelo de datos (Fase 5) | **Resuelto** → **D-17** (quinto catálogo, por despacho) |
 
-| **A-05** | Con el volumen objetivo, **2.499 alertas vencen en el mismo instante** y el motor drena 100 cada 5 minutos: el pico tarda 125 minutos frente a los 15 que tolera RNF-11. ¿Se sube el lote, se baja el intervalo o se reparte el instante de aviso? | Medición de rendimiento (D-25) | **ABIERTO** — la tercera vía cambia RN-19, y decidir a qué hora sale un aviso es del Product Owner |
+| **A-05** | Con el volumen objetivo, **2.499 alertas vencen en el mismo instante** y el motor drena 100 cada 5 minutos: el pico tarda 125 minutos frente a los 15 que tolera RNF-11. | Medición de rendimiento (D-25) | **ABIERTO, pero acotado** → **D-26**: medido el envío real, la salida es **enviar en paralelo**. Falta que el Product Owner elija proveedor con el caudal en la mano |
 
 **A-01 a A-04 quedan cerrados. A-05 es el único asunto abierto del proyecto** y bloquea la verificación de RNF-11: RNF-12 sí queda verificado con evidencia reproducible.
 
@@ -464,3 +486,4 @@ Cada fase se valida antes de abrir la siguiente. Cada artefacto de una fase refe
 | 2026-08-20 | Decisiones **D-17 a D-20**. Cierre de **A-04**, de los supuestos **S-03** y **S-04**, y de los riesgos **RA-3**, **RA-4** y **R-09**. Corrección de RNF-11 (tolerancia 1 h → 15 min). | Cierre de los cuatro pendientes que quedaban tras la Fase 6. **No queda ningún asunto abierto.** |
 | 2026-08-21 | Decisión **D-24**. Se añaden **RN-53** y **RN-54**, **RF-39** y **RF-40**, **HU-43** y **HU-44**: el sistema no tenía forma de cambiar ni restablecer una contraseña. Ahora **40 RF, 56 requisitos** y **44 historias**. Corregida la cifra de origen de §5.2, que llevaba desactualizada desde la Fase 4 (decía «23 de los 52»; el recuento real era 26 de 54, y con D-24 pasa a 28 de 56). | Lo detectó la **construcción del frontend**: escribir en pantalla qué le ocurre al cliente tras recibir su clave obligó a decir la verdad sobre el sistema, y la verdad no se sostenía. La propuesta nunca mencionó cambiar una contraseña, así que ninguna regla lo exigía. |
 | 2026-08-21 | Medición de rendimiento contra el volumen objetivo. **RNF-12 verificado** (16 consultas, peor tiempo 584 ms sobre un límite de 3.000). Decisión **D-25**: **RNF-11 INCUMPLE** —el pico de 2.499 alertas en un mismo instante tarda 125 minutos en drenarse frente a los 15 de tolerancia—. Se abre el asunto **A-05**. | El defecto no está en la consulta (0,35 ms, usa índice) sino en el caudal del motor: 100 alertas cada 5 minutos. Ninguna prueba lo detectó porque todas comprueban RNF-11 **por alerta**, y el incumplimiento solo existe en el conjunto. |
+| 2026-08-21 | Decisión **D-26**. Medido el envío real por SMTP (`mvnw test -Prendimiento`): la salida de A-05 es **enviar en paralelo** —6,6 min con 4 conexiones frente a 36,8 de hoy—, no agrupar el lote. | La hipótesis de D-25 era que reutilizar la conexión bastaría. La medición dijo que no: ahorra 4 de 14 viajes de red por alerta, porque los otros 10 son del protocolo y van por mensaje. **Con el código de hoy, cualquier proveedor a más de 50 ms incumple RNF-11**, y de Neiva a Estados Unidos son 80-120. |

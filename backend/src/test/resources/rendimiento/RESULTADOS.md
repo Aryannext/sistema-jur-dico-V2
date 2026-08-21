@@ -131,6 +131,102 @@ implementación.
 
 Queda como defecto abierto, no corregido en esta medición.
 
+## A-05 — cuánto cuesta el envío real por SMTP
+
+Medido con `mvnw test -Prendimiento` (`RendimientoSmtpTest`). Contra
+GreenMail detrás de un proxy TCP que inyecta latencia
+(`RedConRetardo`), **no contra un proveedor real**: un proveedor daría
+el número de ese proveedor, ese día, desde esa red, y además implicaría
+mandar dos mil correos de prueba desde un dominio nuevo, que es la forma
+más rápida de acabar en una lista negra y que las alertas de verdad
+dejen de llegar.
+
+Lo que se mide en su lugar es **cuántos viajes de red hay por alerta**,
+que es propiedad del código y no del proveedor. Con ese número, el
+tiempo con cualquier proveedor es una multiplicación.
+
+### El coste por alerta
+
+Lote de 100 alertas. La columna **tramos** son viajes de red relevados
+por el proxy; es el dato que no depende de la latencia.
+
+| Latencia | Estrategia | Tiempo | Conexiones | Tramos | Por alerta |
+|---:|---|---:|---:|---:|---:|
+| 0 ms | una conexión por alerta | 1.042 ms | 100 | 1.443 | 10,4 ms |
+| 0 ms | una conexión por lote | 470 ms | 1 | 1.005 | 4,7 ms |
+| 20 ms | una conexión por alerta | 25.618 ms | 100 | 1.400 | 256,2 ms |
+| 20 ms | una conexión por lote | 17.886 ms | 1 | 1.004 | 178,9 ms |
+| 50 ms | una conexión por alerta | 39.056 ms | 100 | 1.400 | 390,6 ms |
+| 50 ms | una conexión por lote | 28.987 ms | 1 | 1.004 | 289,9 ms |
+| 50 ms | **4 conexiones a la vez** | 8.829 ms | 4 | 1.016 | 88,3 ms |
+| 50 ms | **8 conexiones a la vez** | 4.702 ms | 8 | 1.032 | 47,0 ms |
+| 100 ms | una conexión por alerta | 88.286 ms | 100 | 1.400 | 882,9 ms |
+| 100 ms | una conexión por lote | 62.763 ms | 1 | 1.004 | 627,6 ms |
+| 100 ms | **4 conexiones a la vez** | 15.922 ms | 4 | 1.016 | 159,2 ms |
+| 100 ms | **8 conexiones a la vez** | 8.492 ms | 8 | 1.032 | 84,9 ms |
+
+### El hallazgo: agrupar no es la respuesta
+
+**14 tramos por alerta** enviando de una en una; **10 por alerta**
+agrupando el lote en una sola conexión. Reutilizar la conexión ahorra
+solo **4 de 14** —el saludo y la despedida— porque los otros diez son
+del protocolo: `MAIL FROM`, `RCPT TO`, `DATA` y el punto final son un
+viaje cada uno **por mensaje**, y ningún lote los ahorra.
+
+Por eso agrupar mejora 1,4× y no el doble. Y 1,4× no alcanza: a 100 ms
+el pico de 2.499 alertas seguiría tardando 26 minutos.
+
+En paralelo los tramos **no bajan** (1.016 con 4 conexiones, 1.032 con
+8): son los mismos viajes de red. Lo que cambia es que dejan de
+esperarse en fila.
+
+### Qué pasa con el pico de 2.499 alertas
+
+Tolerancia RNF-11: 15 minutos.
+
+| Latencia | Estrategia | El pico tardaría | |
+|---:|---|---:|---|
+| 20 ms | una conexión por alerta | 10,7 min | cabe |
+| 50 ms | una conexión por alerta | 16,3 min | **NO cabe** |
+| 50 ms | una conexión por lote | 12,1 min | cabe, sin margen |
+| 50 ms | 4 conexiones a la vez | 3,7 min | cabe |
+| 50 ms | 8 conexiones a la vez | 2,0 min | cabe |
+| 100 ms | una conexión por alerta | 36,8 min | **NO cabe** |
+| 100 ms | una conexión por lote | 26,1 min | **NO cabe** |
+| 100 ms | 4 conexiones a la vez | 6,6 min | cabe |
+| 100 ms | 8 conexiones a la vez | 3,5 min | cabe |
+
+Con el código de hoy, **cualquier proveedor a más de 50 ms incumple
+RNF-11**. Neiva a un proveedor en Estados Unidos son del orden de 80–120
+ms.
+
+### Tres advertencias sobre estos números
+
+1. **El proxy no hace TLS ni autenticación.** Un proveedor real añade
+   handshake y `AUTH` a **cada conexión**. Ese coste castiga sobre todo
+   a la estrategia de hoy, que abre 100 conexiones por lote: los tiempos
+   de la primera fila son un **suelo**, no una estimación. Con 4 u 8
+   conexiones el coste extra es despreciable porque se paga 4 u 8 veces,
+   no 2.499.
+2. **Los proveedores limitan el caudal.** 8 conexiones despachando 2.499
+   correos en 3,5 minutos son ~12 por segundo. Un servicio transaccional
+   lo admite; el SMTP de una cuenta de Gmail no, ni de lejos. **El
+   proveedor hay que elegirlo con este número en la mano**, y si el
+   elegido limita a menos, el paralelismo no sirve de nada.
+3. **Hay variación entre ejecuciones.** «Una conexión por alerta» a 50 ms
+   dio 47,2 s en una pasada y 39,1 s en otra. Los órdenes de magnitud son
+   sólidos; las cifras concretas, ±20 %.
+
+### Lo que esto NO resuelve
+
+`MotorAlertas.ejecutarBarrido()` envía **dentro de una sola
+transacción**. Enviar en paralelo desde ahí no es cambiar un bucle por
+un pool: la transacción y sus bloqueos quedarían abiertos mientras
+esperan a la red, y las entidades de Hibernate no son seguras entre
+hilos. Separar el envío de la transacción es el trabajo real, y es
+donde puede aparecer emisión duplicada — justo lo que ADR-04 evita hoy
+con `SKIP LOCKED`.
+
 ## Cómo repetirla
 
 ```
@@ -145,6 +241,12 @@ powershell -File medir.ps1
 psql -U sgpj_app -d sgpj_rendimiento -f medir-barrido.sql
 powershell -File medir-barrido.ps1
 dropdb -U postgres sgpj_rendimiento
+```
+
+Y la de A-05, que no necesita base de datos ni volumen:
+
+```
+./mvnw test -Prendimiento
 ```
 
 La base es **desechable** y se borra al terminar: nunca se mide contra la
