@@ -1,0 +1,202 @@
+<main class="estrecho">
+  <div class="migas">
+    <a routerLink="/procesos">Procesos</a>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+    <a [routerLink]="['/procesos', id()]">{{ proceso()?.radicado ?? 'Expediente' }}</a>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>
+    <b>Nueva pieza</b>
+  </div>
+
+  <div class="pag">
+    <div>
+      <h1>Agregar al expediente</h1>
+      <p>
+        @if (proceso(); as p) {
+          {{ p.tipoProceso.nombre }} · {{ p.clienteTitular.nombre }}
+        } @else {
+          Cargando el proceso…
+        }
+      </p>
+    </div>
+  </div>
+
+  <form class="caja" (submit)="guardar($event)" novalidate>
+    <div style="padding:24px 24px 4px">
+
+      <!-- La elección NO es «¿lo ve el cliente?». Es qué clase de pieza es,
+           y la visibilidad se deduce de eso (D-12). Una casilla de
+           visibilidad invita a equivocarse una vez y publicar algo
+           reservado; elegir «nota interna» se entiende sin letra pequeña. -->
+      <div class="campo ancho" style="margin-bottom:22px">
+        <label>¿Qué va a registrar?</label>
+        <div class="clases">
+          <button type="button" class="opt" [class.on]="clase() === 'ACTUACION'" (click)="elegirClase('ACTUACION')">
+            <span class="mar cua"></span>
+            <span><b>Actuación</b><span>Algo que ocurrió en el proceso</span></span>
+          </button>
+          <button type="button" class="opt" [class.on]="clase() === 'DOCUMENTO'" (click)="elegirClase('DOCUMENTO')">
+            <span class="mar cua"></span>
+            <span><b>Documento</b><span>Un archivo del expediente</span></span>
+          </button>
+          <button type="button" class="opt" [class.on]="clase() === 'NOTA'" (click)="elegirClase('NOTA')">
+            <span class="mar cua"></span>
+            <span><b>Nota interna</b><span>Solo para el despacho</span></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Lo que va a pasar con el cliente, dicho antes de guardar y sin
+           tener que buscarlo. Cambia con la elección de arriba. -->
+      @if (clase() === 'DOCUMENTO') {
+        <!-- RF-16 es, literalmente, la advertencia al CARGAR UN DOCUMENTO, y
+             el texto que la cumple lo redacta el backend. No se reutiliza para
+             las actuaciones: ese texto habla de archivos y, puesto en otra
+             pantalla, diría algo que no es verdad de lo que se está haciendo. -->
+        <p class="franja ambar" style="margin-bottom:22px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="2.6"/></svg>
+          <span>
+            @if (advertencia(); as aviso) {
+              {{ aviso.mensaje }}
+              <button type="button" class="enlace-alt" (click)="elegirClase('NOTA')">{{ aviso.alternativa }}</button>
+            } @else {
+              <b>El documento quedará visible para su cliente de inmediato.</b> Si no desea mostrarlo,
+              <button type="button" class="enlace-alt" (click)="elegirClase('NOTA')">regístrelo como nota interna</button>.
+            }
+          </span>
+        </p>
+
+      } @else if (seraVisible()) {
+        <p class="franja ambar" style="margin-bottom:22px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.6-6 9-6 9 6 9 6-3.6 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="2.6"/></svg>
+          <span>
+            <b>Su cliente verá esta actuación en el portal</b>, con la descripción tal como la escriba.
+            Si es algo interno,
+            <button type="button" class="enlace-alt" (click)="elegirClase('NOTA')">regístrelo como nota</button>.
+          </span>
+        </p>
+
+      } @else {
+        <p class="franja marca" style="margin-bottom:22px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 6.3A9.8 9.8 0 0 1 12 6.2c5 0 9 4.3 9 5.8 0 .7-.9 2-2.3 3.2M6.4 8.2C4.3 9.6 3 11.3 3 12c0 1.5 4 5.8 9 5.8 1.2 0 2.3-.25 3.3-.65"/></svg>
+          <span><b>Esto no sale del despacho.</b> Las notas internas nunca aparecen en el portal del cliente, en ninguna circunstancia.</span>
+        </p>
+      }
+
+      @switch (clase()) {
+
+        @case ('NOTA') {
+          <div class="campo ancho">
+            <label for="contenido">Contenido de la nota</label>
+            <div class="caja-c alto">
+              <textarea id="contenido" rows="6" [value]="contenido()" (input)="escribirContenido($event)"
+                        placeholder="Estrategia, recordatorios, lo que no debe ver el cliente…"
+                        [disabled]="guardando()"></textarea>
+            </div>
+            <span class="ayuda" [class.ojo]="escrito() > limite()">
+              {{ escrito() }} de {{ limite() }} caracteres
+            </span>
+          </div>
+        }
+
+        @case ('DOCUMENTO') {
+          <div class="form">
+            <div class="campo">
+              <label for="tipoDoc">Tipo de documento</label>
+              <div class="caja-c">
+                <select id="tipoDoc" (change)="elegirTipo($event)" [disabled]="guardando()">
+                  @for (t of tiposDocumento(); track t.id) {
+                    <option [value]="t.id" [selected]="tipoId() === t.id">{{ t.nombre }}</option>
+                  }
+                </select>
+              </div>
+              <span class="ayuda">Los tipos los administra su despacho, no vienen fijos.</span>
+            </div>
+
+            <div class="campo">
+              <label for="archivo">Archivo</label>
+              @if (archivo(); as elegido) {
+                <div class="caja-c" style="justify-content:space-between">
+                  <span style="display:flex;align-items:center;gap:10px;min-width:0">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--alto)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13.5 3.5V9H19"/></svg>
+                    <b style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ elegido.name }}</b>
+                    <span style="color:var(--apagado);font-size:13px;white-space:nowrap">{{ tamano(elegido.size) }}</span>
+                  </span>
+                  <button type="button" class="quitar-archivo" (click)="quitarArchivo()" aria-label="Quitar el archivo">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                  </button>
+                </div>
+              } @else {
+                <div class="caja-c vacio-archivo">
+                  <input id="archivo" type="file" (change)="elegirArchivo($event)" [disabled]="guardando()">
+                </div>
+              }
+              <span class="ayuda">Hasta 20 MB. El archivo se guarda cifrado.</span>
+            </div>
+          </div>
+        }
+
+        @default {
+          <div class="form">
+            <div class="campo">
+              <label for="tipoAct">Tipo de actuación</label>
+              <div class="caja-c">
+                <select id="tipoAct" (change)="elegirTipo($event)" [disabled]="guardando()">
+                  @for (t of tiposActuacion(); track t.id) {
+                    <option [value]="t.id" [selected]="tipoId() === t.id">{{ t.nombre }}</option>
+                  }
+                </select>
+              </div>
+              <span class="ayuda">Los tipos los administra su despacho, no vienen fijos.</span>
+            </div>
+
+            <div class="campo">
+              <label for="fecha">Fecha de la actuación</label>
+              <div class="caja-c">
+                <input id="fecha" type="date" [value]="fecha()" (input)="escribirFecha($event)"
+                       [disabled]="guardando()">
+              </div>
+              <!-- No es la fecha de hoy por defecto porque sí: es la fecha del
+                   HECHO, que puede ser anterior al día en que se registra. -->
+              <span class="ayuda">Cuándo ocurrió, que puede no ser hoy.</span>
+            </div>
+
+            <div class="campo ancho">
+              <label for="descripcion">Descripción</label>
+              <div class="caja-c alto">
+                <textarea id="descripcion" rows="4" [value]="descripcion()" (input)="escribirDescripcion($event)"
+                          placeholder="Qué ocurrió, en las palabras que entendería su cliente."
+                          [disabled]="guardando()"></textarea>
+              </div>
+              <span class="ayuda" [class.ojo]="escrito() > limite()">
+                {{ escrito() }} de {{ limite() }} caracteres
+              </span>
+            </div>
+          </div>
+        }
+      }
+
+      @if (error(); as fallo) {
+        <p class="franja roja" role="alert" style="margin-top:22px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          <span>{{ fallo }}</span>
+        </p>
+      }
+
+      <p class="franja marca" style="margin:22px 0">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/></svg>
+        <span>Quién registra la pieza y cuándo <b>no se pregunta aquí</b>: lo pone el sistema. Un dato que el usuario escribe es un dato que el usuario puede escribir mal.</span>
+      </p>
+    </div>
+
+    <div class="pie-form">
+      <a class="btn fantasma" [routerLink]="['/procesos', id()]">Cancelar</a>
+      <button class="btn" type="submit" [disabled]="!puedeGuardar()">
+        @if (guardando()) {
+          <span class="girando claro"></span> Guardando…
+        } @else {
+          Guardar en el expediente
+        }
+      </button>
+    </div>
+  </form>
+</main>

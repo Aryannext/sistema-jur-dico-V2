@@ -34,6 +34,10 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5A8 8 0 1 0 18.5 16"/><path d="M20 6v5.5h-5.5"/></svg>
           Actualizar
         </button>
+        <a class="btn" [routerLink]="['/procesos', id(), 'nueva']">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Agregar al expediente
+        </a>
       </div>
     </div>
 
@@ -103,6 +107,20 @@
                     }
                     @if (pieza.origen) { · {{ pieza.origen }} }
                   </div>
+
+                  @if (pieza.tipo === 'DOCUMENTO') {
+                    <!-- Enlace directo, sin JavaScript de por medio: el
+                         navegador manda la cookie de sesión igual y descarga
+                         con su propia barra de progreso, que para un PDF de
+                         20 MB es mejor que cualquier cosa que pintemos aquí.
+                         El backend lo descifra al servirlo y deja asiento de
+                         DESCARGA en la bitácora (RF-08). -->
+                    <a class="adj" [href]="'/api/procesos/' + id() + '/documentos/' + pieza.id" download>
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--alto)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z"/><path d="M13.5 3.5V9H19"/></svg>
+                      Descargar
+                      <span>{{ pieza.descripcion }}</span>
+                    </a>
+                  }
 
                   <!-- RF-38: quién y cuándo lo pone el sistema, no el usuario.
                        Es lo que convierte el expediente en respaldo. -->

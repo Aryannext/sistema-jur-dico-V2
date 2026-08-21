@@ -40,6 +40,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./despacho/expediente/expediente').then(m => m.Expediente),
       },
+      {
+        path: 'procesos/:id/nueva',
+        title: 'Agregar al expediente · Iuris',
+        loadComponent: () =>
+          import('./despacho/expediente/nueva-pieza').then(m => m.NuevaPieza),
+      },
       { path: '', pathMatch: 'full', redirectTo: 'vencimientos' },
     ],
   },

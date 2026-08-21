@@ -47,3 +47,16 @@
 @media (max-width: 1100px) {
   .dos { grid-template-columns: 1fr; }
 }
+
+/* El enlace de descarga usa el mismo aspecto que el adjunto del mockup, pero
+   es un enlace: se puede abrir en otra pestaña, copiar la dirección y usar
+   con el teclado. Envolverlo en un botón con JavaScript quitaría todo eso a
+   cambio de nada. */
+a.adj {
+  text-decoration: none;
+  color: inherit;
+}
+a.adj:hover {
+  border-color: var(--marca);
+  background: var(--marca-suave);
+}

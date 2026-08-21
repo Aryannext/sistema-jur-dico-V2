@@ -12,6 +12,12 @@ export interface Filtros {
   juzgadoId: number | null;
 }
 
+/** GET /api/procesos/{id}/documentos/advertencia — RF-16. */
+export interface Advertencia {
+  mensaje: string;
+  alternativa: string;
+}
+
 export const SIN_FILTROS: Filtros = {
   radicado: '',
   estadoId: null,
@@ -62,6 +68,51 @@ export class Procesos {
    */
   async expediente(procesoId: number): Promise<Pieza[]> {
     return firstValueFrom(this.http.get<Pieza[]>(`/api/procesos/${procesoId}/expediente`));
+  }
+
+  /**
+   * La advertencia de RF-16, tal como la redacta el backend.
+   *
+   * <p>No se escribe aquí una versión propia. El requisito dice que el sistema
+   * debe advertir; si el texto viviera en el frontend, cambiarlo no requeriría
+   * tocar nada del backend y la advertencia podría acabar diciendo algo que ya
+   * no es verdad. Que venga del servidor la ata a la regla que la sostiene.
+   */
+  async advertenciaDeCarga(procesoId: number): Promise<Advertencia> {
+    return firstValueFrom(
+      this.http.get<Advertencia>(`/api/procesos/${procesoId}/documentos/advertencia`));
+  }
+
+  /** RF-17: registrar una actuación. */
+  async registrarActuacion(
+    procesoId: number, tipoActuacionId: number, fecha: string, descripcion: string,
+  ): Promise<Pieza> {
+    return firstValueFrom(this.http.post<Pieza>(
+      `/api/procesos/${procesoId}/actuaciones`, { tipoActuacionId, fecha, descripcion }));
+  }
+
+  /** RF-18: registrar una nota interna. No lleva marca de privacidad: lo es. */
+  async registrarNota(procesoId: number, contenido: string): Promise<Pieza> {
+    return firstValueFrom(
+      this.http.post<Pieza>(`/api/procesos/${procesoId}/notas`, { contenido }));
+  }
+
+  /**
+   * RF-15: cargar un documento. Se guarda cifrado (RNF-04).
+   *
+   * <p>Va como multipart y no como base64 dentro de un JSON: un PDF escaneado
+   * de 20 MB se convertiría en unos 27 MB de texto, y habría que tenerlo entero
+   * en memoria dos veces antes de empezar a subirlo.
+   */
+  async cargarDocumento(
+    procesoId: number, tipoDocumentoId: number, archivo: File,
+  ): Promise<Pieza> {
+    const cuerpo = new FormData();
+    cuerpo.append('tipoDocumentoId', String(tipoDocumentoId));
+    cuerpo.append('archivo', archivo, archivo.name);
+
+    return firstValueFrom(
+      this.http.post<Pieza>(`/api/procesos/${procesoId}/documentos`, cuerpo));
   }
 
   /**

@@ -1,0 +1,119 @@
+/* Añadidos del formulario de nueva pieza. Lo compartido viene de
+   src/styles.css, generado desde diseno/mockups/_base/. */
+
+:host {
+  display: block;
+}
+
+main.estrecho {
+  max-width: 980px;
+}
+
+/* Las tres clases de pieza son botones de verdad, no divs pintados: se
+   alcanzan con el tabulador y responden al teclado. Un formulario donde la
+   primera decisión solo funciona con ratón deja fuera a quien no lo usa. */
+.clases {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 2px;
+}
+.clases .opt {
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.clases .opt > span:last-child {
+  display: block;
+  min-width: 0;
+}
+
+/* El enlace de la alternativa de RF-16 —«regístrelo como nota interna»—
+   cambia la elección en el sitio. Es un botón porque hace algo, no navega. */
+.enlace-alt {
+  display: inline;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin-left: 4px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--medio-av);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.campo select,
+.campo textarea,
+.campo input[type="date"],
+.campo input[type="file"] {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  outline: none;
+  width: 100%;
+  padding: 0;
+}
+.campo textarea {
+  resize: vertical;
+  line-height: 1.6;
+  min-height: 5.6em;
+}
+.campo select {
+  cursor: pointer;
+}
+.campo input[type="file"] {
+  cursor: pointer;
+  font-size: 14px;
+}
+.campo input[type="file"]::file-selector-button {
+  font: inherit;
+  font-weight: 700;
+  font-size: 13.5px;
+  background: var(--marca-suave);
+  color: var(--marca);
+  border: 0;
+  border-radius: 9px;
+  padding: 8px 14px;
+  margin-right: 12px;
+  cursor: pointer;
+}
+.vacio-archivo {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.quitar-archivo {
+  background: none;
+  border: 0;
+  padding: 4px;
+  color: var(--apagado);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.quitar-archivo:hover { color: var(--alto); }
+
+/* El contador de caracteres pasa a ámbar cuando se pasa del límite, antes de
+   que el backend lo rechace. Enterarse al guardar, con el texto ya escrito,
+   es la peor forma de descubrir un límite. */
+.ayuda.ojo {
+  color: var(--medio-av);
+  font-weight: 600;
+}
+
+.girando.claro {
+  border-color: rgba(255, 255, 255, .35);
+  border-top-color: #fff;
+}
+
+.pie-form a.btn {
+  text-decoration: none;
+}
+
+@media (max-width: 760px) {
+  .clases { grid-template-columns: 1fr; }
+  .form { grid-template-columns: 1fr; }
+}
