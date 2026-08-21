@@ -1,0 +1,36 @@
+/* Mi cuenta. Lo compartido viene de src/styles.css, generado desde
+   diseno/mockups/_base/. */
+
+:host { display: block; }
+
+main.estrecho { max-width: 620px; }
+
+.campo { margin-bottom: 20px; }
+.campo input {
+  font: inherit; color: inherit; background: transparent;
+  border: 0; outline: none; width: 100%; padding: 0;
+}
+.campo label.con-enlace {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.link-fino {
+  background: none; border: 0; padding: 0;
+  font: inherit; font-size: 13px; font-weight: 700;
+  color: var(--marca); cursor: pointer; text-decoration: underline;
+}
+
+/* La franja verde no existía en el diseño porque una lámina no confirma
+   nada. Aquí hace falta: sin confirmación, el usuario vuelve a intentarlo
+   con la contraseña vieja y cree que el sistema falló. */
+.franja.verde {
+  background: #E4F1EA;
+  color: #245C43;
+}
+.franja.verde b { color: var(--tinta); }
+
+.girando.claro {
+  border-color: rgba(255, 255, 255, .35);
+  border-top-color: #fff;
+}

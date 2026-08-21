@@ -117,3 +117,20 @@ export interface ValorCatalogo {
   protegido: boolean;
   orden: number;
 }
+
+/** Un rol tal como lo nombra el backend. */
+export interface Rol {
+  codigo: string;
+  nombre: string;
+}
+
+/** GET /api/usuarios — RF-05 · RF-06. */
+export interface Usuario {
+  id: number;
+  despachoId: number;
+  nombre: string;
+  correo: string;
+  activo: boolean;
+  roles: Rol[];
+  fechaRegistro: string;
+}

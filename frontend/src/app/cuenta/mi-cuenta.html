@@ -1,0 +1,99 @@
+<main class="estrecho">
+  <div class="pag">
+    <div>
+      <h1>Mi cuenta</h1>
+      <p>{{ autenticacion.nombre() }} · {{ autenticacion.sesion()?.correo }}</p>
+    </div>
+  </div>
+
+  <form class="caja" (submit)="cambiar($event)" novalidate>
+    <header>
+      <h3>Cambiar mi contraseña</h3>
+      <span>hace falta la actual</span>
+    </header>
+
+    <div style="padding:20px 24px 4px">
+
+      @if (hecho()) {
+        <p class="franja verde" role="status" style="margin-bottom:20px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7"/></svg>
+          <span><b>Contraseña cambiada.</b> La anterior ya no sirve. Su sesión sigue abierta.</span>
+        </p>
+      }
+
+      <div class="campo">
+        <label for="actual">Contraseña actual</label>
+        <div class="caja-c">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>
+          <input id="actual" [type]="verClaves() ? 'text' : 'password'" autocomplete="current-password"
+                 [value]="actual()" (input)="escribir('actual', $event)" [disabled]="guardando()">
+        </div>
+        <!-- No es burocracia: sin ella, una sesión abandonada en un equipo
+             compartido bastaría para quedarse con la cuenta. -->
+        <span class="ayuda">Se pide para que nadie pueda cambiarla desde una sesión suya que quedó abierta.</span>
+      </div>
+
+      <div class="campo">
+        <label for="nueva" class="con-enlace">
+          Contraseña nueva
+          <button type="button" class="link-fino" (click)="verClaves.set(!verClaves())">
+            {{ verClaves() ? 'Ocultar' : 'Ver lo que escribo' }}
+          </button>
+        </label>
+        <div class="caja-c">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></svg>
+          <input id="nueva" [type]="verClaves() ? 'text' : 'password'" autocomplete="new-password"
+                 [value]="nueva()" (input)="escribir('nueva', $event)" [disabled]="guardando()">
+        </div>
+        @if (cortaDemas()) {
+          <span class="ayuda ojo">Al menos {{ minimo }} caracteres.</span>
+        } @else if (esLaMisma()) {
+          <span class="ayuda ojo">Es la misma que tiene ahora. Cambiarla por sí misma no cambia nada.</span>
+        } @else {
+          <span class="ayuda">Al menos {{ minimo }} caracteres.</span>
+        }
+      </div>
+
+      <div class="campo">
+        <label for="repetida">Repita la nueva</label>
+        <div class="caja-c">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7"/></svg>
+          <input id="repetida" [type]="verClaves() ? 'text' : 'password'" autocomplete="new-password"
+                 [value]="repetida()" (input)="escribir('repetida', $event)" [disabled]="guardando()">
+        </div>
+        <!-- Se repite porque va oculta: un error de tecleo dejaría al usuario
+             fuera de su propia cuenta sin forma de recuperarla. -->
+        @if (noCoinciden()) {
+          <span class="ayuda ojo">Las dos no coinciden.</span>
+        } @else {
+          <span class="ayuda">Va oculta: repetirla evita quedarse fuera por un error de tecleo.</span>
+        }
+      </div>
+
+      @if (error(); as fallo) {
+        <p class="franja roja" role="alert" style="margin-top:6px">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          <span>{{ fallo }}</span>
+        </p>
+      }
+
+      <!-- Se dice lo que el sistema hace y lo que NO hace. Quien cambia su
+           contraseña porque sospecha que se la robaron tiene que saber que el
+           intruso conserva la sesión que ya tuviera abierta. -->
+      <p class="franja ambar" style="margin:20px 0 6px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/></svg>
+        <span>Cambiarla <b>no cierra las sesiones ya abiertas</b> en otros equipos. Si sospecha que alguien entró con su clave, avise a su administrador además de cambiarla.</span>
+      </p>
+    </div>
+
+    <div class="pie-form">
+      <button class="btn" type="submit" [disabled]="!puedeGuardar()">
+        @if (guardando()) {
+          <span class="girando claro"></span> Cambiando…
+        } @else {
+          Cambiar la contraseña
+        }
+      </button>
+    </div>
+  </form>
+</main>

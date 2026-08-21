@@ -76,6 +76,16 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./despacho/clientes/ficha-cliente').then(m => m.FichaCliente),
       },
+      {
+        path: 'mi-cuenta',
+        title: 'Mi cuenta · Iuris',
+        loadComponent: () => import('./cuenta/mi-cuenta').then(m => m.MiCuenta),
+      },
+      {
+        path: 'usuarios',
+        title: 'Usuarios y roles · Iuris',
+        loadComponent: () => import('./cuenta/usuarios').then(m => m.Usuarios),
+      },
       { path: '', pathMatch: 'full', redirectTo: 'vencimientos' },
     ],
   },

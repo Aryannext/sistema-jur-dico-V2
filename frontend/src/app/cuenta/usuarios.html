@@ -1,0 +1,228 @@
+<main>
+  <div class="pag">
+    <div>
+      <h1>Usuarios y roles</h1>
+      <p>{{ usuarios().length }} usuario(s) · {{ activos() }} activo(s) en su despacho</p>
+    </div>
+    <div class="util">
+      @if (!creando()) {
+        <button class="btn" type="button" (click)="creando.set(true)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Nuevo usuario
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Las credenciales recién fijadas: se ven UNA vez y se ven bien. Se
+       guardan con hash (RNF-05), así que nadie —tampoco el sistema— puede
+       volver a leerlas. Si esto pasara desapercibido, quedaría un usuario
+       con una clave que nadie conoce. -->
+  @if (claveEntregada(); as entregadas) {
+    <div class="entregada" role="status">
+      <b>Anote estas credenciales ahora</b>
+      <p>No se pueden volver a consultar: la contraseña se guarda cifrada y nadie puede leerla, tampoco nosotros.</p>
+      <dl>
+        <div><dt>Correo</dt><dd>{{ entregadas.correo }}</dd></div>
+        <div><dt>Contraseña</dt><dd class="clave">{{ entregadas.clave }}</dd></div>
+      </dl>
+      <p class="cierre">
+        Entrégueselas por un medio que usted controle. Quien las reciba
+        <b>puede cambiarlas</b> desde «Mi cuenta», y a partir de ahí usted ya no las conoce.
+      </p>
+      <button class="btn fantasma" type="button" (click)="claveEntregada.set(null)">Ya las anoté</button>
+    </div>
+  }
+
+  @if (creando()) {
+    <form class="caja registrar" (submit)="crear($event)" novalidate>
+      <header><h3>Nuevo usuario</h3><span>en su despacho</span></header>
+
+      <div class="campos">
+        <div class="campo">
+          <label for="nombre">Nombre completo</label>
+          <div class="caja-c">
+            <input id="nombre" type="text" [value]="nombre()" (input)="escribir('nombre', $event)"
+                   [disabled]="guardando()" autofocus>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="correo">Correo</label>
+          <div class="caja-c">
+            <input id="correo" type="email" [value]="correo()" (input)="escribir('correo', $event)"
+                   placeholder="nombre@sudespacho.co" [disabled]="guardando()">
+          </div>
+        </div>
+        <div class="campo">
+          <label for="clave" class="con-enlace">
+            Contraseña inicial
+            <button type="button" class="link-fino" (click)="proponerClave('clave')">Proponer una</button>
+          </label>
+          <div class="caja-c">
+            <input id="clave" type="text" [value]="clave()" (input)="escribir('clave', $event)"
+                   placeholder="Al menos {{ MINIMO }} caracteres" [disabled]="guardando()">
+          </div>
+        </div>
+      </div>
+
+      <div class="campo roles">
+        <label>Roles</label>
+        <!-- Se marcan varios a la vez a propósito (RN-08): el abogado
+             independiente es administrador Y abogado con una sola cuenta. -->
+        <div class="opciones">
+          @for (r of roles(); track r.codigo) {
+            <button type="button" class="opt" [class.on]="rolesElegidos().has(r.codigo)"
+                    (click)="alternarRol(r.codigo)" [disabled]="guardando()">
+              <span class="mar cua"></span>
+              <span>{{ r.nombre }}</span>
+            </button>
+          }
+        </div>
+        <span class="ayuda">Se pueden marcar varios: un abogado independiente es administrador y abogado a la vez.</span>
+      </div>
+
+      @if (errorFormulario(); as fallo) {
+        <p class="franja roja" role="alert" style="margin:0 24px 18px">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          <span>{{ fallo }}</span>
+        </p>
+      }
+
+      <div class="pie-form">
+        <button class="btn fantasma" type="button" (click)="cerrarFormulario()">Cancelar</button>
+        <button class="btn" type="submit" [disabled]="!puedeCrear()">
+          @if (guardando()) {
+            <span class="girando claro"></span> Creando…
+          } @else {
+            Crear usuario
+          }
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (error(); as fallo) {
+    <p class="franja roja" role="alert" style="margin-bottom:20px">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <span>{{ fallo }}</span>
+    </p>
+  }
+
+  <section class="caja">
+    @if (cargando()) {
+      <div class="cargando"><span class="girando"></span> Consultando los usuarios…</div>
+
+    } @else {
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th style="padding-top:21px">Usuario</th>
+            <th style="padding-top:21px">Roles</th>
+            <th style="padding-top:21px">Estado</th>
+            <th style="padding-top:21px" class="der">Contraseña</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (u of usuarios(); track u.id) {
+            <tr>
+              <td>
+                <div class="per">
+                  <span class="av-i" [class.gris]="!u.activo">{{ iniciales(u.nombre) }}</span>
+                  <div>
+                    <div class="p">
+                      {{ u.nombre }}
+                      @if (soyYo(u)) { <span class="eti marca yo">usted</span> }
+                    </div>
+                    <div class="s">{{ u.correo }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  @for (r of u.roles; track r.codigo) {
+                    <span class="eti" [class.marca]="r.codigo === 'ADMIN_DESPACHO'"
+                          [class.gris]="r.codigo === 'CLIENTE'">{{ r.nombre }}</span>
+                  }
+                </div>
+              </td>
+              <td>
+                @if (u.activo) {
+                  <span class="eti verde"><i></i>Activo</span>
+                } @else {
+                  <span class="eti gris">Desactivado</span>
+                }
+              </td>
+              <td class="der">
+                <div class="acciones-fila">
+                  <!-- Sobre uno mismo no se ofrece restablecer: hacerlo sería
+                       saltarse la comprobación de la contraseña actual, que es
+                       lo único que protege una sesión abandonada. El backend
+                       lo rechaza igual; aquí simplemente no se ofrece. -->
+                  @if (soyYo(u)) {
+                    <a class="ir" routerLink="/mi-cuenta">Cambiar la mía</a>
+                  } @else {
+                    <button class="btn fantasma" type="button" (click)="abrirRestablecer(u)"
+                            [disabled]="ocupado() === u.id">
+                      Restablecer
+                    </button>
+                    <button class="btn fantasma" type="button" (click)="cambiarEstado(u)"
+                            [disabled]="ocupado() === u.id">
+                      @if (ocupado() === u.id) {
+                        <span class="girando"></span>
+                      } @else if (u.activo) {
+                        Desactivar
+                      } @else {
+                        Activar
+                      }
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+
+            @if (restableciendo()?.id === u.id) {
+              <tr class="fila-form">
+                <td colspan="4">
+                  <form class="restablecer" (submit)="restablecer($event)" novalidate>
+                    <div class="campo">
+                      <label for="claveNueva" class="con-enlace">
+                        Contraseña nueva para {{ u.nombre }}
+                        <button type="button" class="link-fino" (click)="proponerClave('claveNueva')">Proponer una</button>
+                      </label>
+                      <div class="caja-c">
+                        <input id="claveNueva" type="text" [value]="claveNueva()"
+                               (input)="escribir('claveNueva', $event)"
+                               placeholder="Al menos {{ MINIMO }} caracteres" autofocus>
+                      </div>
+                    </div>
+                    <div class="botones">
+                      <button class="btn fantasma" type="button" (click)="restableciendo.set(null)">Cancelar</button>
+                      <button class="btn" type="submit" [disabled]="!puedeRestablecer()">
+                        @if (ocupado() === u.id) {
+                          <span class="girando claro"></span> Fijando…
+                        } @else {
+                          Fijar contraseña
+                        }
+                      </button>
+                    </div>
+                  </form>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+
+  <div class="dos" style="margin-top:22px;grid-template-columns:1fr 1fr">
+    <p class="franja marca">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/></svg>
+      <span><b>Restablecer es fijar una nueva, nunca leer la anterior.</b> Las contraseñas se guardan cifradas: no están en ninguna parte que alguien pueda consultar, tampoco usted.</span>
+    </p>
+    <p class="franja ambar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <span><b>Desactivar surte efecto de inmediato</b>, aunque la persona tenga la sesión abierta — y <b>no borra</b> nada de lo que registró: su nombre sigue en las piezas del expediente que creó.</span>
+    </p>
+  </div>
+</main>

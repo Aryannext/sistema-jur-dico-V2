@@ -1,0 +1,117 @@
+/* Usuarios y roles. Lo compartido viene de src/styles.css, generado desde
+   diseno/mockups/_base/. */
+
+:host { display: block; }
+
+.registrar { margin-bottom: 20px; }
+.registrar .campos {
+  display: grid;
+  grid-template-columns: 1.3fr 1.3fr 1fr;
+  gap: 16px;
+  padding: 18px 24px 4px;
+}
+.campo input {
+  font: inherit; color: inherit; background: transparent;
+  border: 0; outline: none; width: 100%; padding: 0;
+}
+.campo input::placeholder { color: var(--apagado); }
+.campo label.con-enlace {
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.link-fino {
+  background: none; border: 0; padding: 0;
+  font: inherit; font-size: 13px; font-weight: 700;
+  color: var(--marca); cursor: pointer; text-decoration: underline;
+}
+
+.campo.roles { padding: 4px 24px 20px; }
+.opciones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+/* Los roles son botones de verdad: se alcanzan con el tabulador y se marcan
+   varios a la vez, que es el caso del abogado independiente (RN-08). */
+.opciones .opt {
+  font: inherit;
+  cursor: pointer;
+  align-items: center;
+  padding: 11px 15px;
+}
+
+.eti.yo {
+  margin-left: 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.acciones-fila {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.acciones-fila .btn {
+  padding: 7px 13px;
+  font-size: 13px;
+}
+.acciones-fila .girando { width: 14px; height: 14px; }
+
+/* La fila del formulario de restablecer se abre bajo el usuario al que
+   pertenece. Un modal centrado haría perder de vista a quién se le está
+   cambiando la contraseña — que es justo el dato que no conviene confundir. */
+.fila-form td {
+  background: var(--marca-suave);
+  padding: 18px 24px !important;
+}
+.restablecer {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+}
+.restablecer .campo { flex: 1; }
+.restablecer .caja-c { background: var(--sup); }
+.restablecer .botones { display: flex; gap: 9px; }
+.restablecer .btn { height: 46px; }
+
+/* Credenciales recién fijadas: se ven una vez y no pasan desapercibidas. */
+.entregada {
+  background: var(--marca-suave);
+  border: 1px solid var(--marca-media);
+  border-radius: 16px;
+  padding: 20px 22px;
+  margin-bottom: 22px;
+}
+.entregada > b {
+  font-size: 16px; font-weight: 800; letter-spacing: -.02em; color: var(--marca);
+}
+.entregada > p {
+  font-size: 13.5px; color: var(--medio); line-height: 1.55; margin-top: 5px;
+}
+.entregada dl {
+  margin: 15px 0 0; display: flex; gap: 12px; flex-wrap: wrap;
+}
+.entregada dl > div {
+  background: var(--sup); border-radius: 10px; padding: 10px 15px; min-width: 220px;
+}
+.entregada dt {
+  font-size: 11.5px; font-weight: 700; color: var(--apagado);
+  text-transform: uppercase; letter-spacing: .06em;
+}
+.entregada dd {
+  font-size: 15px; font-weight: 700; margin-top: 3px; overflow-wrap: anywhere;
+}
+.entregada dd.clave { color: var(--marca); font-weight: 800; user-select: all; }
+.entregada .cierre { font-size: 13px; color: var(--medio); margin-top: 14px; }
+.entregada .btn { margin-top: 14px; }
+
+.girando.claro {
+  border-color: rgba(255, 255, 255, .35);
+  border-top-color: #fff;
+}
+
+@media (max-width: 1000px) {
+  .registrar .campos { grid-template-columns: 1fr; }
+  .restablecer { flex-direction: column; align-items: stretch; }
+}
