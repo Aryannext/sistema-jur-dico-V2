@@ -356,6 +356,31 @@ Lo detectó la construcción del frontend, y solo porque hubo que escribir en pa
 
 ---
 
+### D-25 — La medición de rendimiento descubre que RNF-11 no se cumple con el volumen objetivo
+
+**Contexto.** Se midió el sistema contra el volumen que fija RNF-12 —50 despachos, 500 procesos por despacho, 50 piezas por expediente— sobre una base desechable de 405 MB con 25.000 procesos, 1.250.000 piezas y 174.999 alertas. Los guiones y el resultado completo están en `backend/src/test/resources/rendimiento/`.
+
+**RNF-12 se cumple con holgura.** Las 16 consultas habituales devuelven datos y ninguna pasa de **584 ms** en su peor tiempo, sobre un límite de 3.000 ms. Se reportó el peor tiempo y no la media, y se marcó `VACIA` toda consulta que devolviera cero filas: en la primera pasada, tres de doce devolvían vacío y salían con tiempos excelentes que no medían nada.
+
+**RNF-11 no se cumple.** Medir el barrido obligó a separar dos cosas que se confunden:
+
+- **La consulta no es el problema.** `EXPLAIN (ANALYZE, BUFFERS)` sobre la consulta real del motor da **0,348 ms**: usa `ix_alerta_pendientes`, no recorre las 175.000 filas. Un barrido completo por HTTP tardó 141 ms el peor de tres, drenando exactamente 300 alertas.
+- **El techo del motor sí lo es.** `MotorAlertas.TAMANO_LOTE = 100` cada 5 minutos fija un máximo de **1.200 alertas/hora** que ninguna optimización de consulta mueve.
+
+Y las alertas no llegan repartidas: `Termino.fechaObjetivo()` devuelve la fecha de vencimiento a las `23:59`, una fecha **sin hora**. Todos los términos que vencen el mismo día disparan sus avisos en el mismo instante, y encima coinciden los de 15, 5 y 1 día de anticipación procedentes de días de vencimiento distintos. Medido: **2.499 alertas en un mismo instante**, 2.706 en el peor día. Drenar ese pico exige 25 barridos, es decir **125 minutos** frente a los **15 de tolerancia**. La última alerta del pico saldría con más de dos horas de retraso, justo sobre el aviso de 24 h de un término, que es la razón de ser del producto.
+
+**Por qué no lo detectó ninguna prueba.** Las pruebas del motor verifican que una alerta sale, que no se reenvía y que se registra el retraso (RNF-11 se comprueba **por alerta**). Ninguna comprueba qué ocurre cuando **miles vencen a la vez**, porque el incumplimiento no está en el comportamiento de una alerta sino en el caudal del conjunto. Es un defecto que solo aparece con volumen, y por eso lo encontró la medición y no la suite.
+
+**Decisión.** Se registra el incumplimiento como defecto abierto **A-05** y **no se corrige aquí**, porque las tres salidas posibles no son equivalentes y la elección no es de implementación:
+
+1. **Subir el lote** a 833 como mínimo. No lo limita la base (0,35 ms por lote de 100) sino el emisor, que envía en serie por SMTP. **El envío real por SMTP no está medido** —los 141 ms son con el emisor en modo registro— y es el número que falta antes de elegir esta vía.
+2. **Bajar el intervalo** a menos de 36 segundos con el lote actual. Multiplica los barridos en vacío el resto del día.
+3. **Repartir el instante de aviso**, para que el pico se aplane solo. Es la más barata de las tres, pero **cambia una regla de negocio**: hoy RN-19 fija la anticipación en días, no en momentos, y decidir a qué hora sale un aviso es del Product Owner, no del desarrollador.
+
+**Lo que sí queda cerrado.** RNF-12 se da por verificado con evidencia reproducible. La base de medición es desechable y se borra al terminar: nunca se mide contra la base de desarrollo.
+
+---
+
 ## 5. Supuestos vigentes [S]
 
 Se trabaja con ellos hasta que se validen. Cada uno indica cuándo debe cerrarse.
@@ -388,7 +413,9 @@ No son vacíos de la propuesta ni supuestos: son **preguntas nuevas que nacieron
 
 | **A-04** | `PROCESO.juzgado` como texto libre degrada la búsqueda que exige P-RNF02 | Modelo de datos (Fase 5) | **Resuelto** → **D-17** (quinto catálogo, por despacho) |
 
-**Los cuatro asuntos quedan cerrados. No queda ningún asunto ni supuesto abierto en el proyecto.**
+| **A-05** | Con el volumen objetivo, **2.499 alertas vencen en el mismo instante** y el motor drena 100 cada 5 minutos: el pico tarda 125 minutos frente a los 15 que tolera RNF-11. ¿Se sube el lote, se baja el intervalo o se reparte el instante de aviso? | Medición de rendimiento (D-25) | **ABIERTO** — la tercera vía cambia RN-19, y decidir a qué hora sale un aviso es del Product Owner |
+
+**A-01 a A-04 quedan cerrados. A-05 es el único asunto abierto del proyecto** y bloquea la verificación de RNF-11: RNF-12 sí queda verificado con evidencia reproducible.
 
 ---
 
@@ -436,3 +463,4 @@ Cada fase se valida antes de abrir la siguiente. Cada artefacto de una fase refe
 | 2026-08-20 | **Fase 6** — Descripción Arquitectónica ISO/IEC/IEEE 42010: 8 interesados, 12 preocupaciones, 7 puntos de vista, 8 decisiones arquitectónicas (ADR-01 a ADR-08), 6 riesgos arquitectónicos. Cierre del pendiente de la Fase 5 sobre emisión duplicada de alertas (**ADR-04**). | **Ingeniería de requerimientos y arquitectura completadas.** |
 | 2026-08-20 | Decisiones **D-17 a D-20**. Cierre de **A-04**, de los supuestos **S-03** y **S-04**, y de los riesgos **RA-3**, **RA-4** y **R-09**. Corrección de RNF-11 (tolerancia 1 h → 15 min). | Cierre de los cuatro pendientes que quedaban tras la Fase 6. **No queda ningún asunto abierto.** |
 | 2026-08-21 | Decisión **D-24**. Se añaden **RN-53** y **RN-54**, **RF-39** y **RF-40**, **HU-43** y **HU-44**: el sistema no tenía forma de cambiar ni restablecer una contraseña. Ahora **40 RF, 56 requisitos** y **44 historias**. Corregida la cifra de origen de §5.2, que llevaba desactualizada desde la Fase 4 (decía «23 de los 52»; el recuento real era 26 de 54, y con D-24 pasa a 28 de 56). | Lo detectó la **construcción del frontend**: escribir en pantalla qué le ocurre al cliente tras recibir su clave obligó a decir la verdad sobre el sistema, y la verdad no se sostenía. La propuesta nunca mencionó cambiar una contraseña, así que ninguna regla lo exigía. |
+| 2026-08-21 | Medición de rendimiento contra el volumen objetivo. **RNF-12 verificado** (16 consultas, peor tiempo 584 ms sobre un límite de 3.000). Decisión **D-25**: **RNF-11 INCUMPLE** —el pico de 2.499 alertas en un mismo instante tarda 125 minutos en drenarse frente a los 15 de tolerancia—. Se abre el asunto **A-05**. | El defecto no está en la consulta (0,35 ms, usa índice) sino en el caudal del motor: 100 alertas cada 5 minutos. Ninguna prueba lo detectó porque todas comprueban RNF-11 **por alerta**, y el incumplimiento solo existe en el conjunto. |
