@@ -72,6 +72,49 @@ De paso quedó comprobado **CA-02.1**: al desactivar, su abogado recibió **HTTP
 | **CA-12.2** | El mismo radicado **sí** se permite en otro despacho | ✅ | El radicado `41001 31 03 001 2026 00777 00` existe en Despacho Catálogos y se aceptó en Cantillo (proceso 500). La unicidad es por despacho (RN-17) |
 | **CA-14.1** | El cambio de estado se refleja en los reportes | ✅ | Al archivar el proceso 499: `Activo 2→1`, `Archivado 0→1` en `/api/reportes/procesos-por-estado` |
 
+### EP4 · Expediente digital
+
+| Criterio | Qué exige | Resultado | Cómo se comprobó |
+|---|---|---|---|
+| **CA-15.1** | Un documento clasificado queda disponible para consulta y descarga | ✅ | Cargado por la API, aparece en el expediente y **se descarga con su contenido intacto** |
+| **CA-15.2** ⛔ | El documento está **cifrado** en el almacén, no legible en claro | ✅ | Se cargó un fichero con una frase reconocible. **No aparece en ninguno de los 8 ficheros** del almacén, y los bytes crudos del más reciente son `a 327 356 334 A , 343 352 9 214 227 @ D`… |
+| **CA-15.3** | Un archivo de hasta 20 MB se acepta | ✅ | 20 MB → **201**; 25 MB → **413**. Se probó **por los dos lados**: que entren 20 MB no dice nada si no hay límite, porque entonces entrarían también 500 |
+| **CA-16.2** | Lo que cargo, mi cliente **ya lo ve**: sin borrador oculto | ✅ | El documento recién cargado aparece en la vista del cliente **y la nota interna no** (D-12) |
+| **CA-16.3** | El sistema ofrece la nota interna como alternativa | ✅ | La advertencia de RF-16 responde `"alternativa":"Registrar como nota interna"` |
+| **CA-17.1** | Fecha y tipo son obligatorios en una actuación | ✅ | Sin ellos: `"errores":{"fecha":"La fecha de la actuación es obligatoria.","tipoActuacionId":"Debe indicar el tipo de actuación."}` |
+| **CA-18.1** | La nota queda visible para el despacho | ✅ | Aparece en el expediente del despacho |
+| **CA-19.3** ⛔ | **No existe** la opción de eliminar una pieza | ✅ | `DELETE` → **404**: el endpoint no existe. Y **0 menciones** de eliminar/borrar en la pantalla del expediente. Se corrige rectificando (RN-27) |
+
+### EP5 · Audiencias y términos
+
+| Criterio | Qué exige | Resultado | Cómo se comprobó |
+|---|---|---|---|
+| **CA-20.3** | Al guardar la audiencia, sus alertas quedan programadas solas | ✅ | Audiencia 655 → **3 alertas** sin intervención (RN-29 exige 48 h, 24 h y el día) |
+| **CA-21.1** | Las audiencias se ven ubicadas en su fecha | ✅ | Aparece en el calendario con su `fechaHora` — ver la nota sobre el rango |
+| **CA-21.2** | Desde la audiencia se llega a su proceso y expediente | ✅ | La fila trae `procesoId` y `radicado` |
+| **CA-22.1** | La fecha de vencimiento la indica **el abogado** | ✅ | Se guardó `2026-12-01`, exactamente lo enviado. El sistema no la tocó |
+| **CA-22.2** ⛔ | El sistema **no calcula ni sugiere** la fecha a partir de normas procesales | ✅ | Ninguna sugerencia en la pantalla y ningún cálculo de vencimiento en el backend — ver la nota sobre el `grep` |
+| **CA-22.4** | Queda **al menos una** alerta anticipada | ✅ | 3 alertas (RN-37b: nunca cero) |
+| **CA-23.1** | El cambio de estado del término queda registrado | ✅ | `PENDIENTE → CUMPLIDO` |
+| **CA-24.2** | Si la alerta por correo falló, el vencimiento **sigue visible** en el sistema | ✅ | El panel muestra sus 3 vencimientos con independencia del correo. Es la segunda vía de defensa contra **R-02** |
+
+#### Dos falsas alarmas, y por qué se cuentan
+
+**El calendario «no mostraba» la audiencia.** Falso: el calendario devuelve por
+defecto **los próximos 30 días** (`inicio.plusDays(30)`), y la audiencia de
+prueba estaba a tres meses. Rehecho con una audiencia dentro de la ventana,
+aparece; y pidiendo noviembre explícitamente, la primera también. **La ausencia
+era del rango de la consulta, no del sistema.**
+
+**CA-22.2 saltó con «2 cálculos de fecha en el backend».** Falso también: los
+dos son **rangos de consulta** —la ventana del panel de vencimientos y los 30
+días del calendario—, no el cómputo de un plazo. El `grep` era demasiado ancho.
+
+Se anotan porque una comprobación que da un falso negativo es tan inútil como
+una que da un falso positivo: las dos hacen perder la confianza en el recorrido
+entero. Y porque el criterio de este proyecto ha sido, desde el principio, que
+un resultado sin verificar no es un resultado.
+
 ---
 
 ## 3. Hallazgos
@@ -128,9 +171,17 @@ criterios que lo marcara «cumple» estaría mintiendo, y uno que lo marcara
 
 ## 4. Lo que falta recorrer
 
-Quedan **40 criterios** de EP4 a EP11: expediente digital, audiencias y
-términos, motor de alertas, portal del cliente, búsqueda y reportes, y las
-garantías transversales.
+Quedan **24 criterios** de EP6 a EP11: motor de alertas, portal del cliente,
+búsqueda y reportes, administración del despacho y garantías transversales.
+(Los 6 de EP10 —Rama Judicial— no se recorren: están fuera de alcance.)
+
+### Rastro que dejó el recorrido
+
+Verificar CA-15.3 exigió cargar de verdad un archivo de **20 MB**, y RN-27
+impide borrar una pieza del expediente. Ese documento —bytes al azar— queda en
+el expediente del proceso 499 y ocupa 20 MB cifrados en el almacén local. No es
+un fallo: es el precio de comprobar el límite con un archivo real en vez de
+suponerlo.
 
 ## 5. Cómo se repite
 
