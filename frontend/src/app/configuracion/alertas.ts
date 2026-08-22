@@ -1,8 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { Configuracion, Esquema } from './configuracion.servicio';
+import { mensajeDeError } from '../nucleo/mensajes';
 
 /**
  * Esquema de alertas de términos. RF-34 · HU-38 · D-16.
@@ -143,7 +143,7 @@ export class Alertas {
       this.hecho.set(true);
 
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo guardar la configuración. Inténtelo de nuevo.'));
 
     } finally {
       this.guardando.set(false);
@@ -156,11 +156,4 @@ export class Alertas {
     return `${dias} días antes`;
   }
 
-  private mensajeDe(fallo: unknown): string {
-    if (fallo instanceof HttpErrorResponse) {
-      const detalle = fallo.error?.detail;
-      if (typeof detalle === 'string' && detalle.trim()) return detalle;
-    }
-    return 'No se pudo guardar la configuración. Inténtelo de nuevo.';
-  }
 }

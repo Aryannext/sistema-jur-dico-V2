@@ -1,8 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 
 import { Autenticacion } from '../nucleo/autenticacion';
 import { Cuenta } from '../nucleo/cuenta.servicio';
+import { mensajeDeError } from '../nucleo/mensajes';
 
 /**
  * Mi cuenta. RF-39 · HU-43 · D-24.
@@ -80,18 +80,11 @@ export class MiCuenta {
       this.hecho.set(true);
 
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo cambiar la contraseña. Inténtelo de nuevo.'));
 
     } finally {
       this.guardando.set(false);
     }
   }
 
-  private mensajeDe(fallo: unknown): string {
-    if (fallo instanceof HttpErrorResponse) {
-      const detalle = fallo.error?.detail;
-      if (typeof detalle === 'string' && detalle.trim()) return detalle;
-    }
-    return 'No se pudo cambiar la contraseña. Inténtelo de nuevo.';
-  }
 }

@@ -1,10 +1,10 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 
 import { Proceso, Termino } from '../../nucleo/modelos';
 import { Procesos } from '../procesos/procesos.servicio';
 import { Vigilancia } from '../vigilancia';
+import { mensajeDeError } from '../../nucleo/mensajes';
 
 /**
  * Términos de un proceso. RF-21 · RF-22 · RNF-16 · HU-22 · HU-24.
@@ -119,7 +119,7 @@ export class Terminos {
       await this.cargar();
 
     } catch (fallo) {
-      this.errorFormulario.set(this.mensajeDe(fallo));
+      this.errorFormulario.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
 
     } finally {
       this.guardando.set(false);
@@ -134,7 +134,7 @@ export class Terminos {
       await this.vigilancia.cumplir(termino.id);
       await this.cargar();
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
     } finally {
       this.ocupado.set(null);
     }
@@ -148,7 +148,7 @@ export class Terminos {
       await this.vigilancia.reabrir(termino.id);
       await this.cargar();
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
     } finally {
       this.ocupado.set(null);
     }
@@ -189,11 +189,4 @@ export class Terminos {
     return Math.round((vence.getTime() - hoy.getTime()) / 86_400_000);
   }
 
-  private mensajeDe(fallo: unknown): string {
-    if (fallo instanceof HttpErrorResponse) {
-      const detalle = fallo.error?.detail;
-      if (typeof detalle === 'string' && detalle.trim()) return detalle;
-    }
-    return 'No se pudo completar la operación. Inténtelo de nuevo.';
-  }
 }

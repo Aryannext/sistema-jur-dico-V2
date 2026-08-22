@@ -1,9 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { ValorCatalogo } from '../nucleo/modelos';
 import { CATALOGOS, Configuracion } from './configuracion.servicio';
+import { mensajeDeError } from '../nucleo/mensajes';
 
 /**
  * Catálogos del despacho. RF-33 · HU-37 · D-13.
@@ -103,7 +103,7 @@ export class Catalogos {
       await this.cargar();
 
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
 
     } finally {
       this.guardando.set(false);
@@ -132,7 +132,7 @@ export class Catalogos {
       this.editando.set(null);
       await this.cargar();
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
     } finally {
       this.ocupado.set(null);
     }
@@ -146,17 +146,10 @@ export class Catalogos {
       await this.servicio.cambiarEstado(valor.id, !valor.activo);
       await this.cargar();
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
     } finally {
       this.ocupado.set(null);
     }
   }
 
-  private mensajeDe(fallo: unknown): string {
-    if (fallo instanceof HttpErrorResponse) {
-      const detalle = fallo.error?.detail;
-      if (typeof detalle === 'string' && detalle.trim()) return detalle;
-    }
-    return 'No se pudo completar la operación. Inténtelo de nuevo.';
-  }
 }

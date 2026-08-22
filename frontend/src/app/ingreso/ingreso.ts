@@ -1,8 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 
 import { Autenticacion } from '../nucleo/autenticacion';
+import { mensajeDeError } from '../nucleo/mensajes';
 
 /**
  * Pantalla de ingreso. RF-04 · HU-04.
@@ -59,32 +59,11 @@ export class Ingreso {
       await this.router.navigate([this.autenticacion.rutaInicial()]);
 
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo iniciar sesión. Inténtelo de nuevo.'));
 
     } finally {
       this.enviando.set(false);
     }
   }
 
-  /**
-   * El mensaje del backend, cuando lo hay.
-   *
-   * <p>Importa respetarlo en lugar de poner uno genérico: el backend distingue
-   * «credenciales incorrectas» de «su despacho está inactivo» a propósito
-   * (CA-03.1). Si el frontend lo aplastara todo con «no se pudo entrar», un
-   * abogado de un despacho desactivado intentaría recuperar su contraseña una y
-   * otra vez sin entender nada.
-   */
-  private mensajeDe(fallo: unknown): string {
-    if (fallo instanceof HttpErrorResponse) {
-      const detalle = fallo.error?.detail;
-      if (typeof detalle === 'string' && detalle.trim()) {
-        return detalle;
-      }
-      if (fallo.status === 0) {
-        return 'No se pudo contactar con el servidor. Revise su conexión.';
-      }
-    }
-    return 'No se pudo iniciar sesión. Inténtelo de nuevo.';
-  }
 }

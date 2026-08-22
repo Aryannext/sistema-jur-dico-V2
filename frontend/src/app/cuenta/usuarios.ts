@@ -1,10 +1,10 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 
 import { Autenticacion } from '../nucleo/autenticacion';
 import { Rol, Usuario as UsuarioModelo } from '../nucleo/modelos';
 import { Cuenta } from '../nucleo/cuenta.servicio';
+import { mensajeDeError } from '../nucleo/mensajes';
 
 /**
  * Usuarios y roles del despacho. RF-05 · RF-06 · RF-40 · HU-05 · HU-44.
@@ -123,7 +123,7 @@ export class Usuarios {
       await this.cargar();
 
     } catch (fallo) {
-      this.errorFormulario.set(this.mensajeDe(fallo));
+      this.errorFormulario.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
 
     } finally {
       this.guardando.set(false);
@@ -178,7 +178,7 @@ export class Usuarios {
       this.claveNueva.set('');
 
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
 
     } finally {
       this.ocupado.set(null);
@@ -193,7 +193,7 @@ export class Usuarios {
       await this.servicio.cambiarEstado(usuario.id, !usuario.activo);
       await this.cargar();
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
     } finally {
       this.ocupado.set(null);
     }
@@ -207,11 +207,4 @@ export class Usuarios {
     return (primera + segunda).toUpperCase();
   }
 
-  private mensajeDe(fallo: unknown): string {
-    if (fallo instanceof HttpErrorResponse) {
-      const detalle = fallo.error?.detail;
-      if (typeof detalle === 'string' && detalle.trim()) return detalle;
-    }
-    return 'No se pudo completar la operación. Inténtelo de nuevo.';
-  }
 }

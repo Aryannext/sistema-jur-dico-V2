@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
@@ -7,6 +7,7 @@ import { motivoInhabil } from '../../nucleo/festivos';
 import { Audiencia, Proceso } from '../../nucleo/modelos';
 import { Procesos } from '../procesos/procesos.servicio';
 import { Vigilancia } from '../vigilancia';
+import { mensajeDeError } from '../../nucleo/mensajes';
 
 /**
  * Audiencias de un proceso. RF-19 · RNF-16 · HU-21.
@@ -138,7 +139,7 @@ export class AudienciasDeProceso {
       await this.vigilancia.refrescar();
 
     } catch (fallo) {
-      this.errorFormulario.set(this.mensajeDe(fallo));
+      this.errorFormulario.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
 
     } finally {
       this.guardando.set(false);
@@ -157,7 +158,7 @@ export class AudienciasDeProceso {
       await this.vigilancia.refrescar();
 
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
 
     } finally {
       this.ocupado.set(null);
@@ -183,11 +184,4 @@ export class AudienciasDeProceso {
       'jul', 'ago', 'sep', 'oct', 'nov', 'dic'][new Date(iso).getMonth()];
   }
 
-  private mensajeDe(fallo: unknown): string {
-    if (fallo instanceof HttpErrorResponse) {
-      const detalle = fallo.error?.detail;
-      if (typeof detalle === 'string' && detalle.trim()) return detalle;
-    }
-    return 'No se pudo completar la operación. Inténtelo de nuevo.';
-  }
 }

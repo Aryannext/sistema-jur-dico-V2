@@ -1,8 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 
 import { Cliente, Clientes as ServicioClientes } from './clientes.servicio';
+import { mensajeDeError } from '../../nucleo/mensajes';
 
 type Filtro = 'todos' | 'con' | 'sin';
 
@@ -128,7 +128,7 @@ export class ListaClientes {
       await this.cargar();
 
     } catch (fallo) {
-      this.errorFormulario.set(this.mensajeDe(fallo));
+      this.errorFormulario.set(mensajeDeError(fallo, 'No se pudo registrar el cliente. Inténtelo de nuevo.'));
 
     } finally {
       this.guardando.set(false);
@@ -143,11 +143,4 @@ export class ListaClientes {
     return (primera + segunda).toUpperCase();
   }
 
-  private mensajeDe(fallo: unknown): string {
-    if (fallo instanceof HttpErrorResponse) {
-      const detalle = fallo.error?.detail;
-      if (typeof detalle === 'string' && detalle.trim()) return detalle;
-    }
-    return 'No se pudo registrar el cliente. Inténtelo de nuevo.';
-  }
 }

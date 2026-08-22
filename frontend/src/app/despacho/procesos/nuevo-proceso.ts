@@ -1,12 +1,12 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 
 import { Autenticacion } from '../../nucleo/autenticacion';
 import { Cuenta } from '../../nucleo/cuenta.servicio';
 import { Cliente, Clientes } from '../clientes/clientes.servicio';
 import { Usuario, ValorCatalogo } from '../../nucleo/modelos';
 import { Procesos as ServicioProcesos } from './procesos.servicio';
+import { mensajeDeError } from '../../nucleo/mensajes';
 
 /**
  * Alta de un proceso. RF-11 · RF-13 · HU-11 · RN-15 · RN-31.
@@ -113,7 +113,7 @@ export class NuevoProceso {
       await this.cargarAbogados();
 
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
     } finally {
       this.cargando.set(false);
     }
@@ -168,7 +168,7 @@ export class NuevoProceso {
       await this.router.navigate(['/procesos', proceso.id]);
 
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
     } finally {
       this.guardando.set(false);
     }
@@ -189,22 +189,4 @@ export class NuevoProceso {
     this.error.set(null);
   }
 
-  /**
-   * El mensaje del backend, cuando lo hay.
-   *
-   * <p>Se lee `detail`, que es el campo del formato ProblemDetail (RFC 9457)
-   * que usa el backend, no un `mensaje` inventado aquí. La primera versión de
-   * este método buscaba `mensaje` y `message`, y ninguno de los dos existe: el
-   * 409 de un radicado repetido llega con un texto que dice exactamente qué
-   * pasó —«ya está registrado en su despacho», citando RN-17— y se habría
-   * aplastado con un genérico. Perder ese mensaje no es un detalle: el abogado
-   * necesita saber que el proceso YA está, no que «algo falló».
-   */
-  private mensajeDe(fallo: unknown): string {
-    if (fallo instanceof HttpErrorResponse) {
-      const detalle = fallo.error?.detail;
-      if (typeof detalle === 'string' && detalle.trim()) return detalle;
-    }
-    return 'No se pudo completar la operación. Inténtelo de nuevo.';
-  }
 }

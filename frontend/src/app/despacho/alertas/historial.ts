@@ -1,9 +1,10 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { Alerta } from '../../nucleo/modelos';
+import { mensajeDeError } from '../../nucleo/mensajes';
 
 type Filtro = 'todas' | 'FALLIDA' | 'PROGRAMADA';
 
@@ -110,7 +111,7 @@ export class HistorialAlertas {
         'Barrido ejecutado. Lo que estuviera pendiente de salir ya salió, y lo que falló quedó marcado abajo.');
 
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo ejecutar el barrido. Inténtelo de nuevo.'));
 
     } finally {
       this.barriendo.set(false);
@@ -130,11 +131,4 @@ export class HistorialAlertas {
     return alerta.estado === 'FALLIDA';
   }
 
-  private mensajeDe(fallo: unknown): string {
-    if (fallo instanceof HttpErrorResponse) {
-      const detalle = fallo.error?.detail;
-      if (typeof detalle === 'string' && detalle.trim()) return detalle;
-    }
-    return 'No se pudo ejecutar el barrido. Inténtelo de nuevo.';
-  }
 }

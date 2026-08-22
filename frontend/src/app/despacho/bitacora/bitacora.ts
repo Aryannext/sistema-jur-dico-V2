@@ -1,8 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 
 import { AsientoBitacora } from '../../nucleo/modelos';
 import { Bitacora as ServicioBitacora } from './bitacora.servicio';
+import { mensajeDeError } from '../../nucleo/mensajes';
 
 /** Los cuatro tipos de acceso que quedan registrados. */
 type Accion = AsientoBitacora['accion'];
@@ -76,7 +76,7 @@ export class BitacoraDeAuditoria {
     try {
       this.asientos.set(await this.servicio.deMiDespacho());
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo consultar la bitácora. Inténtelo de nuevo.'));
     } finally {
       this.cargando.set(false);
     }
@@ -137,11 +137,4 @@ export class BitacoraDeAuditoria {
     return (primera + segunda).toUpperCase();
   }
 
-  private mensajeDe(fallo: unknown): string {
-    if (fallo instanceof HttpErrorResponse) {
-      const detalle = fallo.error?.detail;
-      if (typeof detalle === 'string' && detalle.trim()) return detalle;
-    }
-    return 'No se pudo consultar la bitácora. Inténtelo de nuevo.';
-  }
 }

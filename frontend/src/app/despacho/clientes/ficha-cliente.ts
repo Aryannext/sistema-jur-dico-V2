@@ -1,9 +1,9 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 
 import { Proceso } from '../../nucleo/modelos';
 import { Cliente, Clientes } from './clientes.servicio';
+import { mensajeDeError } from '../../nucleo/mensajes';
 
 /**
  * Ficha del cliente y su acceso al portal. RF-07 · RF-10 · HU-07 · HU-10.
@@ -124,7 +124,7 @@ export class FichaCliente {
       await this.cargar();
 
     } catch (fallo) {
-      this.errorAcceso.set(this.mensajeDe(fallo));
+      this.errorAcceso.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
 
     } finally {
       this.trabajando.set(false);
@@ -141,7 +141,7 @@ export class FichaCliente {
       await this.cargar();
 
     } catch (fallo) {
-      this.errorAcceso.set(this.mensajeDe(fallo));
+      this.errorAcceso.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
 
     } finally {
       this.trabajando.set(false);
@@ -171,11 +171,4 @@ export class FichaCliente {
     return '';
   }
 
-  private mensajeDe(fallo: unknown): string {
-    if (fallo instanceof HttpErrorResponse) {
-      const detalle = fallo.error?.detail;
-      if (typeof detalle === 'string' && detalle.trim()) return detalle;
-    }
-    return 'No se pudo completar la operación. Inténtelo de nuevo.';
-  }
 }

@@ -1,8 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 
 import { Despacho } from '../nucleo/modelos';
 import { Despachos as ServicioDespachos } from './despachos.servicio';
+import { mensajeDeError } from '../nucleo/mensajes';
 
 /**
  * Alta y estado de los despachos. RF-01 · RF-02 · RF-03 · HU-01 · HU-02.
@@ -67,7 +67,7 @@ export class ListaDespachos {
     try {
       this.despachos.set(await this.servicio.listar());
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
     } finally {
       this.cargando.set(false);
     }
@@ -109,7 +109,7 @@ export class ListaDespachos {
       await this.cargar();
     } catch (fallo) {
       this.errorFormulario.set(
-        this.mensajeDe(fallo));
+        mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
     } finally {
       this.guardando.set(false);
     }
@@ -141,7 +141,7 @@ export class ListaDespachos {
       this.despachos.update(lista =>
         lista.map(d => d.id === actualizado.id ? actualizado : d));
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo completar la operación. Inténtelo de nuevo.'));
     } finally {
       this.ocupado.set(null);
     }
@@ -181,22 +181,4 @@ export class ListaDespachos {
     return (primera + segunda).toUpperCase();
   }
 
-  /**
-   * El mensaje del backend, cuando lo hay.
-   *
-   * <p>Se lee `detail`, que es el campo del formato ProblemDetail (RFC 9457)
-   * que usa el backend, no un `mensaje` inventado aquí. La primera versión de
-   * este método buscaba `mensaje` y `message`, y ninguno de los dos existe: el
-   * 409 de un radicado repetido llega con un texto que dice exactamente qué
-   * pasó —«ya está registrado en su despacho», citando RN-17— y se habría
-   * aplastado con un genérico. Perder ese mensaje no es un detalle: el abogado
-   * necesita saber que el proceso YA está, no que «algo falló».
-   */
-  private mensajeDe(fallo: unknown): string {
-    if (fallo instanceof HttpErrorResponse) {
-      const detalle = fallo.error?.detail;
-      if (typeof detalle === 'string' && detalle.trim()) return detalle;
-    }
-    return 'No se pudo completar la operación. Inténtelo de nuevo.';
-  }
 }

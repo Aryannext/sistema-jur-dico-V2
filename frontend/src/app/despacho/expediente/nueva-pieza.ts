@@ -1,9 +1,9 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 
 import { Proceso, ValorCatalogo } from '../../nucleo/modelos';
 import { Advertencia, Procesos } from '../procesos/procesos.servicio';
+import { mensajeDeError } from '../../nucleo/mensajes';
 
 type Clase = 'ACTUACION' | 'DOCUMENTO' | 'NOTA';
 
@@ -166,34 +166,13 @@ export class NuevaPieza {
       await this.router.navigate(['/procesos', procesoId]);
 
     } catch (fallo) {
-      this.error.set(this.mensajeDe(fallo));
+      this.error.set(mensajeDeError(fallo, 'No se pudo guardar. Inténtelo de nuevo.'));
 
     } finally {
       this.guardando.set(false);
     }
   }
 
-  /**
-   * El mensaje del backend, siempre que lo haya.
-   *
-   * <p>Las reglas de negocio las decide el backend y sus mensajes están
-   * escritos para el abogado —«El tipo de documento X está desactivado»—. Un
-   * «no se pudo guardar» genérico lo dejaría sin saber qué corregir.
-   */
-  private mensajeDe(fallo: unknown): string {
-    if (fallo instanceof HttpErrorResponse) {
-      const detalle = fallo.error?.detail;
-      if (typeof detalle === 'string' && detalle.trim()) return detalle;
-
-      if (fallo.status === 413) {
-        return 'El archivo supera el máximo permitido de 20 MB.';
-      }
-      if (fallo.status === 0) {
-        return 'No se pudo contactar con el servidor. Revise su conexión.';
-      }
-    }
-    return 'No se pudo guardar. Inténtelo de nuevo.';
-  }
 
   /** El primer valor del catálogo, para no obligar a abrir el desplegable. */
   private ajustarTipoPorDefecto(): void {

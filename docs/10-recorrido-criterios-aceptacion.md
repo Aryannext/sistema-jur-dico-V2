@@ -66,7 +66,7 @@ De paso quedó comprobado **CA-02.1**: al desactivar, su abogado recibió **HTTP
 |---|---|---|---|
 | **CA-09.3** ⛔ | Un cliente de otro despacho no aparece **ni en búsqueda** | ✅ | Desde el despacho Uno: acceso directo al cliente 4 → **403**, y **0 apariciones** en su listado. Las dos mitades importan: un 403 con el registro asomando en la lista seguiría siendo una fuga |
 | **CA-10.2** | Un proceso tiene **exactamente un** titular | ✅ | `clienteTitular` es un campo singular en la respuesta, no una lista |
-| **CA-11.2** | Omitir un campo obligatorio se impide **e indica cuál** | ⚠ | El backend cumple: devuelve `"errores":{"juzgadoId":"Debe indicar el juzgado."}`. **La interfaz no lo muestra** — ver hallazgo H-1 |
+| **CA-11.2** | Omitir un campo obligatorio se impide **e indica cuál** | ✅ | El backend devuelve `"errores":{"juzgadoId":"Debe indicar el juzgado."}` y **ahora la interfaz lo muestra**. Se descubrió sin mostrarlo; ver H-1, ya corregido |
 | **CA-11.3** | El destinatario de la alerta es el abogado responsable | ✅ | Proceso con responsable «Admin Cat» → alerta con `destinatario: "Admin Cat"`, `correoDestinatario: admin.cat@despacho.co` |
 | **CA-11.4** | El juzgado se elige del catálogo, no se escribe libre | ✅ | `proceso.juzgado_id` es una referencia; **no existe ninguna columna de texto** para juzgado |
 | **CA-12.2** | El mismo radicado **sí** se permite en otro despacho | ✅ | El radicado `41001 31 03 001 2026 00777 00` existe en Despacho Catálogos y se aceptó en Cantillo (proceso 500). La unicidad es por despacho (RN-17) |
@@ -78,7 +78,8 @@ De paso quedó comprobado **CA-02.1**: al desactivar, su abogado recibió **HTTP
 
 ### H-1 · El detalle por campo no llega a la pantalla
 
-**Dónde.** `nuevo-proceso.ts` y `despachos.ts` (las dos pantallas nuevas).
+**Dónde.** Los catorce componentes que muestran errores. Se detectó en
+`nuevo-proceso.ts`, la pantalla más nueva.
 
 **Qué pasa.** Cuando falta un campo obligatorio, el backend responde:
 
@@ -90,11 +91,29 @@ De paso quedó comprobado **CA-02.1**: al desactivar, su abogado recibió **HTTP
 El extractor de mensajes lee solo `detail`, así que el usuario vería «Revise los
 datos enviados» **sin saber cuál campo revisar**. El dato útil viaja y se tira.
 
-**Gravedad: baja, hoy.** Los formularios validan antes de enviar, así que en la
-práctica no se llega a ese estado. Pero es una red de seguridad que no atrapa
-nada, y CA-11.2 exige explícitamente que el sistema *indique cuál falta*.
+**Y no eran dos pantallas: eran catorce.** Al ir a corregirlo apareció que
+**cada componente tenía su propia copia** de la función, catorce en total, y
+**ninguna** leía `errores`. Ese es el argumento contra duplicar: no es que
+catorce copias ocupen más sitio, es que un defecto en una **es un defecto en las
+catorce**, y se corrige catorce veces o no se corrige.
 
-**Estado:** abierto.
+**Corregido.** Una sola función en `nucleo/mensajes.ts`, usada por los catorce,
+con `errores` ganando a `detail` — «Debe indicar el juzgado» le dice al abogado
+qué hacer, «Revise los datos enviados» no. Cada pantalla conserva **su** texto
+por defecto, que es información y no ruido: «no se pudo consultar la bitácora»
+orienta y «error inesperado» no.
+
+Tiene **10 pruebas**, incluidas cuatro negativas: que nunca se enseñe el nombre
+técnico del campo (`juzgadoId`), que un `errores` vacío no deje el aviso en
+blanco, que valores que no sean texto no rompan la pantalla, y que un fallo que
+no venga del servidor no invente un mensaje de servidor.
+
+**Verificado en pantalla**, no solo en pruebas: al registrar un despacho con dos
+correos mal escritos, el aviso dice *«El correo del administrador no tiene un
+formato válido. El correo de contacto no tiene un formato válido.»* Antes habría
+dicho «Revise los datos enviados».
+
+**Estado:** cerrado. **CA-11.2 pasa de ⚠ a ✅.**
 
 ### H-2 · CA-04.4 no se puede cumplir en local, y eso ya estaba decidido
 
