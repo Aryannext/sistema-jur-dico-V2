@@ -1,0 +1,201 @@
+<main>
+  <div class="pag">
+    <div>
+      <a class="volver" routerLink="/procesos">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        Procesos
+      </a>
+      <h1>Nuevo proceso</h1>
+      <p>Se abre con su expediente digital, listo para recibir documentos.</p>
+    </div>
+  </div>
+
+  @if (cargando()) {
+    <section class="caja">
+      <div class="cargando"><span class="girando"></span> Preparando el formulario…</div>
+    </section>
+
+  } @else if (sinClientes()) {
+    <!--
+      RN-15: el proceso es de un cliente. Sin clientes no hay proceso posible, y
+      un desplegable vacío no lo explicaría: el abogado creería que la pantalla
+      está rota.
+    -->
+    <section class="caja vacio">
+      <h3>Primero registre al cliente</h3>
+      <p>
+        Todo proceso es de alguien: el cliente titular es quien lo verá en su
+        portal y a quien pertenece el expediente. Su despacho todavía no tiene
+        ninguno registrado.
+      </p>
+      <a class="btn" routerLink="/clientes">Ir a Clientes</a>
+    </section>
+
+  } @else if (catalogoIncompleto()) {
+    <section class="caja vacio">
+      <h3>Faltan valores en sus catálogos</h3>
+      <p>
+        Un proceso se clasifica con un juzgado, un tipo y un estado procesal, y
+        cada despacho define los suyos. Falta al menos uno de los tres.
+      </p>
+      <a class="btn" routerLink="/configuracion/catalogos">Ir a Catálogos</a>
+    </section>
+
+  } @else {
+    <form class="caja" (submit)="crear($event)" novalidate>
+
+      <div class="bloque">
+        <h3>El proceso</h3>
+
+        <div class="campos">
+          <div class="campo ancho">
+            <label for="radicado">Radicado</label>
+            <div class="caja-c">
+              <input id="radicado" type="text" [value]="radicado()"
+                     (input)="escribir('radicado', $event)"
+                     placeholder="41001 31 03 001 2026 00123 00"
+                     [disabled]="guardando()" autofocus>
+            </div>
+            <span class="ayuda">
+              Tal como lo asignó el juzgado. Debe ser único en su despacho.
+            </span>
+          </div>
+
+          <div class="campo">
+            <label for="juzgado">Juzgado</label>
+            <div class="caja-c sel-c">
+              <select id="juzgado" (change)="elegir('juzgadoId', $event)" [disabled]="guardando()">
+                <option value="">Elija uno…</option>
+                @for (j of juzgados(); track j.id) {
+                  <option [value]="j.id" [selected]="juzgadoId() === j.id">{{ j.nombre }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="tipo">Tipo de proceso</label>
+            <div class="caja-c sel-c">
+              <select id="tipo" (change)="elegir('tipoProcesoId', $event)" [disabled]="guardando()">
+                <option value="">Elija uno…</option>
+                @for (t of tipos(); track t.id) {
+                  <option [value]="t.id" [selected]="tipoProcesoId() === t.id">{{ t.nombre }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="estado">Estado procesal</label>
+            <div class="caja-c sel-c">
+              <select id="estado" (change)="elegir('estadoProcesalId', $event)" [disabled]="guardando()">
+                @for (e of estados(); track e.id) {
+                  <option [value]="e.id" [selected]="estadoProcesalId() === e.id">{{ e.nombre }}</option>
+                }
+              </select>
+            </div>
+            <span class="ayuda">Un proceso que se acaba de abrir normalmente está activo.</span>
+          </div>
+        </div>
+      </div>
+
+      <!--
+        RN-15 · el vínculo con el cliente. No existe una pantalla de «asignar
+        proceso a cliente» porque no hace falta: crear el proceso ES vincularlo.
+      -->
+      <div class="bloque">
+        <h3>El cliente titular</h3>
+
+        <div class="campos">
+          <div class="campo ancho">
+            <label for="cliente">Cliente</label>
+            <div class="caja-c sel-c">
+              <select id="cliente" (change)="elegir('clienteTitularId', $event)" [disabled]="guardando()">
+                <option value="">Elija uno…</option>
+                @for (c of clientes(); track c.id) {
+                  <option [value]="c.id" [selected]="clienteTitularId() === c.id">
+                    {{ c.nombre }}@if (c.documentoIdentidad) { · {{ c.documentoIdentidad }} }
+                  </option>
+                }
+              </select>
+            </div>
+            <span class="ayuda">
+              Es quien verá este proceso en su portal. Un mismo cliente puede
+              tener varios procesos.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bloque">
+        <h3>El responsable</h3>
+
+        <div class="campos">
+          <div class="campo ancho">
+            <label for="abogado">Abogado responsable</label>
+            @if (abogados().length > 0) {
+              <div class="caja-c sel-c">
+                <select id="abogado" (change)="elegir('abogadoResponsableId', $event)"
+                        [disabled]="guardando()">
+                  <option value="">Elija uno…</option>
+                  @for (a of abogados(); track a.id) {
+                    <option [value]="a.id" [selected]="abogadoResponsableId() === a.id">
+                      {{ a.nombre }}
+                    </option>
+                  }
+                </select>
+              </div>
+            } @else {
+              <!-- Un abogado sin rol de administrador no puede consultar la
+                   lista de usuarios de su despacho, así que se asigna a sí
+                   mismo. No es una limitación de esta pantalla: es lo que dice
+                   RN-10 sobre quién gestiona usuarios. -->
+              <p class="fijo">{{ autenticacion.nombre() }} <span>usted</span></p>
+            }
+            <span class="ayuda">
+              <b>Es quien recibirá las alertas</b> de los términos y audiencias de
+              este proceso. Puede cambiarse después.
+            </span>
+          </div>
+
+          <div class="campo ancho">
+            <label for="descripcion">Descripción <span class="ayuda">opcional</span></label>
+            <div class="caja-c">
+              <input id="descripcion" type="text" [value]="descripcion()"
+                     (input)="escribir('descripcion', $event)"
+                     placeholder="Ejecutivo singular por incumplimiento de contrato"
+                     [disabled]="guardando()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      @if (error(); as fallo) {
+        <p class="franja roja" role="alert" style="margin:0 24px 18px">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          <span>{{ fallo }}</span>
+        </p>
+      }
+
+      <div class="pie-form">
+        <a class="btn fantasma" routerLink="/procesos">Cancelar</a>
+        <button class="btn" type="submit" [disabled]="!puedeCrear()">
+          @if (guardando()) {
+            <span class="girando claro"></span> Creando…
+          } @else {
+            Crear proceso
+          }
+        </button>
+      </div>
+    </form>
+
+    <p class="franja marca" style="margin-top:22px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/></svg>
+      <span>
+        <b>El expediente se crea solo.</b> No hay que abrirlo aparte: todo
+        proceso nace con el suyo, y desde él se cargan documentos, se registran
+        actuaciones y se anotan las notas internas.
+      </span>
+    </p>
+  }
+</main>

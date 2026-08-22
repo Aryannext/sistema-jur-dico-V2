@@ -67,7 +67,7 @@ export class ListaDespachos {
     try {
       this.despachos.set(await this.servicio.listar());
     } catch (fallo) {
-      this.error.set(this.mensaje(fallo, 'No se pudieron cargar los despachos.'));
+      this.error.set(this.mensajeDe(fallo));
     } finally {
       this.cargando.set(false);
     }
@@ -109,7 +109,7 @@ export class ListaDespachos {
       await this.cargar();
     } catch (fallo) {
       this.errorFormulario.set(
-        this.mensaje(fallo, 'No se pudo registrar el despacho.'));
+        this.mensajeDe(fallo));
     } finally {
       this.guardando.set(false);
     }
@@ -141,7 +141,7 @@ export class ListaDespachos {
       this.despachos.update(lista =>
         lista.map(d => d.id === actualizado.id ? actualizado : d));
     } catch (fallo) {
-      this.error.set(this.mensaje(fallo, 'No se pudo cambiar el estado del despacho.'));
+      this.error.set(this.mensajeDe(fallo));
     } finally {
       this.ocupado.set(null);
     }
@@ -182,18 +182,21 @@ export class ListaDespachos {
   }
 
   /**
-   * El mensaje del backend si lo hay, y si no uno propio.
+   * El mensaje del backend, cuando lo hay.
    *
-   * <p>El del backend es más útil —dice qué campo falla, o que el correo ya
-   * existe— y está en español porque así se decidió en D-21. Inventar uno
-   * genérico encima escondería justo lo que el usuario necesita leer.
+   * <p>Se lee `detail`, que es el campo del formato ProblemDetail (RFC 9457)
+   * que usa el backend, no un `mensaje` inventado aquí. La primera versión de
+   * este método buscaba `mensaje` y `message`, y ninguno de los dos existe: el
+   * 409 de un radicado repetido llega con un texto que dice exactamente qué
+   * pasó —«ya está registrado en su despacho», citando RN-17— y se habría
+   * aplastado con un genérico. Perder ese mensaje no es un detalle: el abogado
+   * necesita saber que el proceso YA está, no que «algo falló».
    */
-  private mensaje(fallo: unknown, porDefecto: string): string {
+  private mensajeDe(fallo: unknown): string {
     if (fallo instanceof HttpErrorResponse) {
-      const cuerpo = fallo.error;
-      if (typeof cuerpo?.mensaje === 'string') return cuerpo.mensaje;
-      if (typeof cuerpo?.message === 'string') return cuerpo.message;
+      const detalle = fallo.error?.detail;
+      if (typeof detalle === 'string' && detalle.trim()) return detalle;
     }
-    return porDefecto;
+    return 'No se pudo completar la operación. Inténtelo de nuevo.';
   }
 }

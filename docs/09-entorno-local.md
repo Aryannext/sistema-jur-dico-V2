@@ -43,12 +43,26 @@ no de memoria.
 | `admin.cat@despacho.co` | `clave-cat-12345` | Admin. de Despacho **+ Abogado** | **El más completo.** Procesos, expedientes, términos, catálogos, reportes, usuarios |
 | `admin.uno@despacho.co` | `clave-uno-12345` | Admin. de Despacho | Un despacho distinto, para comprobar el aislamiento (RN-02) |
 | `admin.dos@despacho.co` | `clave-dos-12345` | Admin. de Despacho | Un tercer despacho |
-| `ana.portal@correo.co` | `clave-ana-portal` | Cliente | El portal del cliente (M9) |
+| *(ver nota abajo)* | — | Cliente | El portal del cliente (M9) |
 
 **Para ver el sistema por primera vez, entrá con `admin.cat@despacho.co`.**
 Es el único que tiene los dos roles internos a la vez —el caso del
 abogado independiente de **RN-08**— así que ve todas las pantallas sin
 tener que cambiar de cuenta.
+
+### El acceso de cliente al portal
+
+**No hay una credencial de cliente fija en esta tabla, y es a propósito.** El
+acceso al portal lo habilita el despacho desde la ficha del cliente
+(**Clientes → un cliente → habilitar acceso**), y al volver a habilitarlo se
+crea un usuario nuevo y **el anterior queda desactivado**. Cualquier correo que
+se anotara aquí caducaría la próxima vez que alguien reemitiera un acceso — que
+es exactamente lo que ocurrió con `ana.portal@correo.co`, que hoy está inactivo.
+
+Para entrar como cliente: habilite el acceso de un cliente desde su ficha,
+anote las credenciales que el sistema muestra **una sola vez**, y entre con
+ellas. Si ya hay uno habilitado y no recuerda la clave, un Administrador de
+Despacho puede restablecerla desde **Usuarios y roles** (RF-40).
 
 ### Dos cuentas que no están en la tabla
 
@@ -58,9 +72,11 @@ tener que cambiar de cuenta.
   administrador *del mismo despacho*, y el Administrador de Plataforma
   no alcanza a los usuarios de un despacho por **RN-10**. Habría que
   tocarla en la base directamente.
-- **`beto@melo.co`** y **`mruiz.portal@correo.co`** están **inactivos** a
-  propósito: sirven para comprobar que un usuario desactivado no puede
-  entrar (RF-38).
+- **`beto@melo.co`**, **`mruiz.portal@correo.co`** y **`ana.portal@correo.co`**
+  están **inactivos**: los dos primeros a propósito, para comprobar que un
+  usuario desactivado no puede entrar (RF-38); el tercero porque su acceso al
+  portal se reemitió y el anterior se desactivó, que es el comportamiento
+  correcto.
 
 ### Por qué existe este documento
 

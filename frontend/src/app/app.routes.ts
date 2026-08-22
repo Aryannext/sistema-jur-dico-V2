@@ -35,6 +35,15 @@ export const routes: Routes = [
           import('./despacho/procesos/procesos').then(m => m.ListaProcesos),
       },
       {
+        // ANTES de 'procesos/:id'. Angular resuelve por orden, y al revés
+        // «nuevo» se leería como un identificador: la pantalla intentaría
+        // abrir el expediente del proceso número «nuevo».
+        path: 'procesos/nuevo',
+        title: 'Nuevo proceso · Iuris',
+        loadComponent: () =>
+          import('./despacho/procesos/nuevo-proceso').then(m => m.NuevoProceso),
+      },
+      {
         path: 'procesos/:id',
         title: 'Expediente · Iuris',
         loadComponent: () =>

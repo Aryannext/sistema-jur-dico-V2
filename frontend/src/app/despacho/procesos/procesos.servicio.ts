@@ -54,6 +54,30 @@ export class Procesos {
     return firstValueFrom(this.http.get<Proceso[]>('/api/procesos', { params }));
   }
 
+  /**
+   * RF-11 · RF-13: crea el proceso y, con él, su expediente.
+   *
+   * <p>El cliente titular va en el alta y no se asigna después: **crear el
+   * proceso ES vincularlo al cliente**. Un proceso sin titular no existe en la
+   * realidad que este sistema modela, y permitirlo dejaría procesos huérfanos
+   * que ningún cliente vería en su portal.
+   *
+   * <p>El despacho no viaja en la petición: lo fija el backend desde la sesión
+   * (ADR-03, control 1). Mandarlo desde aquí sería ofrecerle a un navegador la
+   * posibilidad de crear procesos en otro despacho.
+   */
+  async crear(datos: {
+    radicado: string;
+    juzgadoId: number;
+    tipoProcesoId: number;
+    estadoProcesalId: number;
+    clienteTitularId: number;
+    abogadoResponsableId: number;
+    descripcion: string | null;
+  }): Promise<Proceso> {
+    return firstValueFrom(this.http.post<Proceso>('/api/procesos', datos));
+  }
+
   async proceso(id: number): Promise<Proceso> {
     return firstValueFrom(this.http.get<Proceso>(`/api/procesos/${id}`));
   }

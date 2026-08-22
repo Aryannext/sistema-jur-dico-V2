@@ -1,0 +1,79 @@
+/* Nuevo proceso. Lo compartido viene de src/styles.css, generado desde
+   diseno/mockups/_base/. Aquí solo lo propio de esta pantalla. */
+
+:host { display: block; }
+
+/* Volver a la lista. El alta se abre desde Procesos y se vuelve allí si se
+   abandona: sin este enlace el único camino de vuelta es el botón del
+   navegador, que en una pantalla con datos a medio escribir da miedo pulsar. */
+.volver {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-bottom: 8px;
+  font-size: 13px; font-weight: 700;
+  color: var(--apagado); text-decoration: none;
+}
+.volver:hover { color: var(--marca); }
+
+/* Los tres bloques del formulario: el proceso, el cliente y el responsable.
+   Se separan con una línea en vez de meterlo todo en una rejilla continua
+   porque son tres preguntas distintas — qué es, de quién es, quién lo lleva —
+   y verlas seguidas convierte el alta en un muro de doce campos. */
+.bloque { padding: 20px 24px 4px; }
+.bloque + .bloque { border-top: 1px solid var(--hilo); }
+.bloque h3 {
+  margin: 0 0 14px;
+  font-size: 14px; font-weight: 800; letter-spacing: -.01em;
+}
+
+.campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  padding-bottom: 16px;
+}
+
+.campo input {
+  font: inherit; color: inherit; background: transparent;
+  border: 0; outline: none; width: 100%; padding: 0;
+}
+.campo input::placeholder { color: var(--apagado); }
+
+/* El desplegable ocupa toda la caja para que el área de clic sea la caja
+   entera y no solo el texto. */
+.sel-c { padding: 0 !important; }
+.sel-c select {
+  font: inherit; color: inherit; background: transparent;
+  border: 0; outline: none; width: 100%;
+  padding: 12px 15px; cursor: pointer;
+  appearance: none;
+}
+
+/* El responsable cuando no hay lista que elegir: se muestra el nombre, no un
+   desplegable de un solo elemento deshabilitado, que parece un fallo. */
+.fijo {
+  margin: 0;
+  background: var(--sup); border: 1px solid var(--hilo); border-radius: 11px;
+  padding: 12px 15px;
+  font-weight: 600;
+}
+.fijo span {
+  margin-left: 8px;
+  font-size: 12px; font-weight: 700; color: var(--apagado);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+
+/* Cuando no se puede crear todavía: sin clientes, o sin catálogos. */
+.caja.vacio {
+  padding: 40px 32px;
+  text-align: center;
+}
+.caja.vacio h3 { margin: 0 0 8px; font-size: 16px; font-weight: 800; }
+.caja.vacio p {
+  margin: 0 auto 20px;
+  max-width: 46ch;
+  color: var(--apagado); line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .campos { grid-template-columns: 1fr; }
+}
