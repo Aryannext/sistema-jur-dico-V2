@@ -10,6 +10,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import org.springframework.beans.factory.annotation.Value;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -57,16 +63,33 @@ public class MotorAlertas {
      * transacción durante minutos. Con lotes, el sistema se recupera poco a
      * poco y sigue atendiendo peticiones.
      */
-    private static final int TAMANO_LOTE = 100;
+
 
     private final AlertaRepository alertas;
     private final EmisorCorreo correo;
     private final EnvioDeUnaAlerta envio;
 
-    public MotorAlertas(AlertaRepository alertas, EmisorCorreo correo, EnvioDeUnaAlerta envio) {
+    /**
+     * Cuántas alertas toma cada barrido. RNF-11 · A-05.
+     *
+     * <p>Era 100 fijo, y con eso el pico medido de 2.499 avisos simultáneos
+     * tardaba 125 minutos en drenarse frente a los 15 que tolera RNF-11. Para
+     * caber en tres barridos hacen falta al menos 833; el valor por defecto deja
+     * margen sobre esa cifra.
+     */
+    private final int tamanoLote;
+
+    /** Cuántas conexiones de correo a la vez. Ver {@code enviarEnParalelo}. */
+    private final int conexiones;
+
+    public MotorAlertas(AlertaRepository alertas, EmisorCorreo correo, EnvioDeUnaAlerta envio,
+                        @Value("${sgpj.alertas.tamano-lote:1000}") int tamanoLote,
+                        @Value("${sgpj.alertas.conexiones-simultaneas:4}") int conexiones) {
         this.alertas = alertas;
         this.correo = correo;
         this.envio = envio;
+        this.tamanoLote = tamanoLote;
+        this.conexiones = Math.max(1, conexiones);
     }
 
     /**
@@ -108,27 +131,77 @@ public class MotorAlertas {
             return new ResultadoBarrido(0, 0, 0);
         }
 
-        int enviadas = 0;
-        int descartadas = 0;
-        int fallidas = 0;
+        Map<EnvioDeUnaAlerta.Resultado, Integer> cuenta = conexiones <= 1
+                ? enviarEnSerie(lote)
+                : enviarEnParalelo(lote);
 
-        for (Long alertaId : lote) {
-            switch (envio.enviar(alertaId)) {
-                case ENVIADA -> enviadas++;
-                case DESCARTADA -> descartadas++;
-                case FALLIDA -> fallidas++;
-                case YA_NO_PROCEDE -> {
-                    // Otra instancia se la llevó entre que se tomó la lista y
-                    // se llegó hasta aquí. No es un fallo: es ADR-04
-                    // funcionando, y no se cuenta como nada.
-                }
-            }
-        }
+        int enviadas = cuenta.getOrDefault(EnvioDeUnaAlerta.Resultado.ENVIADA, 0);
+        int descartadas = cuenta.getOrDefault(EnvioDeUnaAlerta.Resultado.DESCARTADA, 0);
+        int fallidas = cuenta.getOrDefault(EnvioDeUnaAlerta.Resultado.FALLIDA, 0);
 
         registro.info("Barrido de alertas: {} enviadas, {} descartadas, {} con fallo.",
                 enviadas, descartadas, fallidas);
 
         return new ResultadoBarrido(enviadas, descartadas, fallidas);
+    }
+
+    /**
+     * Un despacho pequeño, o quien prefiera no abrir varias conexiones de correo.
+     *
+     * <p>Se conserva porque con pocas alertas el paralelismo no aporta nada y sí
+     * añade hilos: la configuración por defecto sirve al volumen objetivo, no a
+     * todos los despachos.
+     */
+    private Map<EnvioDeUnaAlerta.Resultado, Integer> enviarEnSerie(List<Long> lote) {
+        Map<EnvioDeUnaAlerta.Resultado, Integer> cuenta = new EnumMap<>(EnvioDeUnaAlerta.Resultado.class);
+        for (Long alertaId : lote) {
+            cuenta.merge(envio.enviar(alertaId), 1, Integer::sum);
+        }
+        return cuenta;
+    }
+
+    /**
+     * Varias conexiones de correo a la vez. RNF-11 · A-05 · D-27.
+     *
+     * <p>Es la salida al incumplimiento de RNF-11. Está medido en
+     * {@code RendimientoSmtpTest}: el coste de un aviso son <strong>diez viajes
+     * de red</strong> —{@code MAIL FROM}, {@code RCPT TO}, {@code DATA}, el
+     * punto final— que ningún lote ahorra, porque son del protocolo y van por
+     * mensaje. Contra un coste que no se puede reducir, lo único que queda es no
+     * pagarlo en fila: a 100 ms de latencia, el pico de 2.499 avisos pasa de
+     * 36,8 minutos a 6,6 con cuatro conexiones.
+     *
+     * <h4>Por qué esto es seguro ahora y no lo era antes</h4>
+     *
+     * <p>Cuando se escribió D-26 no lo era: el barrido entero compartía una
+     * transacción, así que paralelizarlo habría hecho que varios hilos tocaran
+     * la misma sesión de Hibernate —que no es segura entre hilos— con los
+     * bloqueos abiertos esperando a la red.
+     *
+     * <p>Al corregir <strong>H-6</strong> eso desapareció: cada alerta abre su
+     * propia transacción, carga su propia entidad y la confirma sola. Los hilos
+     * no comparten nada, y el envío doble lo sigue impidiendo la relectura bajo
+     * bloqueo, que es por alerta y no por lote.
+     */
+    private Map<EnvioDeUnaAlerta.Resultado, Integer> enviarEnParalelo(List<Long> lote) {
+        Map<EnvioDeUnaAlerta.Resultado, Integer> cuenta =
+                Collections.synchronizedMap(new EnumMap<>(EnvioDeUnaAlerta.Resultado.class));
+
+        // try-with-resources sobre el ejecutor: al cerrarlo espera a que
+        // terminen todas las tareas. El barrido no puede darse por hecho
+        // mientras queden correos en vuelo — el planificador arrancaría el
+        // siguiente sobre un trabajo a medias.
+        try (ExecutorService hilos = Executors.newFixedThreadPool(conexiones, hilo -> {
+            Thread creado = new Thread(hilo, "envio-alertas");
+            creado.setDaemon(true);
+            return creado;
+        })) {
+            for (Long alertaId : lote) {
+                hilos.submit(() -> cuenta.merge(envio.enviar(alertaId), 1, Integer::sum));
+            }
+        }
+
+        return cuenta;
     }
 
     /** El recuento de un barrido, para quien lo dispara y para el registro. */
@@ -150,7 +223,7 @@ public class MotorAlertas {
      * bloqueo de cada alerta, no este.
      */
     private List<Long> idsPendientes() {
-        return alertas.tomarLotePendiente(OffsetDateTime.now(), Limit.of(TAMANO_LOTE))
+        return alertas.tomarLotePendiente(OffsetDateTime.now(), Limit.of(tamanoLote))
                 .stream()
                 .map(Alerta::id)
                 .toList();

@@ -403,6 +403,28 @@ Enviar en paralelo sí: **6,6 minutos con 4 conexiones y 3,5 con 8**, a 100 ms. 
 
 ---
 
+### D-27 — A-05 se cierra por la opción B, que dejó de ser la arriesgada
+
+**Contexto.** D-26 dejó dos salidas para el incumplimiento de RNF-11 y descartó implícitamente la de enviar en paralelo por su coste: *«el motor envía dentro de una sola transacción, y paralelizar desde ahí no es cambiar un bucle por un pool —los bloqueos quedarían abiertos esperando a la red y las entidades de Hibernate no son seguras entre hilos—»*.
+
+**Qué cambió.** Al corregir **H-6** —un barrido interrumpido reenviaba lo ya enviado— el motor dejó de ser una sola transacción: **cada alerta abre la suya, carga su propia entidad y la confirma sola**. El obstáculo que hacía peligroso el paralelismo desapareció como efecto colateral de arreglar otra cosa. Se comprobó antes de afirmarlo: ni `EnvioDeUnaAlerta` ni la redacción ni el emisor guardan estado por hilo.
+
+**Decisión.** Se cierra A-05 por la **opción B**: enviar en paralelo, con lote y número de conexiones configurables.
+
+| | Antes | Ahora |
+|---|---:|---:|
+| Alertas por barrido | 100 fijo | **3.000** (`SGPJ_ALERTAS_LOTE`) |
+| Conexiones de correo | 1, en serie | **4** (`SGPJ_ALERTAS_CONEXIONES`) |
+| El pico de 2.499 tarda | **125 min** | **un barrido** |
+
+**Por qué esta y no la opción A.** No porque sea mejor —la de repartir la hora del aviso sigue teniendo a su favor que arregla además un problema de producto, el aviso que llega a medianoche— sino porque **no exige cambiar ninguna regla de negocio**, y por tanto no bloquea. La opción A sigue disponible y sigue mereciendo la pena: son compatibles.
+
+**Lo que esto obliga a decidir de todos modos.** Cuatro conexiones despachando el lote son unos **6 envíos por segundo**. Un servicio transaccional lo admite; el SMTP de una cuenta de Gmail no. **El proveedor de correo hay que elegirlo con esa cifra delante**, y si limita por debajo hay que bajar `SGPJ_ALERTAS_CONEXIONES` y volver a medir. Es el mismo condicionante que ya señalaba D-26, y no desaparece.
+
+**Verificado por mutación, no solo por pasar.** `PicoDeAlertasTest` pasa a `@Tag("integracion")` y con el lote antiguo de 100 vuelve a fallar diciendo «25 barridos, 2 h 05 min tarde» — exactamente la cifra que midió D-25. La prueba comprueba dos cosas distintas: que la muestra sale en un barrido (que el motor respeta su configuración) y que **el pico real cabe en la tolerancia**. Sin la segunda, un lote suficiente para la muestra dejaría pasar la prueba incumpliendo con el volumen de verdad.
+
+---
+
 ## 5. Supuestos vigentes [S]
 
 Se trabaja con ellos hasta que se validen. Cada uno indica cuándo debe cerrarse.
@@ -435,9 +457,9 @@ No son vacíos de la propuesta ni supuestos: son **preguntas nuevas que nacieron
 
 | **A-04** | `PROCESO.juzgado` como texto libre degrada la búsqueda que exige P-RNF02 | Modelo de datos (Fase 5) | **Resuelto** → **D-17** (quinto catálogo, por despacho) |
 
-| **A-05** | Con el volumen objetivo, **2.499 alertas vencen en el mismo instante** y el motor drena 100 cada 5 minutos: el pico tarda 125 minutos frente a los 15 que tolera RNF-11. | Medición de rendimiento (D-25) | **ABIERTO, pero acotado** → **D-26**: medido el envío real, la salida es **enviar en paralelo**. Falta que el Product Owner elija proveedor con el caudal en la mano |
+| **A-05** | Con el volumen objetivo, **2.499 alertas vencen en el mismo instante** y el motor drenaba 100 cada 5 minutos: el pico tardaba 125 minutos frente a los 15 que tolera RNF-11. | Medición de rendimiento (D-25) | **Resuelto** → **D-27** (envío en paralelo, lote 3.000). Queda elegir proveedor de correo que admita ~6 envíos/segundo |
 
-**A-01 a A-04 quedan cerrados. A-05 es el único asunto abierto del proyecto** y bloquea la verificación de RNF-11: RNF-12 sí queda verificado con evidencia reproducible.
+**Los cinco asuntos quedan cerrados.** RNF-11 y RNF-12 quedan verificados con evidencia reproducible. Lo único pendiente de A-05 no es técnico: elegir un proveedor de correo que admita el caudal medido (D-27).
 
 ---
 
@@ -489,3 +511,4 @@ Cada fase se valida antes de abrir la siguiente. Cada artefacto de una fase refe
 | 2026-08-21 | Decisión **D-26**. Medido el envío real por SMTP (`mvnw test -Prendimiento`): la salida de A-05 es **enviar en paralelo** —6,6 min con 4 conexiones frente a 36,8 de hoy—, no agrupar el lote. | La hipótesis de D-25 era que reutilizar la conexión bastaría. La medición dijo que no: ahorra 4 de 14 viajes de red por alerta, porque los otros 10 son del protocolo y van por mensaje. **Con el código de hoy, cualquier proveedor a más de 50 ms incumple RNF-11**, y de Neiva a Estados Unidos son 80-120. |
 | 2026-08-21 | Corregida la fila 6 de la lista de controles de **D-23**: decía «Pendiente» y el cifrado en reposo lleva implementado desde el Sprint 3 (AES-256-GCM). | Una lista de seguridad desactualizada es peor que no tenerla: invita a gastar el esfuerzo del despliegue en algo ya hecho, y a confiar en que el resto de la lista está al día cuando esta fila demostraba que no. |
 | 2026-08-21 | Cerrado el pendiente de diagramas declarado en **D-24**: **CU-28** (cambiar mi contraseña) y **CU-29** (restablecer la de un usuario) en el diagrama de casos de uso, y **F26** en el funcional. | Al cerrarlo se vio que el pendiente estaba **declarado a medias**: decía que faltaban en el diagrama de casos de uso, y también faltaban en el funcional. Se documenta que CU-29 **no lo alcanza el Administrador de Plataforma** (RN-10): restablecer la clave de un abogado le daría acceso efectivo a expedientes ajenos, que es lo que prohíbe RN-02. |
+| 2026-08-22 | Decisión **D-27**: **A-05 queda resuelto** por envío en paralelo (lote 3.000, 4 conexiones). El pico de 2.499 alertas pasa de 125 minutos a un solo barrido. | La opción B dejó de ser la arriesgada al corregir **H-6**: el motor ya no es una sola transacción, así que paralelizar dejó de exigir compartir sesión de Hibernate entre hilos. El obstáculo desapareció arreglando otra cosa. |

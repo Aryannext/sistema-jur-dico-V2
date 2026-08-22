@@ -43,12 +43,19 @@ import static org.mockito.Mockito.doNothing;
 /**
  * <h1>El pico de alertas — la prueba que faltaba (A-05 · RNF-11)</h1>
  *
- * <p><strong>Esta prueba FALLA hoy, a propósito.</strong> No está rota: está
- * demostrando el defecto A-05, que sigue abierto a la espera de la decisión del
- * Product Owner. Por eso lleva la etiqueta {@code defecto-abierto} y no corre en
- * ninguna compilación normal — dejarla en rojo taparía fallos de verdad.
+ * <p><strong>Nació fallando.</strong> Demostró el defecto A-05 —el pico de 2.499
+ * avisos simultáneos tardaba 125 minutos en drenarse frente a los 15 que tolera
+ * RNF-11— y ahora es su guardián: si alguien baja el lote o quita el
+ * paralelismo, esta prueba vuelve a ponerse roja diciendo cuánto tardaría.
  *
- * <p>Se ejecuta a propósito: {@code mvnw test -Pdefectos}
+ * <p>Comprobado por mutación: con el lote antiguo de 100 falla con «25 barridos,
+ * 2 h 05 min tarde», que es exactamente la cifra que midió D-25.
+ *
+ * <p>Comprueba <strong>dos cosas distintas</strong>: que la muestra sembrada sale
+ * en un barrido —lo que verifica que el motor respeta su configuración— y que el
+ * <strong>pico real medido</strong> cabe en la tolerancia con el lote
+ * configurado. La segunda es la que importa: sin ella, un lote que bastara para
+ * la muestra dejaría pasar la prueba incumpliendo con el volumen de verdad.
  *
  * <h2>Por qué NO es {@code @Transactional}</h2>
  *
@@ -97,15 +104,15 @@ import static org.mockito.Mockito.doNothing;
  * cambiara la prueba seguiría comprobando el valor viejo. Se deduce del primer
  * barrido.
  *
- * <h2>Cuándo dejará de fallar</h2>
+ * <h2>Cómo se cerró A-05</h2>
  *
- * <p>Cuando se cierre A-05, por cualquiera de las dos salidas de la propuesta
- * {@code docs/08-propuesta-decision-a05.md}. Entonces esta prueba pasa a
- * {@code @Tag("integracion")} y se convierte en el guardián de que no vuelva a
- * ocurrir.
+ * <p>Por la <strong>opción B</strong> de {@code docs/08-propuesta-decision-a05.md}
+ * —enviar en paralelo—, que no exige cambiar ninguna regla de negocio. Ver
+ * <strong>D-27</strong>: dejó de ser la salida arriesgada cuando la corrección de
+ * H-6 dio a cada alerta su propia transacción.
  */
 @SpringBootTest(properties = "sgpj.alertas.planificador=false")
-@Tag("defecto-abierto")
+@Tag("integracion")
 class PicoDeAlertasTest {
 
     /**
@@ -146,6 +153,21 @@ class PicoDeAlertasTest {
     /** El intervalo REAL del planificador, no una copia. */
     @Value("${sgpj.alertas.intervalo-ms}")
     private long intervaloMs;
+
+    /**
+     * El lote REAL configurado, leído de la misma propiedad que usa el motor.
+     *
+     * <p>No es «copiar la constante»: es leer la misma fuente. La diferencia
+     * importa porque el lote **no se puede medir** cuando es mayor que la
+     * muestra — con 500 alertas sembradas, un barrido de lote 3.000 se lleva las
+     * 500 y el observado sale 500. Medirlo servía cuando era 100; con la
+     * configuración de D-27 ya no.
+     *
+     * <p>Lo observado sigue usándose, pero para otra cosa: comprobar que el
+     * motor <em>respeta</em> la configuración, que es lo que sí se puede medir.
+     */
+    @Value("${sgpj.alertas.tamano-lote}")
+    private int loteConfigurado;
 
     /**
      * El emisor se sustituye porque lo que se mide es el caudal del motor, no
@@ -203,7 +225,51 @@ class PicoDeAlertasTest {
         // Copias fijas para el mensaje: las de arriba cambian dentro del bucle.
         final int barridosNecesarios = barridos;
         final int lote = loteObservado;
+
+        // Lo observado comprueba que el motor RESPETA su configuración: si la
+        // muestra cabe entera en el lote configurado, un solo barrido tiene que
+        // llevársela. Si esto falla, el lote de la configuración no es el que
+        // el motor está usando de verdad.
+        if (PICO_SEMBRADO <= loteConfigurado) {
+            assertTrue(lote == PICO_SEMBRADO && barridosNecesarios == 1,
+                    "el lote configurado es " + loteConfigurado + " y la muestra de "
+                            + PICO_SEMBRADO + " debería salir en UN barrido, pero hicieron falta "
+                            + barridosNecesarios + " y el primero se llevó " + lote);
+        }
         final Duration tardanza = Duration.ofMillis(barridosNecesarios * intervaloMs);
+
+        // Lo que de verdad exige RNF-11 no es que quepan las 500 de la muestra,
+        // sino EL PICO REAL. Se calcula sobre el lote MEDIDO —no sobre una
+        // constante copiada— para que subir o bajar la configuración se refleje
+        // aquí solo. Sin esta comprobación, un lote de 1.000 dejaría pasar la
+        // prueba con la muestra y seguiría incumpliendo con el pico de verdad.
+        final int barridosParaElPicoReal = (int) Math.ceil(PICO_REAL / (double) loteConfigurado);
+        final Duration tardanzaDelPicoReal =
+                Duration.ofMillis((long) barridosParaElPicoReal * intervaloMs);
+
+        assertTrue(tardanzaDelPicoReal.compareTo(TOLERANCIA) <= 0, () -> """
+
+                ==============================================================
+                  RNF-11 INCUMPLIDO con el PICO REAL (no con la muestra)
+                ==============================================================
+
+                  La muestra de %d si cabe, pero el pico medido no:
+
+                    Pico real medido (D-25)      : %d alertas
+                    Lote por barrido (medido)    : %d
+                    Barridos necesarios          : %d
+                    La ultima alerta saldria     : %s tarde
+
+                  RNF-11 tolera %d minutos.
+
+                  Para caber en %d barridos el lote tiene que ser de %d como
+                  minimo. Se configura con SGPJ_ALERTAS_LOTE.
+                ==============================================================
+                """.formatted(
+                        PICO_SEMBRADO, PICO_REAL, loteConfigurado, barridosParaElPicoReal,
+                        legible(tardanzaDelPicoReal), TOLERANCIA.toMinutes(),
+                        (int) (TOLERANCIA.toMillis() / intervaloMs),
+                        (int) Math.ceil(PICO_REAL / (double) (TOLERANCIA.toMillis() / intervaloMs))));
 
         assertTrue(tardanza.compareTo(TOLERANCIA) <= 0, () -> """
 
