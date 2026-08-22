@@ -115,6 +115,35 @@ una que da un falso positivo: las dos hacen perder la confianza en el recorrido
 entero. Y porque el criterio de este proyecto ha sido, desde el principio, que
 un resultado sin verificar no es un resultado.
 
+### EP6 · Motor de alertas ★
+
+Es la épica que sostiene el producto. Los criterios negativos de aquí son los
+más importantes del sistema: comprobar que **no** se avisa de un proceso
+archivado o de un término ya cumplido es lo que separa un sistema en el que el
+abogado confía de uno que acaba ignorando por ruidoso (**R-05**).
+
+El envío se forzó **adelantando el momento programado en la base**, no
+esperando: esperar a la fecha real haría la verificación irrepetible, y mover el
+reloj del sistema afectaría a todo lo demás.
+
+| Criterio | Qué exige | Resultado | Cómo se comprobó |
+|---|---|---|---|
+| **CA-25.1** | La alerta se emite **sin que ningún usuario la solicite** | ✅ | Momento adelantado 2 min → un barrido la dejó en `ENVIADA` |
+| **CA-25.2** | El destinatario es el abogado responsable, por correo | ✅ | `admin.cat@despacho.co`, que es el responsable del proceso |
+| **CA-25.4** | Sale dentro de **15 minutos** de su momento | ⚠ | Salió a los **2,00 min**. Cumple **por alerta**; con el pico de 2.499 simultáneas **no** — es **A-05**, ya registrado |
+| **CA-26.1** | Alertas a 48 h, 24 h y el día de la audiencia | ✅ | Anticipaciones medidas: **[48, 24, 0]** horas |
+| **CA-26.4** ⛔ | Se emite **una sola vez**: ni duplicada ni omitida | ✅ | Dos barridos más sobre la misma alerta: **mismo `enviada_en`, mismos intentos (1)**. No se reprocesa (RNF-10 + ADR-04) |
+| **CA-28.1** ⛔ | Un proceso **archivado** no genera alerta | ✅ | Con el proceso archivado la alerta quedó **`DESCARTADA`**, no enviada (RN-20) |
+| **CA-28.2** ⛔ | Un término **cumplido** no genera alerta | ✅ | Igual: **`DESCARTADA`** (RN-39) |
+| **CA-30.1** | El historial muestra fecha, destinatario y resultado | ⚠ **backend sí, interfaz no** | Ver **H-3** |
+| **CA-30.2** | Ante un término vencido, se puede saber si el sistema avisó y cuándo | ⚠ **backend sí, interfaz no** | Ver **H-3** |
+
+**CA-26.4 tiene un límite honesto.** El criterio habla de un reinicio del
+servicio a media ventana de envío, y eso no se puede provocar desde aquí. Lo que
+sí se comprobó es el mecanismo que hace que ese reinicio sea seguro: que un
+segundo barrido sobre una alerta ya enviada **no la reenvía**. Es la mitad del
+criterio, y se dice que es la mitad.
+
 ---
 
 ## 3. Hallazgos
@@ -158,6 +187,41 @@ dicho «Revise los datos enviados».
 
 **Estado:** cerrado. **CA-11.2 pasa de ⚠ a ✅.**
 
+### H-3 · «Historial de alertas» no muestra el historial
+
+**Dónde.** `despacho/alertas/historial.ts` y su pantalla.
+
+**Qué pasa.** La pantalla se anuncia así:
+
+> Historial de alertas
+> *Todo lo que el sistema **intentó** avisar · y lo que no pudo*
+
+Y consulta exactamente dos cosas: `/api/alertas/fallidas` y
+`/api/alertas/programadas`. **Nunca las `ENVIADA`.** Ni siquiera su pestaña
+«Todas», que suma fallidas + programadas.
+
+Es decir: la pantalla muestra lo que falló y lo que está por salir, y **oculta
+todo lo que el sistema sí envió** — que es la mayoría, y la única evidencia de
+que la vigilancia funciona. Medido ahora mismo en el despacho de prueba: 0
+fallidas, 23 programadas, y **1 enviada que ninguna pantalla consulta**.
+
+**Es el mismo defecto que el «6:00 a.m.»**: texto en pantalla que promete más de
+lo que el sistema hace. Y aquí duele más, porque lo que promete es justamente lo
+que un despacho necesitaría enseñar ante una reclamación.
+
+**Y hay una capacidad entera sin usar.** El backend expone
+`GET /api/alertas/de-evento/{id}`, documentado literalmente como *«lo que permite
+responder ¿el sistema avisó, y cuándo? Ante una reclamación, ese registro es la
+defensa del despacho»*. Tiene **0 referencias en todo el frontend**. Verificado
+por API: devuelve `programadaPara`, `enviadaEn`, `estado` y
+`correoDestinatario` — exactamente lo que piden CA-30.1 y CA-30.2.
+
+**Consecuencia.** CA-30.1 y CA-30.2 **se cumplen en el backend y no en la
+interfaz**. Desde la aplicación no hay forma de saber si un término vencido fue
+avisado.
+
+**Estado:** abierto.
+
 ### H-2 · CA-04.4 no se puede cumplir en local, y eso ya estaba decidido
 
 No es un defecto nuevo: es el **control 3 de la lista de D-23**, diferido junto
@@ -171,9 +235,13 @@ criterios que lo marcara «cumple» estaría mintiendo, y uno que lo marcara
 
 ## 4. Lo que falta recorrer
 
-Quedan **24 criterios** de EP6 a EP11: motor de alertas, portal del cliente,
-búsqueda y reportes, administración del despacho y garantías transversales.
-(Los 6 de EP10 —Rama Judicial— no se recorren: están fuera de alcance.)
+Quedan **10 criterios** de EP7 a EP11: portal del cliente, búsqueda y reportes,
+administración del despacho y garantías transversales. (Los 6 de EP10 —Rama
+Judicial— no se recorren: están fuera de alcance.)
+
+Pendientes de EP6 por otra vía: **CA-26.3** y **CA-27.1/27.3** (configuración
+del esquema) y **CA-31.1/31.2** (el correo de suspensión al desactivar un
+despacho), que exigen observar un envío real y se recorren junto con EP9.
 
 ### Rastro que dejó el recorrido
 
