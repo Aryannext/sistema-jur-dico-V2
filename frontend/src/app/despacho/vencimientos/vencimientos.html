@@ -2,7 +2,15 @@
   <div class="saludo">
     <div>
       <h1>{{ saludo() }}, {{ primerNombre() }}</h1>
-      <p>{{ hoy() }} · el sistema revisa sus términos todos los días a las 6:00 a.m.</p>
+      <!--
+        RF-24 · RNF-11. Decía «revisa sus términos todos los días a las
+        6:00 a.m.» y era falso: el motor barre cada 5 minutos de forma
+        continua (PlanificadorAlertas) y marca los vencidos a las 00:05.
+        Prometer una hora que el sistema no cumple es peor que no prometer
+        ninguna: el abogado planifica su mañana contando con un aviso que a
+        esa hora no llega.
+      -->
+      <p>{{ hoy() }} · el sistema revisa sus términos de forma continua y le avisa antes de cada vencimiento.</p>
     </div>
     <div class="util">
       <button class="btn fantasma" type="button" (click)="refrescar()" [disabled]="vigilancia.cargando()">
