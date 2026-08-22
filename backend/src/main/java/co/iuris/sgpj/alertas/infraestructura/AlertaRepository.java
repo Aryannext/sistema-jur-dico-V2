@@ -12,9 +12,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface AlertaRepository extends JpaRepository<Alerta, Long> {
 
@@ -38,6 +40,13 @@ public interface AlertaRepository extends JpaRepository<Alerta, Long> {
      * <p>Se resuelve con la base de datos que ya existe, sin añadir un
      * componente de coordinación.
      */
+    /**
+     * <p>Lleva {@code @Transactional} propio porque desde H-6 el barrido ya no
+     * es una transacción larga: un método de consulta declarado en la interfaz
+     * <strong>no hereda</strong> transacción de nadie, y un bloqueo pesimista
+     * sin transacción activa falla con «No active transaction».
+     */
+    @Transactional
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2"))
     @EntityGraph(attributePaths = {"evento", "destinatario"}, type = EntityGraphType.LOAD)
@@ -48,6 +57,25 @@ public interface AlertaRepository extends JpaRepository<Alerta, Long> {
             order by a.programadaPara asc
             """)
     List<Alerta> tomarLotePendiente(@Param("ahora") OffsetDateTime ahora, Limit limite);
+
+    /**
+     * Toma UNA alerta concreta para enviarla, con su fila bloqueada.
+     *
+     * <p>Es la pieza que hace segura la emisión desde H-6. El barrido toma la
+     * lista una vez y luego procesa cada alerta <strong>en su propia
+     * transacción</strong>, así que entre lo uno y lo otro el bloqueo del lote
+     * ya se soltó: otra instancia pudo llevarse esta misma alerta.
+     *
+     * <p>Por eso aquí se vuelve a bloquear la fila y quien llama vuelve a
+     * comprobar el estado. Esa segunda comprobación <em>bajo bloqueo</em> es lo
+     * que garantiza que no salgan dos correos, no el bloqueo del lote — que
+     * ahora dura mucho menos.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2"))
+    @EntityGraph(attributePaths = {"evento", "destinatario"}, type = EntityGraphType.LOAD)
+    @Query("select a from Alerta a where a.id = :id")
+    Optional<Alerta> tomarParaEnviar(@Param("id") Long id);
 
     /** CA-29.2 · RNF-08: las que fallaron y siguen visibles para el despacho. */
     @EntityGraph(attributePaths = {"evento", "destinatario"}, type = EntityGraphType.LOAD)

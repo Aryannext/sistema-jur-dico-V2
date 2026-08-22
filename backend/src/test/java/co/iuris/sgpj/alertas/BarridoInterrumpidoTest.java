@@ -42,21 +42,25 @@ import static org.mockito.Mockito.doAnswer;
 /**
  * <h1>Qué pasa si el barrido se interrumpe a media tanda (CA-26.4)</h1>
  *
- * <p><strong>Esta prueba puede fallar, y si falla es un defecto real.</strong>
- * Por eso lleva la etiqueta {@code defecto-abierto} y no corre en ninguna
- * compilación normal, igual que {@code PicoDeAlertasTest}.
+ * <p><strong>Nació fallando.</strong> Reprodujo el defecto H-6 y ahora es su
+ * guardián: si alguien devuelve el barrido a una sola transacción, esta prueba
+ * vuelve a ponerse roja.
  *
- * <h2>Qué se sospecha</h2>
+ * <h2>Qué defecto atrapó</h2>
  *
- * <p>{@code MotorAlertas.ejecutarBarrido()} es <strong>una sola transacción</strong>
- * para todo el lote. Dentro de ella se envía el correo —que es irreversible— y
- * se marca la alerta como enviada —que no lo es, porque no se ha hecho commit—.
+ * <p>{@code MotorAlertas.ejecutarBarrido()} era <strong>una sola transacción</strong>
+ * para todo el lote. Dentro de ella se enviaba el correo —irreversible— y se
+ * marcaba la alerta como enviada —que no lo es hasta el commit.
  *
- * <p>Si algo revierte esa transacción después de que hayan salido varios
+ * <p>Si algo revertía esa transacción después de que hubieran salido varios
  * correos —un reinicio durante el despliegue, una caída de la conexión con la
- * base, cualquier error no capturado—, las alertas vuelven a {@code PROGRAMADA}
- * <em>con los correos ya enviados</em>, y el siguiente barrido los manda otra
- * vez.
+ * base, cualquier error no capturado—, las alertas volvían a
+ * {@code PROGRAMADA} <em>con los correos ya enviados</em>, y el siguiente
+ * barrido los mandaba otra vez. Medido: 2 correos enviados, 4 de 4 alertas
+ * revertidas, 2 correos repetidos.
+ *
+ * <p>Se comprobó que esta prueba sirve, no solo que pasa: al devolver el motor
+ * a su estructura anterior volvió a fallar con las mismas cifras.
  *
  * <p>Es exactamente el caso que describe <strong>CA-26.4</strong>: «cuando el
  * servicio de alertas se reinicia durante la ventana de envío, entonces la
@@ -78,10 +82,10 @@ import static org.mockito.Mockito.doAnswer;
  * Es la forma más fiel de simular «el proceso se cayó a media tanda» sin matar
  * la JVM de la prueba.
  *
- * <p>Necesita PostgreSQL: {@code mvnw test -Pdefectos}
+ * <p>Necesita PostgreSQL: {@code mvnw test -Pintegracion}
  */
 @SpringBootTest(properties = "sgpj.alertas.planificador=false")
-@Tag("defecto-abierto")
+@Tag("integracion")
 class BarridoInterrumpidoTest {
 
     /** Cuántas alertas salen antes de la interrupción. */
@@ -100,15 +104,26 @@ class BarridoInterrumpidoTest {
 
     @MockitoBean private EmisorCorreo emisorCorreo;
 
-    /** A quién se le mandó correo, en orden. Es la prueba de la duplicación. */
-    private final List<String> correosEnviados = new ArrayList<>();
+    /**
+     * QUÉ se mandó, en orden. Es la prueba de la duplicación.
+     *
+     * <p>Se guarda el <strong>cuerpo</strong> del correo y no el destinatario.
+     * La primera versión guardaba el destinatario y daba un falso positivo: los
+     * cuatro términos son del mismo despacho, así que las cuatro alertas van al
+     * mismo abogado, y comparar direcciones decía «repetido» cuando lo que había
+     * salido eran avisos <em>distintos</em> a la misma persona.
+     *
+     * <p>El cuerpo nombra su término («Término interrumpido 0», «1»…), así que
+     * identifica el aviso y no a quien lo recibe, que es lo que hay que comparar.
+     */
+    private final List<String> avisosEnviados = new ArrayList<>();
 
     private Long procesoId;
     private final List<Long> alertasSembradas = new ArrayList<>();
 
     @BeforeEach
     void prepararLoteQueSeVaAInterrumpir() {
-        correosEnviados.clear();
+        avisosEnviados.clear();
         alertasSembradas.clear();
 
         transacciones.executeWithoutResult(estado -> {
@@ -150,11 +165,10 @@ class BarridoInterrumpidoTest {
     void loQueYaSalioNoSeVuelveAEnviar() {
         // El emisor cae en el tercer envío. Los dos primeros correos YA salieron.
         doAnswer(invocacion -> {
-            String destinatario = invocacion.getArgument(0);
-            if (correosEnviados.size() >= ANTES_DE_CAER) {
+            if (avisosEnviados.size() >= ANTES_DE_CAER) {
                 throw new Error("El proceso se cayó a media tanda (simulado).");
             }
-            correosEnviados.add(destinatario);
+            avisosEnviados.add(invocacion.getArgument(2));   // el cuerpo
             return null;
         }).when(emisorCorreo).enviar(anyString(), anyString(), anyString());
 
@@ -164,7 +178,7 @@ class BarridoInterrumpidoTest {
             // Es la interrupción que se está simulando.
         }
 
-        List<String> primeraTanda = List.copyOf(correosEnviados);
+        List<String> primeraTanda = List.copyOf(avisosEnviados);
         assertEquals(ANTES_DE_CAER, primeraTanda.size(),
                 "el montaje de la prueba no consiguió enviar antes de caer");
 
@@ -176,15 +190,15 @@ class BarridoInterrumpidoTest {
                         .count());
 
         // Segundo barrido, ya sin caídas: es el que haría el motor al reiniciar.
-        correosEnviados.clear();
+        avisosEnviados.clear();
         doAnswer(invocacion -> {
-            correosEnviados.add(invocacion.getArgument(0));
+            avisosEnviados.add(invocacion.getArgument(2));
             return null;
         }).when(emisorCorreo).enviar(anyString(), anyString(), anyString());
 
         motor.ejecutarBarrido();
 
-        List<String> repetidos = primeraTanda.stream().filter(correosEnviados::contains).toList();
+        List<String> repetidos = primeraTanda.stream().filter(avisosEnviados::contains).toList();
 
         assertTrue(repetidos.isEmpty(), () -> """
 
@@ -218,7 +232,10 @@ class BarridoInterrumpidoTest {
                 ══════════════════════════════════════════════════════════════
                 """.formatted(
                         primeraTanda.size(), pendientes, alertasSembradas.size(),
-                        repetidos.size(), String.join(", ", repetidos)));
+                        repetidos.size(),
+                        repetidos.stream().map(t -> t.lines()
+                                .filter(l -> l.startsWith("Término")).findFirst().orElse("?"))
+                                .reduce((x, y) -> x + " | " + y).orElse("ninguno")));
     }
 
     private void autenticarComo(Long usuarioId) {

@@ -132,7 +132,7 @@ reloj del sistema afectaría a todo lo demás.
 | **CA-25.2** | El destinatario es el abogado responsable, por correo | ✅ | `admin.cat@despacho.co`, que es el responsable del proceso |
 | **CA-25.4** | Sale dentro de **15 minutos** de su momento | ⚠ | Salió a los **2,00 min**. Cumple **por alerta**; con el pico de 2.499 simultáneas **no** — es **A-05**, ya registrado |
 | **CA-26.1** | Alertas a 48 h, 24 h y el día de la audiencia | ✅ | Anticipaciones medidas: **[48, 24, 0]** horas |
-| **CA-26.4** ⛔ | Se emite **una sola vez**: ni duplicada ni omitida | ❌ | Un segundo barrido normal no reenvía (RNF-10 + ADR-04), **pero un barrido interrumpido sí**. Ver **H-6** |
+| **CA-26.4** ⛔ | Se emite **una sola vez**: ni duplicada ni omitida | ✅ | Se descubrió incumplido —un barrido interrumpido reenviaba— y se corrigió. Ver **H-6** |
 | **CA-28.1** ⛔ | Un proceso **archivado** no genera alerta | ✅ | Con el proceso archivado la alerta quedó **`DESCARTADA`**, no enviada (RN-20) |
 | **CA-28.2** ⛔ | Un término **cumplido** no genera alerta | ✅ | Igual: **`DESCARTADA`** (RN-39) |
 | **CA-30.1** | El historial muestra fecha, destinatario y resultado | ✅ | Se descubrió sin cumplirse en la interfaz; ver **H-3**, ya corregido |
@@ -387,7 +387,42 @@ un despliegue parta un barrido por la mitad.
 aviso deja de fiarse de todos, y a partir de ahí el sistema tiene alertas pero ya
 no tiene vigilancia.
 
-**Estado:** abierto, con prueba que lo reproduce.
+**Corregido.** El barrido dejó de ser una sola transacción. Ahora **coordina** y
+no persiste: toma la lista de identificadores y le pasa cada alerta a
+`EnvioDeUnaAlerta`, que la envía y la confirma **en su propia transacción**,
+inmediatamente después del envío. La ventana entre «el correo salió» y «consta
+que salió» pasa de durar todo el lote a durar una alerta.
+
+**Lo que esto NO consigue, y está escrito en el código.** No hay forma de
+garantizar «exactamente una vez» con un efecto externo: el correo sale por la
+red y el *commit* ocurre después. Lo que se elige es **qué se arriesga**:
+duplicar como mucho un aviso en lugar de repetir el lote entero. La alternativa
+—marcar como enviada antes de enviar— cambia el riesgo por el contrario, y una
+alerta perdida en silencio es exactamente el fallo que el sistema existe para
+evitar (**R-02**). Entre repetir un aviso y no darlo, se repite.
+
+**Dos cosas que hubo que resolver por el camino, y las dos son la misma trampa:**
+
+1. **`idsPendientes()` se llamaba a sí mismo dentro del motor.** Spring aplica
+   `@Transactional` con un proxy, y una llamada interna no pasa por él: la
+   anotación no hacía nada y el bloqueo pesimista falló con «No active
+   transaction». Es la trampa que el javadoc de `EnvioDeUnaAlerta` advierte, y
+   caí en ella en la clase de al lado. Resuelto poniendo la transacción en el
+   repositorio.
+2. **Seis pruebas de `MotorAlertasIntegracionTest` se pusieron rojas.** La clase
+   era `@Transactional`, y `REQUIRES_NEW` **suspende** la transacción de la
+   prueba: desde la nueva no se ven los datos que la prueba creó sin confirmar.
+   No era un fallo del motor — era la prueba apoyándose en que el barrido
+   compartía su transacción, que es justo lo que había que romper.
+
+**Verificado por mutación**, no solo por pasar: al devolver el motor a su
+estructura anterior la prueba volvió a fallar con las mismas cifras (4 de 4
+revertidas, 2 correos repetidos). Restaurado después.
+
+`BarridoInterrumpidoTest` pasa de `defecto-abierto` a `integracion`: nació
+fallando y ahora es el guardián de que no vuelva.
+
+**Estado:** cerrado. **CA-26.4 pasa a ✅.**
 
 ### H-5 · No se puede ajustar el esquema de alertas de un término
 
@@ -420,8 +455,8 @@ criterios que lo marcara «cumple» estaría mintiendo, y uno que lo marcara
 | | |
 |---:|---|
 | **54** | criterios recorridos |
-| **50** | ✅ cumplen |
-| **2** | ❌ no cumplen: **CA-26.4** y **CA-27.3** |
+| **51** | ✅ cumplen |
+| **1** | ❌ no cumple: **CA-27.3** |
 | **1** | ❌ no puede cumplirse en local por decisión: **CA-04.4** (TLS) |
 | **1** | ⚠ cumple por alerta, no en el pico: **CA-25.4**, que es **A-05** |
 
@@ -437,7 +472,7 @@ alcance declarado de la propuesta.
 | **H-2** | CA-04.4 (TLS) no se cumple en local | pendiente de despliegue (**D-23**, control 3) |
 | **H-4** | Solo el módulo de usuarios tenía prueba de acceso cruzado | ✅ corregido |
 | **H-5** | No se puede ajustar el esquema de alertas de un término | **abierto** |
-| **H-6** | Un barrido interrumpido reenvía lo que ya había salido | **abierto**, con prueba que lo reproduce |
+| **H-6** | Un barrido interrumpido reenviaba lo que ya había salido | ✅ corregido |
 
 ### Cuatro veces me equivoqué yo, y no el sistema
 

@@ -25,7 +25,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -67,11 +67,27 @@ import static org.mockito.Mockito.doThrow;
  * las de otros despachos, así que los números no dicen nada sobre lo que se
  * quería verificar.
  *
+ * <h2>Por qué esta clase NO es {@code @Transactional}</h2>
+ *
+ * <p>Lo era, y dejó de serlo al corregir <strong>H-6</strong>. El motor pasó a
+ * enviar cada alerta en su propia transacción ({@code REQUIRES_NEW}), y
+ * {@code REQUIRES_NEW} <strong>suspende</strong> la transacción de la prueba:
+ * desde la nueva no se ven los datos que la prueba creó y aún no confirmó, así
+ * que el barrido no encontraba nada y seis de estas diez pruebas fallaron.
+ *
+ * <p>No era un fallo del motor: era la prueba apoyándose en que el barrido
+ * compartía su transacción, que es justo lo que había que romper. El montaje se
+ * confirma ahora con {@link TransactionTemplate}, como en
+ * {@code BarridoInterrumpidoTest}.
+ *
+ * <p>El precio es que estas pruebas <strong>dejan datos</strong> en la base:
+ * cada ejecución crea su despacho con sufijo aleatorio. Es el coste de probar
+ * código que gestiona sus propias transacciones, y se paga a sabiendas.
+ *
  * <p>Necesita PostgreSQL: {@code mvnw test -Pintegracion}
  */
 @SpringBootTest(properties = "sgpj.alertas.planificador=false")
 @Tag("integracion")
-@Transactional
 class MotorAlertasIntegracionTest {
 
     @Autowired private AltaDespachoService altaDespachos;
@@ -90,8 +106,14 @@ class MotorAlertasIntegracionTest {
     private Long procesoId;
     private Long despachoId;
 
+    @Autowired private TransactionTemplate transacciones;
+
     @BeforeEach
     void prepararDespachoConProceso() {
+        transacciones.executeWithoutResult(estado -> montar());
+    }
+
+    private void montar() {
         String sufijo = UUID.randomUUID().toString().substring(0, 8);
 
         var despacho = altaDespachos.registrar(
@@ -342,12 +364,20 @@ class MotorAlertasIntegracionTest {
                 "el listado de enviadas trajo alertas en otro estado");
     }
 
+    /**
+     * Una alerta cuyo momento ya pasó, <strong>confirmada</strong> en la base.
+     *
+     * <p>La confirmación es imprescindible desde H-6: el barrido envía en su
+     * propia transacción, y una alerta sin confirmar no existe para ella.
+     */
     private Alerta alertaYaVencida() {
-        Termino termino = vigilancia.registrarTermino(
-                procesoId, "Término de prueba " + UUID.randomUUID().toString().substring(0, 6),
-                LocalDate.now().plusDays(30));
+        return transacciones.execute(estado -> {
+            Termino termino = vigilancia.registrarTermino(
+                    procesoId, "Término de prueba " + UUID.randomUUID().toString().substring(0, 6),
+                    LocalDate.now().plusDays(30));
 
-        return alertas.save(new Alerta(termino, OffsetDateTime.now().minusMinutes(5)));
+            return alertas.save(new Alerta(termino, OffsetDateTime.now().minusMinutes(5)));
+        });
     }
 
     private void autenticarComo(Long usuarioId) {

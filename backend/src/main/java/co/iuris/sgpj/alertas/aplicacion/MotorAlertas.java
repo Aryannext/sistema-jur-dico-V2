@@ -61,10 +61,12 @@ public class MotorAlertas {
 
     private final AlertaRepository alertas;
     private final EmisorCorreo correo;
+    private final EnvioDeUnaAlerta envio;
 
-    public MotorAlertas(AlertaRepository alertas, EmisorCorreo correo) {
+    public MotorAlertas(AlertaRepository alertas, EmisorCorreo correo, EnvioDeUnaAlerta envio) {
         this.alertas = alertas;
         this.correo = correo;
+        this.envio = envio;
     }
 
     /**
@@ -76,10 +78,31 @@ public class MotorAlertas {
      *
      * @return cuántas se emitieron con éxito.
      */
-    @Transactional
+    /**
+     * Un barrido: toma las alertas cuyo momento llegó y las emite.
+     *
+     * <p><strong>Ya no es una sola transacción</strong>, y ese es el cambio que
+     * corrige H-6. Antes lo era: se enviaban cien correos —irreversibles— y solo
+     * al hacer <em>commit</em> quedaba escrito que habían salido, de modo que
+     * una reversión a media tanda devolvía las cien alertas a
+     * {@code PROGRAMADA} con los correos ya enviados y el siguiente barrido los
+     * repetía.
+     *
+     * <p>Ahora este método <strong>coordina</strong> y no persiste nada: toma la
+     * lista y le pasa cada alerta a {@link EnvioDeUnaAlerta}, que la envía y la
+     * confirma en su propia transacción. Si el proceso se cae a media tanda, lo
+     * ya enviado ya está escrito.
+     *
+     * <p>Se procesa por identificador y no reutilizando las entidades del lote:
+     * cada envío abre su propia transacción, y una entidad cargada en otra no
+     * pertenece a ella. Además obliga a releer el estado bajo bloqueo, que es
+     * justo la comprobación que impide el envío doble entre instancias (ADR-04)
+     * ahora que el bloqueo del lote dura mucho menos.
+     *
+     * @return cuántas se emitieron con éxito.
+     */
     public ResultadoBarrido ejecutarBarrido() {
-        OffsetDateTime ahora = OffsetDateTime.now();
-        List<Alerta> lote = alertas.tomarLotePendiente(ahora, Limit.of(TAMANO_LOTE));
+        List<Long> lote = idsPendientes();
 
         if (lote.isEmpty()) {
             return new ResultadoBarrido(0, 0, 0);
@@ -89,42 +112,16 @@ public class MotorAlertas {
         int descartadas = 0;
         int fallidas = 0;
 
-        for (Alerta alerta : lote) {
-            EventoVigilado evento = alerta.evento();
-
-            // RF-27 · RN-20 · RN-39: comprobación en el último momento, no al
-            // programar. Entre que se programó y ahora, el proceso pudo
-            // archivarse o el término cumplirse.
-            if (!evento.requiereVigilancia()) {
-                alerta.descartar("El evento dejó de requerir vigilancia: "
-                        + "el proceso se archivó, el término se cumplió o la audiencia ya pasó.");
-                alertas.save(alerta);
-                descartadas++;
-                continue;
-            }
-
-            try {
-                correo.enviar(
-                        alerta.destinatario().correo(),
-                        asuntoDe(alerta),
-                        cuerpoDe(alerta));
-
-                alerta.marcarEnviada();
-                alertas.save(alerta);
-                enviadas++;
-
-                avisarSiLlegoTarde(alerta);
-
-            } catch (RuntimeException error) {
-                // RNF-08: no se propaga. Un fallo con una alerta no puede
-                // impedir que salgan las demás del lote — si el correo de un
-                // abogado rebota, los otros deben recibir el suyo igual.
-                alerta.registrarFallo(error.getMessage());
-                alertas.save(alerta);
-                fallidas++;
-
-                registro.warn("Fallo al enviar la alerta {} (intento {} de {}): {}",
-                        alerta.id(), alerta.intentos(), Alerta.MAXIMO_INTENTOS, error.getMessage());
+        for (Long alertaId : lote) {
+            switch (envio.enviar(alertaId)) {
+                case ENVIADA -> enviadas++;
+                case DESCARTADA -> descartadas++;
+                case FALLIDA -> fallidas++;
+                case YA_NO_PROCEDE -> {
+                    // Otra instancia se la llevó entre que se tomó la lista y
+                    // se llegó hasta aquí. No es un fallo: es ADR-04
+                    // funcionando, y no se cuenta como nada.
+                }
             }
         }
 
@@ -134,76 +131,29 @@ public class MotorAlertas {
         return new ResultadoBarrido(enviadas, descartadas, fallidas);
     }
 
+    /** El recuento de un barrido, para quien lo dispara y para el registro. */
     public record ResultadoBarrido(int enviadas, int descartadas, int conFallo) {
     }
 
     /**
-     * RNF-11: la alerta debe salir dentro de 15 minutos de su momento.
+     * Los identificadores del lote, en una transacción corta y propia.
      *
-     * <p>Se registra la desviación cuando se supera. Una alerta de 24 horas que
-     * llega con retraso deja de ser una alerta de 24 horas, y si eso empieza a
-     * ocurrir hay que enterarse antes de que alguien pierda un término por ello.
-     */
-    private void avisarSiLlegoTarde(Alerta alerta) {
-        long desviacion = alerta.minutosDeDesviacion();
-
-        if (desviacion > 15) {
-            registro.warn("La alerta {} salió con {} minutos de retraso sobre su momento "
-                    + "programado. RNF-11 admite 15.", alerta.id(), desviacion);
-        }
-    }
-
-    private String asuntoDe(Alerta alerta) {
-        EventoVigilado evento = alerta.evento();
-        return "[Iuris] " + evento.tipoParaMostrar() + " · " + evento.proceso().radicado();
-    }
-
-    /**
-     * CA-25.3: la alerta identifica el proceso, el radicado, el cliente y la
-     * fecha del evento — <strong>suficiente para actuar sin entrar al
-     * sistema</strong>.
+     * <p>La transacción la abre el propio repositorio, no este método: llamarlo
+     * desde {@code ejecutarBarrido()} es una llamada interna, y una llamada
+     * interna <strong>no pasa por el proxy de Spring</strong>, así que un
+     * {@code @Transactional} puesto aquí no haría nada. Se intentó, y falló con
+     * «No active transaction» — que es la forma ruidosa de este error; la
+     * silenciosa es que la anotación simplemente se ignore.
      *
-     * <p>No es un detalle de cortesía: un aviso que obliga a abrir la
-     * aplicación para saber de qué caso habla llega igual de tarde que no
-     * llegar, si el abogado lo lee en el juzgado desde el móvil.
+     * <p>El bloqueo que toma la consulta se suelta enseguida, y eso está
+     * previsto: lo que garantiza que no salgan dos correos es la relectura bajo
+     * bloqueo de cada alerta, no este.
      */
-    private String cuerpoDe(Alerta alerta) {
-        EventoVigilado evento = alerta.evento();
-
-        return """
-                %s
-
-                Proceso : %s
-                Cliente : %s
-                Juzgado : %s
-
-                %s
-                Fecha   : %s
-
-                --
-                Este es un aviso automático de Iuris. No responda a este correo.
-                """.formatted(
-                saludo(alerta),
-                evento.proceso().radicado(),
-                evento.proceso().clienteTitular().nombre(),
-                evento.proceso().juzgado().nombre(),
-                evento.resumen(),
-                evento.fechaObjetivo().format(FORMATO_FECHA));
-    }
-
-    private String saludo(Alerta alerta) {
-        long horas = java.time.Duration.between(
-                alerta.programadaPara(), alerta.evento().fechaObjetivo()).toHours();
-
-        if (horas <= 0) {
-            return "Hoy es la fecha de este " + alerta.evento().tipoParaMostrar().toLowerCase() + ".";
-        }
-        if (horas < 48) {
-            return "Faltan " + horas + " horas para este "
-                    + alerta.evento().tipoParaMostrar().toLowerCase() + ".";
-        }
-        return "Faltan " + (horas / 24) + " días para este "
-                + alerta.evento().tipoParaMostrar().toLowerCase() + ".";
+    private List<Long> idsPendientes() {
+        return alertas.tomarLotePendiente(OffsetDateTime.now(), Limit.of(TAMANO_LOTE))
+                .stream()
+                .map(Alerta::id)
+                .toList();
     }
 
     /**
