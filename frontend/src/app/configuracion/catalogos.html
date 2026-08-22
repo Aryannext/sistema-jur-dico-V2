@@ -41,6 +41,33 @@
     </button>
   </form>
 
+  <!--
+    Sugerencias de juzgados. RF-33 - CA-37.5.
+
+    El catálogo sigue naciendo VACÍO, como exige CA-37.5: esto no siembra nada.
+    Solo evita teclear cuarenta nombres y, sobre todo, evita que se escriban
+    distinto — dos grafías del mismo juzgado parten en dos la búsqueda de
+    P-RNF02 dentro del propio despacho.
+  -->
+  @if (elegido() === 'JUZGADO' && sugerenciasPendientes().length > 0) {
+    <section class="caja sugerencias">
+      <header>
+        <b>Juzgados de Neiva</b>
+        <span>{{ sugerenciasPendientes().length }} sin agregar · toque uno para ponerlo en el campo</span>
+      </header>
+      <div class="lista">
+        @for (j of sugerenciasPendientes(); track j) {
+          <button type="button" class="chip" (click)="usarSugerencia(j)">{{ j }}</button>
+        }
+      </div>
+      <p class="aviso">
+        Es una <b>ayuda para escribir, no un directorio oficial</b>: los juzgados
+        cambian y esta lista puede quedarse corta. Agregue solo aquellos ante los
+        que su despacho litiga de verdad, y corrija el nombre si hace falta.
+      </p>
+    </section>
+  }
+
   @if (error(); as fallo) {
     <p class="franja roja" role="alert" style="margin-bottom:20px">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>

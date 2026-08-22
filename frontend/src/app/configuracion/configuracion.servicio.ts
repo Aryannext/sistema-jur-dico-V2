@@ -36,6 +36,18 @@ export class Configuracion {
     return firstValueFrom(this.http.get<ValorCatalogo[]>(`/api/catalogos/${tipo}`));
   }
 
+  /**
+   * Los juzgados de Neiva que el sistema sugiere. RF-33 · CA-37.5.
+   *
+   * <p>Son sugerencias, no un catálogo sembrado: el del despacho sigue naciendo
+   * vacío. Esto solo evita teclear los mismos nombres y, sobre todo, evita que
+   * se escriban distinto — que es lo que degrada la búsqueda por juzgado dentro
+   * del propio despacho.
+   */
+  async juzgadosSugeridos(): Promise<string[]> {
+    return firstValueFrom(this.http.get<string[]>('/api/catalogos/JUZGADO/sugerencias'));
+  }
+
   async agregar(tipo: string, nombre: string, orden: number | null): Promise<ValorCatalogo> {
     return firstValueFrom(
       this.http.post<ValorCatalogo>(`/api/catalogos/${tipo}`, { nombre, orden }));

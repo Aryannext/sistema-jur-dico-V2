@@ -175,3 +175,21 @@ button.sel:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px;
   .agregar { flex-direction: column; align-items: stretch; }
   .editar { flex-wrap: wrap; }
 }
+
+/* Sugerencias de juzgados (RF-33 · CA-37.5). No es un catálogo sembrado:
+   son nombres para no teclear, y para que todos se escriban igual. */
+.sugerencias { padding: 18px 22px 20px; margin-bottom: 20px; }
+.sugerencias header {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.sugerencias header b { font-size: 14px; font-weight: 800; }
+.sugerencias header span { font-size: 12.5px; color: var(--apagado); }
+.sugerencias .lista {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  max-height: 190px; overflow-y: auto;
+}
+.sugerencias .chip { font-size: 12.5px; padding: 7px 13px; font-weight: 500; }
+.sugerencias .aviso {
+  margin: 14px 0 0; font-size: 12.5px; line-height: 1.55; color: var(--apagado);
+}

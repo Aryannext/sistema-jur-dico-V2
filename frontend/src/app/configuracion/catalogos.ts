@@ -36,6 +36,22 @@ export class Catalogos {
   protected readonly ocupado = signal<number | null>(null);
 
   protected readonly nuevo = signal('');
+
+  /** Las sugerencias de juzgados. Solo se piden una vez. */
+  protected readonly sugerencias = signal<string[]>([]);
+
+  /**
+   * Las que el despacho todavía NO tiene.
+   *
+   * <p>Las ya agregadas desaparecen de la lista en vez de quedar marcadas: una
+   * sugerencia que no se puede usar es ruido, y con más de cuarenta la lista
+   * necesita encogerse a medida que se trabaja, no crecer en tachones.
+   */
+  protected readonly sugerenciasPendientes = computed(() => {
+    if (this.elegido() !== 'JUZGADO') return [];
+    const puestos = new Set(this.valores().map(v => v.nombre.trim().toLowerCase()));
+    return this.sugerencias().filter(s => !puestos.has(s.trim().toLowerCase()));
+  });
   protected readonly guardando = signal(false);
 
   /** Cuál se está renombrando, y con qué texto. */
@@ -52,6 +68,10 @@ export class Catalogos {
 
   constructor() {
     void this.cargar();
+    // Se piden una sola vez: son una constante del sistema, no del despacho.
+    void this.servicio.juzgadosSugeridos()
+        .then(js => this.sugerencias.set(js))
+        .catch(() => this.sugerencias.set([]));   // sin sugerencias se teclea, sin más
   }
 
   protected async elegir(tipo: string): Promise<void> {
@@ -74,6 +94,18 @@ export class Catalogos {
     } finally {
       this.cargando.set(false);
     }
+  }
+
+  /**
+   * Pone la sugerencia en el campo, <strong>sin agregarla</strong>.
+   *
+   * <p>Se eligió así y no con un alta directa porque la lista no es oficial: los
+   * números pueden haber cambiado. Que el nombre pase por el campo deja al
+   * abogado corregirlo antes de guardar, que es quien sabe ante cuál litiga.
+   */
+  protected usarSugerencia(nombre: string): void {
+    this.nuevo.set(nombre);
+    this.error.set(null);
   }
 
   protected escribirNuevo(evento: Event): void {

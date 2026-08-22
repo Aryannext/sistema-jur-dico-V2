@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
+import co.iuris.sgpj.catalogo.aplicacion.JuzgadosSugeridos;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,9 +35,12 @@ import java.util.List;
 @RequestMapping("/api/catalogos")
 public class CatalogoController {
 
+    private final JuzgadosSugeridos juzgados;
+
     private final CatalogoService servicio;
 
-    public CatalogoController(CatalogoService servicio) {
+    public CatalogoController(CatalogoService servicio, JuzgadosSugeridos juzgados) {
+        this.juzgados = juzgados;
         this.servicio = servicio;
     }
 
@@ -74,6 +78,23 @@ public class CatalogoController {
     }
 
     /** Vista de administración: incluye los valores desactivados. */
+    /**
+     * Los juzgados de Neiva, para no teclearlos. RF-33 · CA-37.5.
+     *
+     * <p><strong>Sugerir no es sembrar.</strong> El catálogo de juzgados sigue
+     * naciendo vacío, como exige CA-37.5: esto solo evita que cada despacho
+     * escriba los mismos nombres de forma distinta, que es lo que degrada la
+     * búsqueda por juzgado de P-RNF02 dentro de su propio despacho.
+     *
+     * <p>Se devuelven <strong>todos</strong>, incluidos los que el despacho ya
+     * tiene: filtrar aquí obligaría a consultar su catálogo y la pantalla ya lo
+     * tiene cargado. Que marque cuáles están puestos es cosa suya.
+     */
+    @GetMapping("/JUZGADO/sugerencias")
+    public List<String> sugerenciasDeJuzgados() {
+        return juzgados.todos();
+    }
+
     @GetMapping("/{tipo}")
     public List<ValorResponse> listar(@PathVariable TipoCatalogo tipo) {
         return servicio.listar(tipo).stream().map(ValorResponse::desde).toList();
