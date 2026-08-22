@@ -171,7 +171,7 @@ criterio, y se dice que es la mitad.
 
 | Criterio | Qué exige | Resultado | Cómo se comprobó |
 |---|---|---|---|
-| **CA-41.3** | Existe una prueba de acceso cruzado **para cada módulo** | ❌ | Solo la hay para **usuario**. Siete módulos no tienen ninguna. Ver **H-4** |
+| **CA-41.3** | Existe una prueba de acceso cruzado **para cada módulo** | ✅ | Se descubrió con una sola, la de usuario; ahora son **41 en 9 módulos**. Ver **H-4**, ya corregido |
 | **CA-42.1** ⛔ | Con el despacho inactivo, una funcionalidad de **cada módulo** queda bloqueada | ✅ | Los **10 módulos** pasaron de `200` a `401`/`403` **con la sesión ya abierta**. Ver la nota de abajo |
 | **CA-42.2** | La verificación está en **un único punto de control** | ✅ | Una sola definición de `despachoActual()`, y **cero** parámetros `despachoId` en peticiones: el despacho no puede llegar desde fuera |
 
@@ -310,7 +310,44 @@ Es el mismo patrón que D-25 dejó escrito sobre A-05: *ninguna prueba lo detect
 porque todas comprobaban una alerta, y el fallo estaba en el conjunto*. Aquí
 todas comprueban un módulo, y el requisito habla de todos.
 
-**Estado:** abierto. Es el hallazgo más importante del recorrido.
+**Corregido.** Ahora hay **una prueba de acceso cruzado en cada módulo**, en el
+paquete de su módulo, no en un fichero central: una prueba que vive junto al
+módulo se borra, se mueve y se rompe con él; una central sobre nueve módulos
+sobrevive intacta a que alguien se lleve uno por delante.
+
+| Módulo | Pruebas |
+|---|---:|
+| cliente · proceso · expediente · vigilancia · alertas · catálogo · reportes · bitácora | **34** |
+| usuario *(ya existía)* | 7 |
+| **Total** | **41** |
+
+Lo único compartido es el andamiaje: `PruebaDeAislamiento` monta **dos despachos
+con datos reales** —cliente, proceso, expediente con nota, término y audiencia
+en cada uno—. Sin datos no se prueba nada: una consulta cruzada contra un
+despacho vacío devuelve vacío *siempre*, haya filtro o no. Es el error que este
+mismo recorrido cometió en CA-35.3.
+
+**Y se comprobó que las pruebas sirven, no solo que pasan.** Se rompió el filtro
+de clientes a propósito —`findAll()` en lugar de filtrar por despacho— y la
+prueba falló nombrando el registro fugado:
+
+```
+Expected an empty value at JSON path "$[?(@.id == 613)]"
+but found: [{"id":613,"nombre":"Cliente de B",...}]
+```
+
+Filtro restaurado después. Sin esa comprobación, 41 pruebas en verde solo
+demostrarían que 41 pruebas están en verde.
+
+**Tres de las 41 fallaron al escribirlas, y ninguna era una fuga:**
+
+- El historial de alertas y la bitácora de un proceso ajeno devuelven **200 con
+  lista vacía**, no 403 — porque el despacho va *dentro* de la consulta. Mi
+  aserción pedía 4xx. El reflejo de «cruce = 403» es fácil y, aplicado a una
+  colección, da por rota una implementación correcta.
+- El reporte resumen usa `totalProcesos`, no `procesosActivos`.
+
+**Estado:** cerrado. **CA-41.3 pasa a ✅.**
 
 ### H-5 · No se puede ajustar el esquema de alertas de un término
 
@@ -343,8 +380,8 @@ criterios que lo marcara «cumple» estaría mintiendo, y uno que lo marcara
 | | |
 |---:|---|
 | **54** | criterios recorridos |
-| **50** | ✅ cumplen |
-| **2** | ❌ no cumplen: **CA-27.3** y **CA-41.3** |
+| **51** | ✅ cumplen |
+| **1** | ❌ no cumple: **CA-27.3** |
 | **1** | ❌ no puede cumplirse en local por decisión: **CA-04.4** (TLS) |
 | **1** | ⚠ cumple por alerta, no en el pico: **CA-25.4**, que es **A-05** |
 
@@ -358,7 +395,7 @@ alcance declarado de la propuesta.
 | **H-1** | El detalle por campo no llegaba a la pantalla — en las **14** copias del extractor de mensajes | ✅ corregido |
 | **H-3** | «Historial de alertas» no mostraba las enviadas, y su subtítulo lo prometía | ✅ corregido |
 | **H-2** | CA-04.4 (TLS) no se cumple en local | pendiente de despliegue (**D-23**, control 3) |
-| **H-4** | Solo el módulo de usuarios tiene prueba de acceso cruzado | **abierto** |
+| **H-4** | Solo el módulo de usuarios tenía prueba de acceso cruzado | ✅ corregido |
 | **H-5** | No se puede ajustar el esquema de alertas de un término | **abierto** |
 
 ### Cuatro veces me equivoqué yo, y no el sistema
