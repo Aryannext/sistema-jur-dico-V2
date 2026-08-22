@@ -43,7 +43,15 @@ no de memoria.
 | `admin.cat@despacho.co` | `clave-cat-12345` | Admin. de Despacho **+ Abogado** | **El más completo.** Procesos, expedientes, términos, catálogos, reportes, usuarios |
 | `admin.uno@despacho.co` | `clave-uno-12345` | Admin. de Despacho | Un despacho distinto, para comprobar el aislamiento (RN-02) |
 | `admin.dos@despacho.co` | `clave-dos-12345` | Admin. de Despacho | Un tercer despacho |
+| `admin@cantillo.co` | `nehuilasur-4821` | Admin. de Despacho | Un despacho vacío, para ver el sistema desde cero |
+| `raso@cantillo.co` | `clave-raso-12345` | **Abogado, sin administrador** | **Comprobar los límites del rol**: no ve Usuarios ni Bitácora |
 | *(ver nota abajo)* | — | Cliente | El portal del cliente (M9) |
+
+**`raso@cantillo.co` es la única cuenta de abogado sin rol de administrador**,
+y por eso vale la pena tenerla: es la que demuestra que los límites de rol se
+cumplen también en la interfaz. Con ella, la barra lateral **no muestra**
+Usuarios ni Bitácora, y escribir `/bitacora` a mano devuelve al panel. Catálogos
+y Configurar alertas sí los ve: puede consultarlos, solo no guardar.
 
 **Para ver el sistema por primera vez, entrá con `admin.cat@despacho.co`.**
 Es el único que tiene los dos roles internos a la vez —el caso del

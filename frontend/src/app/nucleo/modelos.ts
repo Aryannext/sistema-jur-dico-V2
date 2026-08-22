@@ -227,3 +227,23 @@ export interface AltaDespacho {
   despacho: Despacho;
   administrador: { id: number; nombre: string; correo: string };
 }
+
+/**
+ * GET /api/bitacora — RF-08 · RNF-07 · HU-08.
+ *
+ * El correo y el radicado son INSTANTÁNEAS del momento del acceso, no
+ * referencias: si el usuario cambia de correo o el proceso de radicado, el
+ * asiento sigue diciendo lo que decía ese día. Es lo que lo hace servir como
+ * evidencia.
+ */
+export interface AsientoBitacora {
+  id: number;
+  correoUsuario: string;
+  usuarioId: number;
+  procesoId: number;
+  radicado: string;
+  piezaId: number | null;
+  detalle: string | null;
+  accion: 'CONSULTA_EXPEDIENTE' | 'DESCARGA_DOCUMENTO' | 'CONSULTA_PORTAL' | 'DESCARGA_PORTAL';
+  momento: string;
+}

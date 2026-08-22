@@ -1,0 +1,126 @@
+<main>
+  <div class="pag">
+    <div>
+      <h1>Bitácora de auditoría</h1>
+      <p>
+        @if (cargando()) {
+          Consultando…
+        } @else {
+          {{ asientos().length }} acceso(s) registrado(s) ·
+          {{ desdeElPortal() }} desde el portal · {{ descargas() }} descarga(s)
+        }
+      </p>
+    </div>
+    <div class="util">
+      <button class="btn fantasma" type="button" (click)="cargar()" [disabled]="cargando()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5A8 8 0 1 0 18.5 16"/><path d="M20 6v5.5h-5.5"/></svg>
+        Actualizar
+      </button>
+    </div>
+  </div>
+
+  <div class="filtros">
+    <button type="button" class="chip" [class.on]="filtro() === null"
+            (click)="filtrarPor(null)">Todo</button>
+    <button type="button" class="chip" [class.on]="filtro() === 'CONSULTA_EXPEDIENTE'"
+            (click)="filtrarPor('CONSULTA_EXPEDIENTE')">Expedientes abiertos</button>
+    <button type="button" class="chip" [class.on]="filtro() === 'DESCARGA_DOCUMENTO'"
+            (click)="filtrarPor('DESCARGA_DOCUMENTO')">Descargas del despacho</button>
+    <button type="button" class="chip" [class.on]="filtro() === 'CONSULTA_PORTAL'"
+            (click)="filtrarPor('CONSULTA_PORTAL')">Consultas del cliente</button>
+    <button type="button" class="chip" [class.on]="filtro() === 'DESCARGA_PORTAL'"
+            (click)="filtrarPor('DESCARGA_PORTAL')">Descargas del cliente</button>
+  </div>
+
+  @if (error(); as fallo) {
+    <p class="franja roja" role="alert" style="margin-bottom:20px">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <span>{{ fallo }}</span>
+    </p>
+  }
+
+  <section class="caja">
+    @if (cargando()) {
+      <div class="cargando"><span class="girando"></span> Consultando la bitácora…</div>
+
+    } @else if (asientos().length === 0) {
+      <!--
+        Vacía NO significa rota. Es lo que se ve en un despacho donde nadie ha
+        abierto todavía un expediente, y decirlo evita que el administrador
+        concluya que la auditoría no está funcionando.
+      -->
+      <div class="cargando">
+        Todavía no hay accesos registrados. Aparecerán aquí en cuanto alguien
+        abra un expediente o descargue un documento.
+      </div>
+
+    } @else if (visibles().length === 0) {
+      <div class="cargando">
+        No hay accesos de ese tipo. Pruebe con otro filtro.
+      </div>
+
+    } @else {
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th style="padding-top:21px">Quién</th>
+            <th style="padding-top:21px">Qué hizo</th>
+            <th style="padding-top:21px">Sobre qué</th>
+            <th style="padding-top:21px" class="der">Cuándo</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (a of visibles(); track a.id) {
+            <tr>
+              <td>
+                <div class="per">
+                  <span class="av-i" [class.gris]="esDelPortal(a.accion)">{{ iniciales(a.correoUsuario) }}</span>
+                  <div>
+                    <div class="p">{{ a.correoUsuario }}</div>
+                    <div class="s">
+                      @if (esDelPortal(a.accion)) { desde el portal } @else { desde el despacho }
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="eti" [class.ambar]="esDescarga(a.accion)"
+                      [class.gris]="!esDescarga(a.accion)">
+                  {{ textoDe(a.accion) }}
+                </span>
+              </td>
+              <td>
+                <div class="p mono">{{ a.radicado }}</div>
+                @if (a.detalle) { <div class="s">{{ a.detalle }}</div> }
+              </td>
+              <td class="der">
+                <span class="momento">{{ momentoDe(a.momento) }}</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+
+  <div class="dos" style="margin-top:22px;grid-template-columns:1fr 1fr">
+    <p class="franja marca">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/></svg>
+      <span>
+        <b>Esta bitácora no se puede editar ni borrar</b>, tampoco por usted.
+        No es que la pantalla no ofrezca el botón: la base de datos rechaza
+        cualquier modificación. Una bitácora que el auditado puede editar no
+        sirve como evidencia.
+      </span>
+    </p>
+    <p class="franja ambar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <span>
+        <b>Abrir un expediente queda registrado</b>, y eso incluye los suyos.
+        Los abogados de su despacho no ven esta pantalla: registra también sus
+        accesos, y quien responde por el manejo de la información reservada es
+        usted.
+      </span>
+    </p>
+  </div>
+</main>

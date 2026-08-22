@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 
-import { exigeAnonimo, exigeCliente, exigeDespacho, exigePlataforma } from './nucleo/sesion.guard';
+import {
+  exigeAdministrador, exigeAnonimo, exigeCliente, exigeDespacho, exigePlataforma,
+} from './nucleo/sesion.guard';
 
 /**
  * Las rutas del despacho.
@@ -87,6 +89,7 @@ export const routes: Routes = [
       },
       {
         path: 'usuarios',
+        canActivate: [exigeAdministrador],
         title: 'Usuarios y roles · Iuris',
         loadComponent: () => import('./cuenta/usuarios').then(m => m.Usuarios),
       },
@@ -110,6 +113,13 @@ export const routes: Routes = [
         path: 'alertas',
         title: 'Historial de alertas · Iuris',
         loadComponent: () => import('./despacho/alertas/historial').then(m => m.HistorialAlertas),
+      },
+      {
+        path: 'bitacora',
+        canActivate: [exigeAdministrador],
+        title: 'Bitácora de auditoría · Iuris',
+        loadComponent: () =>
+          import('./despacho/bitacora/bitacora').then(m => m.BitacoraDeAuditoria),
       },
       {
         path: 'mi-cuenta',

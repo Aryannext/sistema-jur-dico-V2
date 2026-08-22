@@ -83,6 +83,30 @@ export const exigeCliente: CanActivateFn = async () => {
 };
 
 /**
+ * Las pantallas exclusivas del Administrador de Despacho. RF-05 · RF-08.
+ *
+ * <p>Usuarios y Bitácora, que el backend niega con un 403 a un abogado. Se
+ * esconden del menú <em>y</em> se protege la ruta: sin lo segundo, escribir la
+ * dirección a mano llevaría a una pantalla que dice «los abogados de su
+ * despacho no ven esto» mientras la está viendo un abogado.
+ *
+ * <p>Esto no es seguridad —lo que protege los datos es el backend— sino
+ * coherencia: la interfaz no debe prometer ni negar nada distinto de lo que la
+ * regla dice.
+ */
+export const exigeAdministrador: CanActivateFn = async () => {
+  const autenticacion = inject(Autenticacion);
+  const router = inject(Router);
+
+  const sesion = autenticacion.sesion() ?? await autenticacion.recuperarSesion();
+  if (!sesion) return router.createUrlTree(['/ingreso']);
+
+  return autenticacion.esAdministradorDeDespacho()
+    ? true
+    : router.createUrlTree([autenticacion.rutaInicial()]);
+};
+
+/**
  * Lo contrario de exigeSesion: si ya hay sesión, el ingreso no tiene sentido.
  *
  * <p>Cada quien vuelve a SU zona, no a una fija.

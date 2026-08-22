@@ -1,0 +1,56 @@
+/* Bitácora de auditoría. Lo compartido viene de src/styles.css, generado desde
+   diseno/mockups/_base/. Aquí solo lo propio de esta pantalla. */
+
+:host { display: block; }
+
+/* Los filtros por tipo de acceso. Mismo lenguaje que los de «Configurar
+   alertas»: son la misma idea —elegir entre unas pocas opciones fijas— y dos
+   formas distintas de lo mismo obligarían al usuario a aprender dos veces. */
+.filtros {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.chip {
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  background: var(--sup);
+  border: 1px solid var(--hilo);
+  border-radius: 99px;
+  padding: 9px 16px;
+  color: var(--medio);
+  cursor: pointer;
+}
+.chip:hover { border-color: var(--marca-media); }
+.chip.on {
+  background: var(--marca);
+  border-color: var(--marca);
+  color: #fff;
+  font-weight: 700;
+}
+.chip:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
+
+/* El radicado en monoespaciada y con cifras de ancho fijo: son 23 dígitos que
+   se comparan de un vistazo entre filas, y con tipografía proporcional dos
+   radicados casi iguales parecen idénticos. */
+.mono {
+  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
+}
+
+/* La fecha, también con cifras de ancho fijo, para que la columna se lea como
+   una columna y no como texto desalineado. */
+.momento {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--medio);
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .momento { white-space: normal; }
+}
