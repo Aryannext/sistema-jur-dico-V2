@@ -144,6 +144,43 @@ sí se comprobó es el mecanismo que hace que ese reinicio sea seguro: que un
 segundo barrido sobre una alerta ya enviada **no la reenvía**. Es la mitad del
 criterio, y se dice que es la mitad.
 
+### EP6 · Configuración del esquema (lo que faltaba)
+
+| Criterio | Qué exige | Resultado | Cómo se comprobó |
+|---|---|---|---|
+| **CA-26.3** | Se pueden **añadir** avisos al esquema del despacho | ✅ | `[15,5,1]` → `[20,15,5,1]`, guardado |
+| **CA-27.1 · CA-38.1** | Los términos **nuevos** usan el esquema configurado | ✅ | Un término creado justo después nació con **[20, 15, 5, 1]** días de anticipación |
+| **CA-27.3** | Se puede ajustar el esquema de **un término** sin cambiar el del despacho | ❌ | **No existe.** Ni endpoint por término ni columna en la tabla `termino`: el esquema es solo del despacho. Ver **H-5** |
+| **CA-31.1** | Al desactivar el despacho, recibe **un correo** avisando de la suspensión | ✅ | Se desactivó el despacho de prueba y el aviso salió a `contacto@cantillo.co` |
+| **CA-31.2** | Ese aviso es **notificación de corte**, no acceso | ✅ | El mensaje **no contiene ningún enlace, token ni vía de acceso**: dice qué deja de ocurrir y que la información se conserva |
+
+### EP8 · Búsqueda y reportes
+
+| Criterio | Qué exige | Resultado | Cómo se comprobó |
+|---|---|---|---|
+| **CA-35.3** ⛔ | La búsqueda **solo** devuelve procesos de mi despacho | ✅ | Un fragmento que coincide con **1 proceso del otro despacho y 0 de los míos**: la búsqueda devolvió 0. Había algo real que fugar y no se fugó |
+| **CA-35.4** | Con el volumen objetivo, responde en menos de 3 s | ✅ | **153 ms** sobre 25.000 procesos, ya medido en RNF-12 |
+
+### EP9 · Administración del despacho
+
+| Criterio | Qué exige | Resultado | Cómo se comprobó |
+|---|---|---|---|
+| **CA-37.5** | El catálogo de **juzgados** nace vacío | ✅ | El despacho creado hoy nació con 4 estados, 7 tipos de actuación, 8 de documento y 7 de proceso sembrados — y **cero juzgados**. Ninguna migración los siembra |
+
+### EP11 · Garantías transversales
+
+| Criterio | Qué exige | Resultado | Cómo se comprobó |
+|---|---|---|---|
+| **CA-41.3** | Existe una prueba de acceso cruzado **para cada módulo** | ❌ | Solo la hay para **usuario**. Siete módulos no tienen ninguna. Ver **H-4** |
+| **CA-42.1** ⛔ | Con el despacho inactivo, una funcionalidad de **cada módulo** queda bloqueada | ✅ | Los **10 módulos** pasaron de `200` a `401`/`403` **con la sesión ya abierta**. Ver la nota de abajo |
+| **CA-42.2** | La verificación está en **un único punto de control** | ✅ | Una sola definición de `despachoActual()`, y **cero** parámetros `despachoId` en peticiones: el despacho no puede llegar desde fuera |
+
+**CA-42.1 solo significa algo con la sesión ya abierta.** Desactivar primero e
+intentar entrar después habría comprobado únicamente que el ingreso falla, y eso
+no dice nada sobre los módulos. Se entró, se comprobó que los diez respondían
+`200`, se desactivó **sin tocar la sesión**, y se repitió: los diez pasaron a
+`401`/`403`.
+
 ---
 
 ## 3. Hallazgos
@@ -245,6 +282,49 @@ Programadas 23», con la enviada mostrando destinatario y fecha real de envío.
 
 **Estado:** cerrado. **CA-30.1 y CA-30.2 pasan a ✅.**
 
+### H-4 · Solo un módulo tiene prueba de acceso cruzado
+
+**CA-41.3 lo dice con todas las letras:** *«existe una prueba de acceso cruzado
+para ese módulo. **La prueba no se hace una vez: se hace en cada módulo**»*. Y su
+razón de ser es que hacerla una sola vez garantiza que algún módulo se olvide.
+
+Es exactamente lo que pasó. `AislamientoEntreDespachosTest` existe y es bueno
+—siete pruebas—, pero **todas son del módulo de usuarios**. Del resto:
+
+| Módulo | Prueba de acceso cruzado |
+|---|---|
+| usuario | ✅ 7 pruebas |
+| cliente | ❌ *no tiene ni carpeta de pruebas* |
+| proceso · expediente · portal · catálogo · reportes · bitácora | ❌ ninguna crea dos despachos |
+
+Sin crear dos despachos en la prueba, **no se puede probar el cruce**: no hay
+desde dónde intentarlo.
+
+**Lo importante: el sistema no está mal, la red de seguridad sí.** El aislamiento
+funciona — se verificó a mano hoy en **CA-09.3** (clientes) y **CA-35.3**
+(búsqueda de procesos), y las dos pasaron contra datos reales. Lo que falta es
+que algo lo *siga* comprobando: hoy, un cambio que rompiera el aislamiento en
+procesos o en el portal no haría fallar ninguna prueba.
+
+Es el mismo patrón que D-25 dejó escrito sobre A-05: *ninguna prueba lo detectó
+porque todas comprobaban una alerta, y el fallo estaba en el conjunto*. Aquí
+todas comprueban un módulo, y el requisito habla de todos.
+
+**Estado:** abierto. Es el hallazgo más importante del recorrido.
+
+### H-5 · No se puede ajustar el esquema de alertas de un término
+
+**CA-27.3** pide poder darle a un término concreto una anticipación distinta sin
+cambiar la del despacho. **No existe**: ni endpoint, ni columna en `termino`. El
+esquema es del despacho y se aplica a todo por igual.
+
+**Gravedad: baja.** No rompe nada y RN-37b sigue garantizando el mínimo. Pero es
+un criterio de aceptación escrito y aprobado que no está implementado, y el caso
+que lo motiva es real: un término de dos días no se vigila igual que uno de
+sesenta, y con un esquema de 15/5/1 el primero solo recibiría el aviso de un día.
+
+**Estado:** abierto.
+
 ### H-2 · CA-04.4 no se puede cumplir en local, y eso ya estaba decidido
 
 No es un defecto nuevo: es el **control 3 de la lista de D-23**, diferido junto
@@ -256,23 +336,52 @@ criterios que lo marcara «cumple» estaría mintiendo, y uno que lo marcara
 
 ---
 
-## 4. Lo que falta recorrer
+## 4. Recuento final
 
-Quedan **10 criterios** de EP7 a EP11: portal del cliente, búsqueda y reportes,
-administración del despacho y garantías transversales. (Los 6 de EP10 —Rama
-Judicial— no se recorren: están fuera de alcance.)
+**El recorrido está completo.**
 
-Pendientes de EP6 por otra vía: **CA-26.3** y **CA-27.1/27.3** (configuración
-del esquema) y **CA-31.1/31.2** (el correo de suspensión al desactivar un
-despacho), que exigen observar un envío real y se recorren junto con EP9.
+| | |
+|---:|---|
+| **54** | criterios recorridos |
+| **50** | ✅ cumplen |
+| **2** | ❌ no cumplen: **CA-27.3** y **CA-41.3** |
+| **1** | ❌ no puede cumplirse en local por decisión: **CA-04.4** (TLS) |
+| **1** | ⚠ cumple por alerta, no en el pico: **CA-25.4**, que es **A-05** |
 
-### Rastro que dejó el recorrido
+Los 5 restantes de los 59 son de **HU-39 y HU-40** (Rama Judicial), fuera del
+alcance declarado de la propuesta.
 
-Verificar CA-15.3 exigió cargar de verdad un archivo de **20 MB**, y RN-27
-impide borrar una pieza del expediente. Ese documento —bytes al azar— queda en
-el expediente del proceso 499 y ocupa 20 MB cifrados en el almacén local. No es
-un fallo: es el precio de comprobar el límite con un archivo real en vez de
-suponerlo.
+### Hallazgos, y en qué acabaron
+
+| | Qué era | Estado |
+|---|---|---|
+| **H-1** | El detalle por campo no llegaba a la pantalla — en las **14** copias del extractor de mensajes | ✅ corregido |
+| **H-3** | «Historial de alertas» no mostraba las enviadas, y su subtítulo lo prometía | ✅ corregido |
+| **H-2** | CA-04.4 (TLS) no se cumple en local | pendiente de despliegue (**D-23**, control 3) |
+| **H-4** | Solo el módulo de usuarios tiene prueba de acceso cruzado | **abierto** |
+| **H-5** | No se puede ajustar el esquema de alertas de un término | **abierto** |
+
+### Cuatro veces me equivoqué yo, y no el sistema
+
+Se anotan porque un recorrido en el que no se puede confiar no sirve para nada,
+y porque las cuatro tienen la misma forma: **la comprobación miraba mal, y el
+resultado parecía un defecto del sistema**.
+
+1. **CA-11.2 «pasó» por un `grep` que acertó en el sitio equivocado.** Cumplía,
+   pero por una razón distinta de la que mi comprobación afirmaba.
+2. **CA-21.1 «falló»** porque el calendario devuelve los próximos 30 días y creé
+   la audiencia a tres meses.
+3. **CA-30.1 «falló»** porque lo busqué en `/programadas`, que por diseño solo
+   devuelve las pendientes.
+4. **CA-26.3 y CA-27.1 «fallaron»** porque mandé el campo `dias` y el contrato
+   dice `diasAnticipacion`.
+
+Y una quinta, distinta y peor: **CA-35.3 «pasó» estando hueco.** Busqué desde un
+despacho con **cero procesos**: cero resultados no prueba aislamiento, prueba que
+no hay nada. Rehecho contra un despacho con procesos propios y un fragmento que
+sí coincidía con uno ajeno, entonces sí significó algo. Es el mismo error que la
+primera medición de RNF-12, donde tres consultas devolvían vacío y salían con
+tiempos excelentes.
 
 ## 5. Cómo se repite
 
