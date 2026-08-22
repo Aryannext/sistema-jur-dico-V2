@@ -132,7 +132,7 @@ reloj del sistema afectaría a todo lo demás.
 | **CA-25.2** | El destinatario es el abogado responsable, por correo | ✅ | `admin.cat@despacho.co`, que es el responsable del proceso |
 | **CA-25.4** | Sale dentro de **15 minutos** de su momento | ⚠ | Salió a los **2,00 min**. Cumple **por alerta**; con el pico de 2.499 simultáneas **no** — es **A-05**, ya registrado |
 | **CA-26.1** | Alertas a 48 h, 24 h y el día de la audiencia | ✅ | Anticipaciones medidas: **[48, 24, 0]** horas |
-| **CA-26.4** ⛔ | Se emite **una sola vez**: ni duplicada ni omitida | ✅ | Dos barridos más sobre la misma alerta: **mismo `enviada_en`, mismos intentos (1)**. No se reprocesa (RNF-10 + ADR-04) |
+| **CA-26.4** ⛔ | Se emite **una sola vez**: ni duplicada ni omitida | ❌ | Un segundo barrido normal no reenvía (RNF-10 + ADR-04), **pero un barrido interrumpido sí**. Ver **H-6** |
 | **CA-28.1** ⛔ | Un proceso **archivado** no genera alerta | ✅ | Con el proceso archivado la alerta quedó **`DESCARTADA`**, no enviada (RN-20) |
 | **CA-28.2** ⛔ | Un término **cumplido** no genera alerta | ✅ | Igual: **`DESCARTADA`** (RN-39) |
 | **CA-30.1** | El historial muestra fecha, destinatario y resultado | ✅ | Se descubrió sin cumplirse en la interfaz; ver **H-3**, ya corregido |
@@ -349,6 +349,46 @@ demostrarían que 41 pruebas están en verde.
 
 **Estado:** cerrado. **CA-41.3 pasa a ✅.**
 
+### H-6 · Un barrido interrumpido reenvía lo que ya había salido
+
+**Encontrado después de cerrar el recorrido**, al elegir en qué seguir: revisando
+D-26 apareció que separar el envío de la transacción hace falta con *cualquiera*
+de las dos salidas de A-05, y mirando por qué, salió esto.
+
+**Qué pasa.** `MotorAlertas.ejecutarBarrido()` es **una sola transacción para
+todo el lote**. Dentro de ella se envía el correo —que es irreversible— y se
+marca la alerta como enviada —que no lo es, porque no se ha hecho *commit*.
+
+Si algo revierte esa transacción después de que hayan salido varios correos —un
+reinicio durante el despliegue, una caída de la conexión con la base, cualquier
+error no capturado—, las alertas vuelven a `PROGRAMADA` **con los correos ya
+enviados**, y el siguiente barrido los manda otra vez.
+
+**Reproducido** (`BarridoInterrumpidoTest`, etiqueta `defecto-abierto`):
+
+```
+Correos que ya habían salido antes de la caída : 2
+Alertas que volvieron a PROGRAMADA             : 4 de 4
+Correos REPETIDOS en el segundo barrido        : 2
+```
+
+**Incumple CA-26.4** literalmente: *«cuando el servicio de alertas se reinicia
+durante la ventana de envío, entonces la alerta se emite **una sola vez**: ni
+duplicada ni omitida»*. Es el caso que este mismo recorrido dio por no
+comprobable —se verificó solo que un segundo barrido normal no reenvía— y que
+resultó ser el que fallaba.
+
+**Por qué importa más ahora.** Hoy la ventana de riesgo dura milisegundos: el
+lote es de 100 y el emisor escribe en un log. **Cualquiera de las dos salidas de
+A-05 la alarga a minutos** —SMTP real, lotes mayores—, y minutos bastan para que
+un despliegue parta un barrido por la mitad.
+
+**Y el daño es el que R-05 describe.** Un abogado que recibe dos veces el mismo
+aviso deja de fiarse de todos, y a partir de ahí el sistema tiene alertas pero ya
+no tiene vigilancia.
+
+**Estado:** abierto, con prueba que lo reproduce.
+
 ### H-5 · No se puede ajustar el esquema de alertas de un término
 
 **CA-27.3** pide poder darle a un término concreto una anticipación distinta sin
@@ -380,8 +420,8 @@ criterios que lo marcara «cumple» estaría mintiendo, y uno que lo marcara
 | | |
 |---:|---|
 | **54** | criterios recorridos |
-| **51** | ✅ cumplen |
-| **1** | ❌ no cumple: **CA-27.3** |
+| **50** | ✅ cumplen |
+| **2** | ❌ no cumplen: **CA-26.4** y **CA-27.3** |
 | **1** | ❌ no puede cumplirse en local por decisión: **CA-04.4** (TLS) |
 | **1** | ⚠ cumple por alerta, no en el pico: **CA-25.4**, que es **A-05** |
 
@@ -397,6 +437,7 @@ alcance declarado de la propuesta.
 | **H-2** | CA-04.4 (TLS) no se cumple en local | pendiente de despliegue (**D-23**, control 3) |
 | **H-4** | Solo el módulo de usuarios tenía prueba de acceso cruzado | ✅ corregido |
 | **H-5** | No se puede ajustar el esquema de alertas de un término | **abierto** |
+| **H-6** | Un barrido interrumpido reenvía lo que ya había salido | **abierto**, con prueba que lo reproduce |
 
 ### Cuatro veces me equivoqué yo, y no el sistema
 
