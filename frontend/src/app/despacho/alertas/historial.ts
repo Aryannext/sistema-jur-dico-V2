@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { Alerta } from '../../nucleo/modelos';
 import { mensajeDeError } from '../../nucleo/mensajes';
 
-type Filtro = 'todas' | 'FALLIDA' | 'PROGRAMADA';
+type Filtro = 'todas' | 'FALLIDA' | 'ENVIADA' | 'PROGRAMADA';
 
 /**
  * Historial de alertas. RF-26 · RF-27 · RNF-08 · RNF-09 · HU-30.
@@ -14,6 +14,15 @@ type Filtro = 'todas' | 'FALLIDA' | 'PROGRAMADA';
  * <p>Esta pantalla existe para poder <strong>responder después</strong>: si
  * alguien pregunta por qué se venció un término, aquí está si el aviso salió,
  * cuándo y a quién. Es el respaldo del despacho, no un adorno.
+ *
+ * <p><strong>Durante un tiempo no cumplió eso.</strong> Pedía solo las fallidas
+ * y las pendientes, así que enseñaba lo que no salió y lo que aún no ha
+ * salido, y ocultaba <em>todo lo que sí se envió</em> — que es la mayoría, y la
+ * única evidencia de que la vigilancia funciona. Se anunciaba como «todo lo que
+ * el sistema intentó avisar» mientras no mostraba ni uno de los intentos que
+ * salieron bien. Lo destapó el recorrido de criterios de aceptación (H-3), y es
+ * el mismo defecto de fondo que el «6:00 a.m.»: la pantalla prometiendo más de
+ * lo que hacía.
  *
  * <p>Las fallidas van primero y en rojo. <strong>No existe un estado
  * «descartada»</strong> en este sistema: una alerta que no salió y desaparece
@@ -31,6 +40,7 @@ export class HistorialAlertas {
   private readonly http = inject(HttpClient);
 
   protected readonly fallidas = signal<Alerta[]>([]);
+  protected readonly enviadas = signal<Alerta[]>([]);
   protected readonly programadas = signal<Alerta[]>([]);
   protected readonly cargando = signal(true);
   protected readonly error = signal<string | null>(null);
@@ -53,10 +63,17 @@ export class HistorialAlertas {
     switch (this.filtro()) {
       case 'FALLIDA':
         return [...this.fallidas()].sort(porFecha);
+      case 'ENVIADA':
+        return [...this.enviadas()].sort(porFecha);
       case 'PROGRAMADA':
         return [...this.programadas()].sort(porFecha);
       default:
+        // Fallidas, luego enviadas, luego pendientes. Lo que falló va primero
+        // porque es lo único sobre lo que hay que hacer algo hoy; lo enviado va
+        // antes que lo pendiente porque ya ocurrió, y esta pantalla se abre
+        // sobre todo para mirar atrás.
         return [...[...this.fallidas()].sort(porFecha),
+                ...[...this.enviadas()].sort(porFecha),
                 ...[...this.programadas()].sort(porFecha)];
     }
   });
@@ -75,15 +92,18 @@ export class HistorialAlertas {
     this.error.set(null);
 
     try {
-      const [fallidas, programadas] = await Promise.all([
+      const [fallidas, enviadas, programadas] = await Promise.all([
         firstValueFrom(this.http.get<Alerta[]>('/api/alertas/fallidas')),
+        firstValueFrom(this.http.get<Alerta[]>('/api/alertas/enviadas')),
         firstValueFrom(this.http.get<Alerta[]>('/api/alertas/programadas')),
       ]);
       this.fallidas.set(fallidas);
+      this.enviadas.set(enviadas);
       this.programadas.set(programadas);
 
     } catch {
       this.fallidas.set([]);
+      this.enviadas.set([]);
       this.programadas.set([]);
       this.error.set('No se pudo cargar el historial de alertas.');
 

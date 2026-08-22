@@ -82,6 +82,26 @@ public class AlertaController {
                 .toList();
     }
 
+    /**
+     * <strong>CA-30.1 · RNF-09: las que sí salieron.</strong>
+     *
+     * <p>Faltaba, y su ausencia hacía que la pantalla de historial mintiera:
+     * se anunciaba como «todo lo que el sistema intentó avisar» mostrando solo
+     * las fallidas y las pendientes. Lo que el sistema <em>sí</em> envió —la
+     * mayoría, y la única evidencia de que la vigilancia funciona— no lo
+     * consultaba nadie.
+     *
+     * <p>Es el registro que un despacho enseña cuando alguien reclama que no
+     * se le avisó. Sin él, la respuesta a «¿el sistema avisó?» solo se podía
+     * dar mirando la base de datos.
+     */
+    @GetMapping("/enviadas")
+    public List<AlertaResponse> enviadas() {
+        return alertas.porEstadoEnDespacho(contexto.despachoActual(), EstadoAlerta.ENVIADA).stream()
+                .map(AlertaResponse::desde)
+                .toList();
+    }
+
     /** Las que están esperando su momento. */
     @GetMapping("/programadas")
     public List<AlertaResponse> programadas() {

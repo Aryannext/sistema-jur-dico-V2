@@ -135,8 +135,8 @@ reloj del sistema afectaría a todo lo demás.
 | **CA-26.4** ⛔ | Se emite **una sola vez**: ni duplicada ni omitida | ✅ | Dos barridos más sobre la misma alerta: **mismo `enviada_en`, mismos intentos (1)**. No se reprocesa (RNF-10 + ADR-04) |
 | **CA-28.1** ⛔ | Un proceso **archivado** no genera alerta | ✅ | Con el proceso archivado la alerta quedó **`DESCARTADA`**, no enviada (RN-20) |
 | **CA-28.2** ⛔ | Un término **cumplido** no genera alerta | ✅ | Igual: **`DESCARTADA`** (RN-39) |
-| **CA-30.1** | El historial muestra fecha, destinatario y resultado | ⚠ **backend sí, interfaz no** | Ver **H-3** |
-| **CA-30.2** | Ante un término vencido, se puede saber si el sistema avisó y cuándo | ⚠ **backend sí, interfaz no** | Ver **H-3** |
+| **CA-30.1** | El historial muestra fecha, destinatario y resultado | ✅ | Se descubrió sin cumplirse en la interfaz; ver **H-3**, ya corregido |
+| **CA-30.2** | Ante un término vencido, se puede saber si el sistema avisó y cuándo | ✅ | Igual; ver **H-3** |
 
 **CA-26.4 tiene un límite honesto.** El criterio habla de un reinicio del
 servicio a media ventana de envío, y eso no se puede provocar desde aquí. Lo que
@@ -220,7 +220,30 @@ por API: devuelve `programadaPara`, `enviadaEn`, `estado` y
 interfaz**. Desde la aplicación no hay forma de saber si un término vencido fue
 avisado.
 
-**Estado:** abierto.
+**Corregido.** Tres cambios:
+
+1. **`GET /api/alertas/enviadas`** en el backend. No existía: el listado por
+   estado estaba escrito para las FALLIDA y las PROGRAMADA, y las ENVIADA se
+   quedaron fuera.
+2. **La pestaña «Enviadas»** en la pantalla, y las tres sumadas en «Todas».
+3. **El subtítulo dice ahora la verdad**: «Lo que salió, lo que no pudo salir y
+   lo que está por salir».
+
+El vacío de esa pestaña lleva su propio texto, y es lo contrario del de
+«Fallidas»: una lista de fallidas vacía es buena noticia; una de enviadas vacía
+significa que **o el despacho acaba de empezar, o el motor no está funcionando**.
+Decirlo evita que se lea como tranquilizador.
+
+**Dos pruebas nuevas** en `MotorAlertasIntegracionTest`, una de ellas negativa:
+que una alerta enviada se pueda encontrar después **con su fecha de envío** —sin
+la fecha no se responde «¿y cuándo?»— y que el listado de enviadas **no mezcle
+las pendientes**, porque decir que salió un aviso que no ha salido es peor que
+no mostrarlo: el despacho creería que su cliente ya fue avisado.
+
+**Verificado en pantalla:** «Todas 24 · Fallidas 0 · **Enviadas 1** ·
+Programadas 23», con la enviada mostrando destinatario y fecha real de envío.
+
+**Estado:** cerrado. **CA-30.1 y CA-30.2 pasan a ✅.**
 
 ### H-2 · CA-04.4 no se puede cumplir en local, y eso ya estaba decidido
 

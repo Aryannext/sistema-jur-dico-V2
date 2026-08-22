@@ -88,6 +88,7 @@ class MotorAlertasIntegracionTest {
     @MockitoBean private EmisorCorreo emisorCorreo;
 
     private Long procesoId;
+    private Long despachoId;
 
     @BeforeEach
     void prepararDespachoConProceso() {
@@ -97,6 +98,7 @@ class MotorAlertasIntegracionTest {
                 "Despacho Alertas " + sufijo, null, "contacto." + sufijo + "@despacho.co", null,
                 "Admin", "admin." + sufijo + "@despacho.co", "clave-alertas-123");
 
+        despachoId = despacho.despacho().id();
         autenticarComo(despacho.administrador().id());
 
         // El responsable de un proceso debe ser abogado (RN-31): es quien
@@ -285,6 +287,61 @@ class MotorAlertasIntegracionTest {
      * momentos pasados a propósito. Aquí se construye directamente porque lo que
      * se prueba es el <em>motor</em>, no la programación.
      */
+    // --- El historial que el despacho enseña (CA-30.1 · RNF-09) -------
+
+    /**
+     * <strong>CA-30.1: una alerta enviada tiene que poder consultarse.</strong>
+     *
+     * <p>Parece obvio y no lo era. El listado por estado existía para las
+     * FALLIDA y las PROGRAMADA, y <em>no</em> para las ENVIADA: la pantalla de
+     * historial se anunciaba como «todo lo que el sistema intentó avisar»
+     * mostrando solo lo que falló y lo que aún no ha salido. Los avisos que sí
+     * salieron —la mayoría, y la única evidencia de que la vigilancia
+     * funciona— no los consultaba nadie.
+     *
+     * <p>Lo destapó el recorrido de criterios de aceptación (H-3), no la suite:
+     * todas las pruebas del motor miraban el estado de <em>una</em> alerta
+     * concreta, y ninguna preguntaba si el despacho podía encontrarla después.
+     * Esta es la que faltaba.
+     */
+    @Test
+    @DisplayName("CA-30.1: una alerta enviada aparece en el historial del despacho")
+    void laAlertaEnviadaSePuedeConsultarDespues() {
+        doNothing().when(emisorCorreo).enviar(anyString(), anyString(), anyString());
+
+        Alerta alerta = alertaYaVencida();
+        motor.ejecutarBarrido();
+
+        List<Alerta> enviadas = alertas.porEstadoEnDespacho(despachoId, EstadoAlerta.ENVIADA);
+
+        assertAll(
+                () -> assertTrue(enviadas.stream().anyMatch(a -> a.id().equals(alerta.id())),
+                        "la alerta salió pero el despacho no puede encontrarla: sin esto, "
+                                + "la respuesta a «¿el sistema avisó?» solo está en la base de datos"),
+                () -> assertTrue(enviadas.stream().allMatch(a -> a.enviadaEn() != null),
+                        "una alerta enviada sin fecha de envío no sirve para responder «¿y cuándo?»")
+        );
+    }
+
+    @Test
+    @DisplayName("⛔ CA-30.1: el historial de enviadas NO incluye las que aún no han salido")
+    void elHistorialDeEnviadasNoMezclaLasPendientes() {
+        doNothing().when(emisorCorreo).enviar(anyString(), anyString(), anyString());
+
+        // Un término futuro: sus alertas quedan PROGRAMADA, no salen.
+        vigilancia.registrarTermino(procesoId, "Término futuro " + UUID.randomUUID(),
+                LocalDate.now().plusDays(45));
+        motor.ejecutarBarrido();
+
+        List<Alerta> enviadas = alertas.porEstadoEnDespacho(despachoId, EstadoAlerta.ENVIADA);
+
+        // Si el listado devolviera todo, la pantalla diría que salieron avisos
+        // que no han salido — que es peor que no mostrarlos, porque el despacho
+        // creería que su cliente ya fue avisado.
+        assertTrue(enviadas.stream().allMatch(a -> a.estado() == EstadoAlerta.ENVIADA),
+                "el listado de enviadas trajo alertas en otro estado");
+    }
+
     private Alerta alertaYaVencida() {
         Termino termino = vigilancia.registrarTermino(
                 procesoId, "Término de prueba " + UUID.randomUUID().toString().substring(0, 6),
