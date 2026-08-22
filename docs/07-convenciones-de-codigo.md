@@ -153,6 +153,37 @@ Un "lego" no está terminado hasta cumplir **las cinco**:
 
 **Sin excepción para el punto 2.** Los cinco fallos que destruyen este producto solo se detectan con pruebas negativas — probar que algo **no** ocurre.
 
+### 7.1 Cómo se ejecutan las pruebas
+
+| Orden | Qué corre | Necesita |
+|---|---|---|
+| `mvnw test` | El dominio. Es la compilación por defecto y **debe estar siempre en verde** | Nada |
+| `mvnw test -Pintegracion` | Además, todo lo que toca la base | PostgreSQL |
+| `mvnw test -Prendimiento` | Las mediciones. Inyectan latencia y tardan minutos | Nada |
+| `mvnw test -Pdefectos` | Las que demuestran **defectos abiertos**. ⚠ **Fallan a propósito** | PostgreSQL |
+
+### 7.2 El perfil `defectos`, y por qué existe
+
+Una prueba etiquetada `defecto-abierto` **no está rota: está haciendo su
+trabajo.** Reproduce un defecto conocido y documentado, y falla hasta el día en
+que se corrige.
+
+Vive fuera de toda compilación normal —ni la de por defecto ni la de
+integración— porque una suite con un rojo permanente deja de servir para
+detectar rojos nuevos: al segundo día nadie mira cuál de los dos falló.
+
+**Es la misma lógica de D-23 aplicada a los defectos.** Allí se aceptó relajar
+controles de seguridad en local *solo porque existe una lista que dice cuándo
+dejan de estar relajados y alguien la verifica*. Un defecto conocido se acepta
+igual: solo si existe algo que demuestre que sigue ahí y que avise el día que
+deje de estarlo. Sin eso, «ya lo arreglaremos» se convierte en «nunca se
+arregló».
+
+**Al cerrar el defecto, la prueba no se borra**: se le cambia la etiqueta a
+`integracion` y pasa a ser el guardián de que no vuelva.
+
+Hoy hay una: `PicoDeAlertasTest` (**A-05**, RNF-11).
+
 ---
 
 ## 8. Convención de commits

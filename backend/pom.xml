@@ -122,7 +122,7 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
-					<excludedGroups>integracion,rendimiento</excludedGroups>
+					<excludedGroups>integracion,rendimiento,defecto-abierto</excludedGroups>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -142,7 +142,7 @@
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<configuration>
-							<excludedGroups combine.self="override">rendimiento</excludedGroups>
+							<excludedGroups combine.self="override">rendimiento,defecto-abierto</excludedGroups>
 						</configuration>
 					</plugin>
 				</plugins>
@@ -159,6 +159,35 @@
 						<artifactId>maven-surefire-plugin</artifactId>
 						<configuration>
 							<groups>rendimiento</groups>
+							<excludedGroups combine.self="override"/>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+		<!--
+			mvnw test -Pdefectos  ->  las pruebas que demuestran defectos ABIERTOS.
+
+			FALLAN A PROPOSITO. No estan rotas: cada una reproduce un defecto
+			conocido y documentado, y deja de fallar el dia que se corrige.
+
+			Es la misma logica de D-23 aplicada a los defectos: un problema
+			conocido solo es aceptable si existe algo que demuestre que sigue
+			ahi y que avise cuando deje de estarlo. Sin esto, "ya lo
+			arreglaremos" se convierte en "nunca se arreglo".
+
+			Necesitan PostgreSQL.
+		-->
+		<profile>
+			<id>defectos</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<groups>defecto-abierto</groups>
 							<excludedGroups combine.self="override"/>
 						</configuration>
 					</plugin>
