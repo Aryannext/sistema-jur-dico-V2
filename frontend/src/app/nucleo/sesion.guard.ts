@@ -34,7 +34,35 @@ export const exigeDespacho: CanActivateFn = async () => {
   const sesion = autenticacion.sesion() ?? await autenticacion.recuperarSesion();
   if (!sesion) return router.createUrlTree(['/ingreso']);
 
+  // RN-10: el Administrador de Plataforma no entra aquí. Antes sí entraba, y
+  // no por permitirlo sino por descarte: la comprobación era «¿es solo
+  // cliente?», y como no lo es, pasaba. Se comprueba ahora de forma
+  // afirmativa, que es lo que impide que el próximo rol que se añada vuelva a
+  // colarse por el mismo hueco.
+  if (autenticacion.esAdministradorDePlataforma()) {
+    return router.createUrlTree(['/despachos']);
+  }
+
   return autenticacion.soloCliente() ? router.createUrlTree(['/portal']) : true;
+};
+
+/**
+ * La zona de la plataforma. RF-01 · RF-02 · RN-10.
+ *
+ * <p>Solo el Administrador de Plataforma. Quien trabaja en un despacho que
+ * llegue aquí vuelve a lo suyo: estas pantallas hablan de despachos como
+ * clientes de la plataforma, no de procesos.
+ */
+export const exigePlataforma: CanActivateFn = async () => {
+  const autenticacion = inject(Autenticacion);
+  const router = inject(Router);
+
+  const sesion = autenticacion.sesion() ?? await autenticacion.recuperarSesion();
+  if (!sesion) return router.createUrlTree(['/ingreso']);
+
+  return autenticacion.esAdministradorDePlataforma()
+    ? true
+    : router.createUrlTree([autenticacion.rutaInicial()]);
 };
 
 /**

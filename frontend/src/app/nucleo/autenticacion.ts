@@ -54,6 +54,24 @@ export class Autenticacion {
     () => this._sesion()?.roles.includes('CLIENTE') ?? false);
 
   /**
+   * El Administrador de Plataforma. RN-10.
+   *
+   * <p>Opera la plataforma, no ejerce la abogacía: da de alta despachos y los
+   * activa o desactiva, y <strong>nunca accede al contenido de un
+   * expediente</strong>.
+   *
+   * <p>Su zona es aparte, y eso no es una comodidad de navegación. Al no
+   * existir, este rol caía por descarte en la zona del despacho —no era
+   * cliente, luego iba a `/vencimientos`— y veía un menú con Procesos,
+   * Clientes y Reportes. El backend le negaba los datos, así que lo que veía
+   * era un sistema aparentemente roto; pero además la interfaz le estaba
+   * OFRECIENDO lo que RN-10 le prohíbe. Una regla que el backend cumple y la
+   * pantalla contradice sigue siendo una regla mal implementada.
+   */
+  readonly esAdministradorDePlataforma = computed(
+    () => this._sesion()?.roles.includes('ADMIN_PLATAFORMA') ?? false);
+
+  /**
    * Solo cliente y nada más.
    *
    * <p>Se comprueba así y no con {@code esCliente()} a secas porque un usuario
@@ -72,7 +90,10 @@ export class Autenticacion {
    * pantalla que le devuelve 403 en cada consulta: vería el sistema roto
    * cuando lo que pasa es que ese sitio no es suyo.
    */
-  readonly rutaInicial = computed(() => this.soloCliente() ? '/portal' : '/vencimientos');
+  readonly rutaInicial = computed(() => {
+    if (this.esAdministradorDePlataforma()) return '/despachos';
+    return this.soloCliente() ? '/portal' : '/vencimientos';
+  });
 
   /**
    * Pregunta al backend quién está dentro.

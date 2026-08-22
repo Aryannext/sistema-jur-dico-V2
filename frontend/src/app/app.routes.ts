@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { exigeAnonimo, exigeCliente, exigeDespacho, exigeSesion } from './nucleo/sesion.guard';
+import { exigeAnonimo, exigeCliente, exigeDespacho, exigePlataforma } from './nucleo/sesion.guard';
 
 /**
  * Las rutas del despacho.
@@ -132,6 +132,40 @@ export const routes: Routes = [
       },
       { path: 'audiencias', pathMatch: 'full', redirectTo: 'procesos' },
       { path: '', pathMatch: 'full', redirectTo: 'procesos' },
+    ],
+  },
+
+  /**
+   * La zona de la plataforma. RF-01 · RF-02 · RN-10.
+   *
+   * <p>Cuelga de la raíz y no de `/plataforma/...` para que el Administrador
+   * de Plataforma aterrice en `/despachos`, que es SU pantalla principal, y no
+   * en una subcarpeta. Las tres zonas del sistema son hermanas, no una
+   * principal con dos anexos.
+   */
+  {
+    path: 'despachos',
+    canActivate: [exigePlataforma],
+    loadComponent: () => import('./plataforma/marco-plataforma').then(m => m.MarcoPlataforma),
+    children: [
+      {
+        path: '',
+        title: 'Despachos · Iuris',
+        loadComponent: () => import('./plataforma/despachos').then(m => m.ListaDespachos),
+      },
+    ],
+  },
+  {
+    path: 'plataforma',
+    canActivate: [exigePlataforma],
+    loadComponent: () => import('./plataforma/marco-plataforma').then(m => m.MarcoPlataforma),
+    children: [
+      {
+        path: 'mi-cuenta',
+        title: 'Mi cuenta · Iuris',
+        loadComponent: () => import('./cuenta/mi-cuenta').then(m => m.MiCuenta),
+      },
+      { path: '', pathMatch: 'full', redirectTo: '/despachos' },
     ],
   },
 

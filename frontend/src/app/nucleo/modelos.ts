@@ -203,3 +203,27 @@ export interface AudienciaDelCliente {
   lugar: string | null;
   radicado: string;
 }
+
+/** GET /api/despachos — RF-01 · RF-02 · RN-10. Zona del Administrador de Plataforma. */
+export interface Despacho {
+  id: number;
+  nombre: string;
+  nit: string | null;
+  correoContacto: string;
+  telefono: string | null;
+  estado: 'ACTIVO' | 'INACTIVO';
+  estadoDescripcion: string;
+  fechaRegistro: string;
+}
+
+/**
+ * POST /api/despachos — RF-01 · CA-01.2.
+ *
+ * El administrador viaja en el alta y no en una segunda llamada: un despacho
+ * sin administrador no podría operar, y un fallo entre los dos pasos dejaría un
+ * despacho al que nadie puede entrar.
+ */
+export interface AltaDespacho {
+  despacho: Despacho;
+  administrador: { id: number; nombre: string; correo: string };
+}

@@ -45,3 +45,21 @@
   background: var(--fondo);
   color: var(--alto);
 }
+
+/*
+  La nota de la barra lateral de la plataforma (RN-10).
+
+  Vive aquí porque esta hoja la comparten los dos marcos. La zona de la
+  plataforma tiene un menú de dos entradas, y sin explicación alguien lo leería
+  como una pantalla a medio hacer. No lo está: es el límite del rol, escrito
+  donde se ve.
+*/
+.nota-lado {
+  margin: 14px 14px 0;
+  padding: 12px 13px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--tinta-3, #6b7280);
+  background: var(--fondo-2, #f6f7f8);
+  border-radius: 10px;
+}

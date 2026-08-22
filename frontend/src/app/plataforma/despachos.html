@@ -1,0 +1,226 @@
+<main>
+  <div class="pag">
+    <div>
+      <h1>Despachos</h1>
+      <p>{{ despachos().length }} despacho(s) · {{ activos() }} activo(s) en la plataforma</p>
+    </div>
+    <div class="util">
+      @if (!creando()) {
+        <button class="btn" type="button" (click)="creando.set(true)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Registrar despacho
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Se ven UNA vez. La contraseña se guarda con hash (RNF-05) y nadie puede
+       volver a leerla; si esto pasara desapercibido, el despacho recién creado
+       quedaría con un administrador cuya clave no conoce nadie. -->
+  @if (claveEntregada(); as entregadas) {
+    <div class="entregada" role="status">
+      <b>Anote estas credenciales ahora</b>
+      <p>
+        Son el único acceso a «{{ entregadas.despacho }}». No se pueden volver a
+        consultar: la contraseña se guarda cifrada y nadie puede leerla, tampoco nosotros.
+      </p>
+      <dl>
+        <div><dt>Correo</dt><dd>{{ entregadas.correo }}</dd></div>
+        <div><dt>Contraseña</dt><dd class="clave">{{ entregadas.clave }}</dd></div>
+      </dl>
+      <p class="cierre">
+        Entrégueselas al despacho por un medio que usted controle. Quien las reciba
+        <b>puede cambiarlas</b> desde «Mi cuenta», y a partir de ahí usted ya no las conoce.
+      </p>
+      <button class="btn fantasma" type="button" (click)="claveEntregada.set(null)">Ya las anoté</button>
+    </div>
+  }
+
+  @if (creando()) {
+    <form class="caja registrar" (submit)="crear($event)" novalidate>
+      <header><h3>Nuevo despacho</h3><span>y su primer administrador</span></header>
+
+      <div class="campos">
+        <div class="campo">
+          <label for="nombre">Nombre del despacho</label>
+          <div class="caja-c">
+            <input id="nombre" type="text" [value]="nombre()" (input)="escribir('nombre', $event)"
+                   placeholder="Consultorio Jurídico…" [disabled]="guardando()" autofocus>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="correoContacto">Correo de contacto</label>
+          <div class="caja-c">
+            <input id="correoContacto" type="email" [value]="correoContacto()"
+                   (input)="escribir('correoContacto', $event)"
+                   placeholder="contacto@despacho.co" [disabled]="guardando()">
+          </div>
+        </div>
+        <div class="campo">
+          <label for="nit">NIT <span class="ayuda">opcional</span></label>
+          <div class="caja-c">
+            <input id="nit" type="text" [value]="nit()" (input)="escribir('nit', $event)"
+                   [disabled]="guardando()">
+          </div>
+        </div>
+        <div class="campo">
+          <label for="telefono">Teléfono <span class="ayuda">opcional</span></label>
+          <div class="caja-c">
+            <input id="telefono" type="tel" [value]="telefono()" (input)="escribir('telefono', $event)"
+                   [disabled]="guardando()">
+          </div>
+        </div>
+      </div>
+
+      <!--
+        CA-01.2: el administrador NO es un paso posterior. Un despacho sin
+        administrador es un despacho al que nadie puede entrar, y hacerlo en dos
+        pasos deja esa posibilidad abierta si el segundo falla.
+      -->
+      <div class="campo roles">
+        <label>Su primer administrador</label>
+        <span class="ayuda">
+          Se crea junto con el despacho: sin él, nadie podría entrar. Después él
+          crea a sus abogados, y cada abogado habilita a sus clientes.
+        </span>
+      </div>
+
+      <div class="campos">
+        <div class="campo">
+          <label for="adminNombre">Nombre completo</label>
+          <div class="caja-c">
+            <input id="adminNombre" type="text" [value]="adminNombre()"
+                   (input)="escribir('adminNombre', $event)" [disabled]="guardando()">
+          </div>
+        </div>
+        <div class="campo">
+          <label for="adminCorreo">Correo</label>
+          <div class="caja-c">
+            <input id="adminCorreo" type="email" [value]="adminCorreo()"
+                   (input)="escribir('adminCorreo', $event)"
+                   placeholder="nombre@despacho.co" [disabled]="guardando()">
+          </div>
+        </div>
+        <div class="campo">
+          <label for="clave" class="con-enlace">
+            Contraseña inicial
+            <button type="button" class="link-fino" (click)="proponerClave()">Proponer una</button>
+          </label>
+          <div class="caja-c">
+            <input id="clave" type="text" [value]="clave()" (input)="escribir('clave', $event)"
+                   placeholder="Al menos {{ MINIMO }} caracteres" [disabled]="guardando()">
+          </div>
+        </div>
+      </div>
+
+      @if (errorFormulario(); as fallo) {
+        <p class="franja roja" role="alert" style="margin:0 24px 18px">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+          <span>{{ fallo }}</span>
+        </p>
+      }
+
+      <div class="pie-form">
+        <button class="btn fantasma" type="button" (click)="cerrarFormulario()">Cancelar</button>
+        <button class="btn" type="submit" [disabled]="!puedeCrear()">
+          @if (guardando()) {
+            <span class="girando claro"></span> Registrando…
+          } @else {
+            Registrar despacho
+          }
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (error(); as fallo) {
+    <p class="franja roja" role="alert" style="margin-bottom:20px">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <span>{{ fallo }}</span>
+    </p>
+  }
+
+  <section class="caja">
+    @if (cargando()) {
+      <div class="cargando"><span class="girando"></span> Consultando los despachos…</div>
+
+    } @else if (despachos().length === 0) {
+      <div class="cargando">
+        Todavía no hay ningún despacho. Registre el primero con el botón de arriba.
+      </div>
+
+    } @else {
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th style="padding-top:21px">Despacho</th>
+            <th style="padding-top:21px">Contacto</th>
+            <th style="padding-top:21px">Estado</th>
+            <th style="padding-top:21px" class="der">Vigilancia</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (d of despachos(); track d.id) {
+            <tr>
+              <td>
+                <div class="per">
+                  <span class="av-i" [class.gris]="d.estado !== 'ACTIVO'">{{ iniciales(d.nombre) }}</span>
+                  <div>
+                    <div class="p">{{ d.nombre }}</div>
+                    <div class="s">
+                      @if (d.nit) { NIT {{ d.nit }} } @else { sin NIT registrado }
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="p">{{ d.correoContacto }}</div>
+                @if (d.telefono) { <div class="s">{{ d.telefono }}</div> }
+              </td>
+              <td>
+                @if (d.estado === 'ACTIVO') {
+                  <span class="eti verde"><i></i>{{ d.estadoDescripcion }}</span>
+                } @else {
+                  <span class="eti gris">{{ d.estadoDescripcion }}</span>
+                }
+              </td>
+              <td class="der">
+                <div class="acciones-fila">
+                  <button class="btn fantasma" type="button" (click)="cambiarEstado(d)"
+                          [disabled]="ocupado() === d.id">
+                    @if (ocupado() === d.id) {
+                      <span class="girando"></span>
+                    } @else if (d.estado === 'ACTIVO') {
+                      Desactivar
+                    } @else {
+                      Activar
+                    }
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+
+  <div class="dos" style="margin-top:22px;grid-template-columns:1fr 1fr">
+    <p class="franja marca">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r="1" fill="currentColor" stroke="none"/></svg>
+      <span>
+        <b>Nadie se registra solo.</b> No hay formulario público de alta: si
+        cualquiera pudiera crear un despacho, cualquiera podría reclamar el
+        expediente de otra persona. El alta la hace usted.
+      </span>
+    </p>
+    <p class="franja ambar">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5V13"/><circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none"/><path d="M10.3 3.9 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <span>
+        <b>Desactivar detiene la vigilancia</b> de los términos y audiencias de
+        ese despacho, y su gente deja de entrar de inmediato. <b>No borra</b>
+        nada: al reactivarlo, todo sigue ahí.
+      </span>
+    </p>
+  </div>
+</main>

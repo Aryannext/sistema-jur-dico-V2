@@ -50,7 +50,13 @@ export class Ingreso {
 
     try {
       await this.autenticacion.entrar(this.correo().trim(), this.contrasena());
-      await this.router.navigate(['/vencimientos']);
+
+      // Cada quien a SU zona, no a una fija. Estaba escrito '/vencimientos'
+      // a secas y funcionaba de rebote: los guardianes reexpedían al cliente
+      // a su portal. Funcionar de rebote no es funcionar — con el
+      // Administrador de Plataforma el rebote no existía, porque su zona
+      // tampoco, y aterrizaba en un panel del despacho que RN-10 le prohíbe.
+      await this.router.navigate([this.autenticacion.rutaInicial()]);
 
     } catch (fallo) {
       this.error.set(this.mensajeDe(fallo));
