@@ -25,7 +25,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -49,6 +49,23 @@ import static org.mockito.Mockito.doNothing;
  * ninguna compilación normal — dejarla en rojo taparía fallos de verdad.
  *
  * <p>Se ejecuta a propósito: {@code mvnw test -Pdefectos}
+ *
+ * <h2>Por qué NO es {@code @Transactional}</h2>
+ *
+ * <p>Lo era, y al corregir H-6 dejó de funcionar sin decirlo. El motor pasó a
+ * enviar cada alerta en su propia transacción, y {@code REQUIRES_NEW}
+ * <strong>suspende</strong> la de la prueba: el barrido no veía ni una de las
+ * 500 alertas sembradas.
+ *
+ * <p>Y no falló rápido, que habría sido lo bueno: <strong>degeneró en un bucle
+ * de 41 minutos</strong> barriendo en vacío 509 veces y consultando 500 eventos
+ * en cada vuelta. Terminó «fallando» por no haber drenado el pico, que es
+ * exactamente el mensaje equivocado: no medía nada y parecía medir.
+ *
+ * <p>De ahí las dos defensas que ahora tiene: el montaje se confirma con
+ * {@link TransactionTemplate}, y si el primer barrido no envía nada la prueba
+ * <strong>se detiene en el acto</strong> en vez de insistir. Una medición que no
+ * mide tiene que decirlo enseguida.
  *
  * <h2>Por qué no existía</h2>
  *
@@ -89,7 +106,6 @@ import static org.mockito.Mockito.doNothing;
  */
 @SpringBootTest(properties = "sgpj.alertas.planificador=false")
 @Tag("defecto-abierto")
-@Transactional
 class PicoDeAlertasTest {
 
     /**
@@ -125,6 +141,7 @@ class PicoDeAlertasTest {
     @Autowired private CatalogoService catalogos;
     @Autowired private ClienteService clientes;
     @Autowired private ProcesoService procesos;
+    @Autowired private TransactionTemplate transacciones;
 
     /** El intervalo REAL del planificador, no una copia. */
     @Value("${sgpj.alertas.intervalo-ms}")
@@ -142,9 +159,9 @@ class PicoDeAlertasTest {
     void elPicoDebeSalirDentroDeLaTolerancia() {
         doNothing().when(emisorCorreo).enviar(anyString(), anyString(), anyString());
 
-        Long procesoId = prepararProcesoVigilado();
         OffsetDateTime elMismoInstante = OffsetDateTime.now().minusMinutes(1);
-        List<Long> eventos = sembrarPico(procesoId, elMismoInstante);
+        List<Long> idsDelPico = transacciones.execute(estado ->
+                sembrarPico(prepararProcesoVigilado(), elMismoInstante));
 
         int barridos = 0;
         int loteObservado = 0;
@@ -153,21 +170,33 @@ class PicoDeAlertasTest {
         // Se barre hasta drenar, con un tope que solo existe para que un fallo
         // se manifieste como aserción legible y no como una prueba colgada.
         final int TOPE = PICO_SEMBRADO + 10;
-        while (enviadas(eventos) < PICO_SEMBRADO && barridos < TOPE) {
+        while (enviadas(idsDelPico) < PICO_SEMBRADO && barridos < TOPE) {
             motor.ejecutarBarrido();
             barridos++;
 
-            int ahora = enviadas(eventos);
+            int ahora = enviadas(idsDelPico);
             if (barridos == 1) {
                 // El tamaño real del lote, deducido en vez de copiado.
                 loteObservado = ahora - enviadasAntes;
+
+                // Si el primer barrido no envió NADA, insistir 508 veces más no
+                // va a arreglarlo: significa que el motor no ve las alertas, no
+                // que el pico sea grande. Se para aquí para que el fallo diga la
+                // verdad en vez de disfrazarse de «no se drenó».
+                if (loteObservado == 0) {
+                    fail("El primer barrido no envió ninguna de las " + PICO_SEMBRADO
+                            + " alertas sembradas. Eso NO es el defecto A-05: el motor no "
+                            + "está viendo el montaje de la prueba. Suele ser que el montaje "
+                            + "no se confirmó y el barrido, que abre su propia transacción, "
+                            + "no puede verlo.");
+                }
             }
             enviadasAntes = ahora;
         }
 
-        if (enviadas(eventos) < PICO_SEMBRADO) {
+        if (enviadas(idsDelPico) < PICO_SEMBRADO) {
             fail("El pico no llegó a drenarse en " + TOPE + " barridos: salieron "
-                    + enviadas(eventos) + " de " + PICO_SEMBRADO + ". "
+                    + enviadas(idsDelPico) + " de " + PICO_SEMBRADO + ". "
                     + "Eso no es el defecto A-05, es otro problema.");
         }
 
@@ -234,10 +263,9 @@ class PicoDeAlertasTest {
      * <p>Lo que sí se conserva, que es lo que causa el defecto: <strong>todas
      * comparten el instante</strong>.
      *
-     * @return los identificadores de los eventos sembrados
+     * @return los identificadores de las ALERTAS sembradas
      */
     private List<Long> sembrarPico(Long procesoId, OffsetDateTime instante) {
-        List<Long> eventos = new ArrayList<>(PICO_SEMBRADO);
         List<Alerta> pico = new ArrayList<>(PICO_SEMBRADO);
 
         for (int i = 0; i < PICO_SEMBRADO; i++) {
@@ -245,29 +273,30 @@ class PicoDeAlertasTest {
             // da true y el motor no descarta la alerta del pico (RN-39).
             Termino termino = vigilancia.registrarTermino(
                     procesoId, "Término del pico " + i, LocalDate.now().plusDays(30));
-            eventos.add(termino.id());
             pico.add(new Alerta(termino, instante));
         }
-        alertas.saveAll(pico);
 
-        return eventos;
+        return alertas.saveAll(pico).stream().map(Alerta::id).toList();
     }
 
     /**
      * Cuántas alertas del pico ya salieron.
      *
-     * <p>Se cuentan las de los eventos sembrados y no los contadores del
+     * <p>Se cuentan las alertas sembradas y no los contadores del
      * barrido: el motor recoge todas las alertas vencidas de la base, incluidas
      * las que dejaron otras pruebas o el trabajo en local. Fiarse de sus
      * contadores fue un error real que ya se corrigió en
      * {@code MotorAlertasIntegracionTest}, y aquí volvería a colarse igual.
      */
-    private int enviadas(List<Long> eventos) {
+    private int enviadas(List<Long> idsDelPico) {
+        // UNA consulta, no una por alerta. La primera versión preguntaba evento
+        // por evento —500 consultas— y se llamaba en cada vuelta del bucle: con
+        // 509 vueltas salían 254.500 consultas, y de ahí los 41 minutos.
         int salidas = 0;
-        for (Long eventoId : eventos) {
-            salidas += (int) alertas.findByEventoIdOrderByProgramadaParaAsc(eventoId).stream()
-                    .filter(a -> a.estado() == EstadoAlerta.ENVIADA)
-                    .count();
+        for (Alerta a : alertas.findAllById(idsDelPico)) {
+            if (a.estado() == EstadoAlerta.ENVIADA) {
+                salidas++;
+            }
         }
         return salidas;
     }

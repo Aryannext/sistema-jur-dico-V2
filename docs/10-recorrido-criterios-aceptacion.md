@@ -422,6 +422,19 @@ revertidas, 2 correos repetidos). Restaurado después.
 `BarridoInterrumpidoTest` pasa de `defecto-abierto` a `integracion`: nació
 fallando y ahora es el guardián de que no vuelva.
 
+**Y hubo una tercera víctima, la peor de las tres.** `PicoDeAlertasTest` —la
+prueba que sostiene la evidencia de A-05— también era `@Transactional`, y al
+quedarse ciega **no falló rápido: degeneró en un bucle de 41 minutos**,
+barriendo en vacío 509 veces y consultando 500 eventos en cada vuelta —254.500
+consultas—. Terminó «fallando» por no haber drenado el pico, que es el mensaje
+equivocado: **no medía nada y parecía medir**.
+
+Es el peor modo de fallo posible, porque las otras dos se delataron solas. Ahora
+tiene dos defensas: el montaje se confirma, y **si el primer barrido no envía
+nada la prueba se detiene en el acto** diciendo que el motor no ve el montaje,
+en vez de insistir 508 veces. Vuelta a medir: 24 segundos, y las cifras reales
+de A-05.
+
 **Estado:** cerrado. **CA-26.4 pasa a ✅.**
 
 ### H-5 · No se puede ajustar el esquema de alertas de un término
