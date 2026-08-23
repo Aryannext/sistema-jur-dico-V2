@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
@@ -96,13 +97,16 @@ public class VigilanciaController {
     public record TerminoResponse(
             Long id, Long procesoId, String radicado, String descripcion,
             LocalDate fechaVencimiento, String estado, String estadoDescripcion,
-            boolean vencido, boolean seVigila, String destinatarioAlertas) {
+            boolean vencido, boolean seVigila, String destinatarioAlertas,
+            /** CA-27.3: las de ESTE término, que pueden diferir de las del despacho. */
+            List<Integer> diasAnticipacion) {
 
         static TerminoResponse desde(Termino t) {
             return new TerminoResponse(
                     t.id(), t.proceso().id(), t.proceso().radicado(), t.descripcion(),
                     t.fechaVencimiento(), t.estado().name(), t.estado().descripcion(),
-                    t.estaVencido(), t.requiereVigilancia(), t.destinatarioDeAlertas().nombre());
+                    t.estaVencido(), t.requiereVigilancia(), t.destinatarioDeAlertas().nombre(),
+                    t.anticipacionesEnDias().stream().sorted(Comparator.reverseOrder()).toList());
         }
     }
 
@@ -192,6 +196,20 @@ public class VigilanciaController {
                                       @Valid @RequestBody TerminoRequest peticion) {
         return TerminoResponse.desde(servicio.actualizarTermino(
                 id, peticion.descripcion(), peticion.fechaVencimiento()));
+    }
+
+    /**
+     * Ajusta las anticipaciones de UN término. CA-27.3 · RN-37c.
+     *
+     * <p>Cuelga del término y no del esquema del despacho a propósito: son dos
+     * configuraciones distintas, y la ruta lo dice. Cambiar aquí no toca a los
+     * demás términos ni al esquema; cambiar el esquema no toca a este.
+     */
+    @PutMapping("/terminos/{id}/anticipaciones")
+    public TerminoResponse ajustarAnticipaciones(@PathVariable Long id,
+                                                 @Valid @RequestBody EsquemaRequest peticion) {
+        return TerminoResponse.desde(
+                servicio.ajustarAnticipaciones(id, peticion.diasAnticipacion()));
     }
 
     // --- Esquema de alertas ------------------------------------------

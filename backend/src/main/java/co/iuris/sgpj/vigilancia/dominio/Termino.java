@@ -4,6 +4,8 @@ import co.iuris.sgpj.comun.dominio.ReglaDeNegocioException;
 import co.iuris.sgpj.expediente.dominio.Actuacion;
 import co.iuris.sgpj.proceso.dominio.Proceso;
 import co.iuris.sgpj.usuario.dominio.Usuario;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -17,6 +19,10 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
 import java.time.Duration;
+import java.util.Set;
+import java.util.LinkedHashSet;
+import java.util.Comparator;
+import java.util.Collection;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -78,18 +84,29 @@ public class Termino extends EventoVigilado {
     private Actuacion actuacionOrigen;
 
     /**
-     * Anticipaciones con las que se vigila este término.
+     * Con cuántos días de anticipación se vigila este término. CA-27.3 · RN-37c.
      *
-     * <p>No se persiste: la programación real de los avisos vive en las filas
-     * de alerta, que se crean al registrar el término. Aquí se conserva para
-     * que el motor pueda preguntárselas al objeto sin consultar la
-     * configuración del despacho en cada barrido.
+     * <p><strong>Son suyas, no del despacho.</strong> Nacen copiando el esquema
+     * del despacho al registrarlo, y desde ahí pueden ajustarse sin tocar el de
+     * los demás: un término de dos días no se vigila igual que uno de sesenta,
+     * y con un esquema de 15/5/1 el primero solo recibiría el aviso de un día.
      *
-     * <p>CA-38.3: cambiar el esquema del despacho no reprograma los términos ya
-     * existentes; sus alertas ya estaban creadas.
+     * <p>Antes eran {@code @Transient} y se leían del despacho cada vez. Eso
+     * hacía imposible CA-27.3, y escondía una trampa: al cambiar la fecha de
+     * vencimiento el servicio volvía a leer el esquema del despacho, así que un
+     * ajuste individual se habría perdido en silencio la próxima vez que
+     * alguien corrigiera la fecha.
+     *
+     * <p>Persistirlas hace además explícito lo que <strong>CA-38.3</strong> ya
+     * exigía —cambiar el esquema del despacho no reprograma los términos
+     * existentes—: antes era cierto de rebote, ahora lo es por diseño.
      */
-    @Transient
-    private List<Duration> anticipaciones = List.of();
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "anticipacion_termino",
+            joinColumns = @JoinColumn(name = "termino_id"))
+    @Column(name = "dias", nullable = false)
+    private Set<Integer> anticipacionesEnDias = new LinkedHashSet<>();
 
     /** Requerido por JPA. */
     protected Termino() {
@@ -113,12 +130,37 @@ public class Termino extends EventoVigilado {
 
     @Override
     public List<Duration> anticipaciones() {
-        return anticipaciones;
+        return anticipacionesEnDias.stream()
+                .sorted(Comparator.reverseOrder())   // la más lejana primero
+                .map(Duration::ofDays)
+                .toList();
     }
 
-    /** El motor las fija al programar las alertas, desde el esquema del despacho. */
-    public void fijarAnticipaciones(List<Duration> anticipaciones) {
-        this.anticipaciones = anticipaciones == null ? List.of() : List.copyOf(anticipaciones);
+    /** Los días tal cual, para mostrarlos y para editarlos. */
+    public Set<Integer> anticipacionesEnDias() {
+        return Set.copyOf(anticipacionesEnDias);
+    }
+
+    /**
+     * Fija las anticipaciones de ESTE término. CA-27.3 · RN-37b.
+     *
+     * <p>Rechaza el conjunto vacío, igual que el esquema del despacho: es la
+     * regla que impide que la configurabilidad se convierta en el fallo. Un
+     * término sin ningún aviso anticipado es un término que no se vigila, y el
+     * sistema obedecería mientras el plazo vence en silencio.
+     */
+    public void fijarAnticipaciones(Collection<Integer> dias) {
+        if (dias == null || dias.isEmpty()) {
+            throw new ReglaDeNegocioException("RN-37b",
+                    "Un término necesita al menos una alerta anticipada. "
+                            + "La configuración decide cuántas y cuándo, nunca si las hay.");
+        }
+        if (dias.stream().anyMatch(d -> d == null || d <= 0)) {
+            throw new ReglaDeNegocioException("RN-37",
+                    "Las alertas de un término son ANTICIPADAS: los días deben ser mayores que "
+                            + "cero. Avisar el mismo día del vencimiento llega tarde.");
+        }
+        this.anticipacionesEnDias = new LinkedHashSet<>(dias);
     }
 
     @Override

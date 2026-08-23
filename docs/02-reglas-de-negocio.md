@@ -2,7 +2,7 @@
 
 **Proyecto:** Iuris / SGPJ — Sistema de Gestión de Procesos Jurídicos
 **Fuente base:** `24_propuesta.pdf` + [`00-decisiones-y-trazabilidad.md`](00-decisiones-y-trazabilidad.md) + [`01-idea-y-definicion-de-negocio.md`](01-idea-y-definicion-de-negocio.md)
-**Versión:** 1.4 · **Fecha:** 2026-08-23 · **Estado: CERRADA** — 60 reglas, decisiones D-13 a D-17 incorporadas; **RN-53 y RN-54 añadidas por D-24**, **RN-17a y RN-17b por D-28**, ambas durante la construcción
+**Versión:** 1.4 · **Fecha:** 2026-08-23 · **Estado: CERRADA** — 61 reglas, decisiones D-13 a D-17 incorporadas; **RN-53 y RN-54 añadidas por D-24**, **RN-17a y RN-17b por D-28** y **RN-37c por D-29**, todas durante la construcción
 
 > Marcas de origen: **[P]** propuesta · **[D-nn]** decisión registrada · **[S]** supuesto por validar · **[R-nn]** riesgo que la regla trata.
 
@@ -159,6 +159,7 @@ Valores iniciales: **Auto · Traslado · Notificación · Audiencia · Recurso �
 | **RN-37** | Todo término de un proceso activo genera **al menos una alerta anticipada**, emitida **antes** de su fecha de vencimiento. | El RF04 exige "fecha de vencimiento y alerta". Alertar el mismo día del vencimiento llegaría tarde: el riesgo es irreversible. | **[P]** RF04 |
 | **RN-37a** | El despacho **configura cuántas alertas** se emiten por término y **con cuánta anticipación**, mediante un **esquema de alertas** (p. ej. 15, 5 y 1 día antes). | Decisión de negocio: cada despacho maneja plazos distintos según su práctica. La propuesta dejó el RF04 sin especificar, a diferencia del RF03. | **[D-16]** |
 | **RN-37b** | El esquema de alertas **no admite el valor cero**. Siempre queda al menos una alerta anticipada activa por término, y no es desactivable. | ★ **Es la regla que impide que la configurabilidad se convierta en el fallo.** Sin ella, un despacho podría apagar sin darse cuenta toda la vigilancia de sus términos, y el sistema cumpliría su configuración mientras el plazo vence en silencio. La configuración decide *cuántas más* y *cuándo*, **nunca *si***. | **[R-08] [R-02]** |
+| **RN-37c** | Cada término lleva **sus propias anticipaciones**, copiadas del esquema del despacho al registrarlo. Pueden ajustarse **sin cambiar el del despacho**, y siguen sujetas a RN-37b. | ★ Un término de dos días no se vigila igual que uno de sesenta: con un esquema de 15/5/1, el primero solo recibiría el aviso de un día. Persistirlas hace además explícito lo que CA-38.3 ya exigía —cambiar el esquema del despacho no reprograma lo existente—: antes era cierto de rebote, ahora por diseño. | **[D-29]** CA-27.3 |
 | **RN-38** | Un término tiene un **estado explícito**: pendiente, cumplido o vencido. | Sin estado no se puede distinguir un término atendido de uno olvidado, y las alertas seguirían sonando sobre algo ya resuelto. | **[P]** RF04 |
 | **RN-39** | Un término **cumplido** deja de generar alertas. | Evita el ruido que hace que el abogado empiece a ignorar los avisos — la forma silenciosa en que muere R-02. | **[P]** RF04, **[R-05]** |
 

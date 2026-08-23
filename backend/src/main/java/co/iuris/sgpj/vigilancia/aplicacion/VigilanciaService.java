@@ -129,13 +129,45 @@ public class VigilanciaService {
                 proceso, usuarios.obtenerDeMiDespacho(contexto.usuarioActual()),
                 descripcion, fechaVencimiento, null);
 
-        // Las anticipaciones del despacho acompañan al término desde su
-        // creación (CA-38.3): cambiar el esquema después no reprograma lo ya
-        // registrado.
-        termino.fijarAnticipaciones(esquemaDeMiDespacho().anticipaciones());
+        // El término nace con COPIA del esquema del despacho (CA-38.3), y desde
+        // ahí es suya: cambiar el esquema después no reprograma lo ya
+        // registrado, y este término puede ajustarse aparte (CA-27.3).
+        termino.fijarAnticipaciones(esquemaDeMiDespacho().dias());
 
         eventos.save(termino);
         programador.programarPara(termino);
+
+        return termino;
+    }
+
+    /**
+     * Ajusta las anticipaciones de UN término. CA-27.3 · RN-37c.
+     *
+     * <p>Sin cambiar el esquema del despacho, que es de lo que trata el
+     * criterio: un término de dos días no se vigila igual que uno de sesenta, y
+     * con un esquema de 15/5/1 el primero solo recibiría el aviso de un día.
+     *
+     * <p>Reprogramar <strong>descarta las alertas pendientes con su motivo</strong>
+     * y crea las nuevas. Las ya enviadas no se tocan: son el registro de que el
+     * sistema avisó (RNF-09), y borrarlas para dejar el historial limpio sería
+     * borrar justamente lo que sirve de defensa.
+     */
+    @Transactional
+    public Termino ajustarAnticipaciones(Long terminoId, Collection<Integer> dias) {
+        Termino termino = exigirTermino(terminoId);
+
+        // RN-39: si ya se cumplió, no hay nada que reprogramar. Dejarlo pasar
+        // crearía alertas para un término atendido — el ruido que hace que el
+        // abogado empiece a ignorar los avisos (R-05).
+        if (!termino.requiereVigilancia()) {
+            throw new ReglaDeNegocioException("RN-39",
+                    "Este término ya no se vigila: está cumplido o su proceso está archivado. "
+                            + "Ajustar sus alertas no tendría efecto.");
+        }
+
+        termino.fijarAnticipaciones(dias);
+        eventos.save(termino);
+        programador.reprogramarPara(termino);
 
         return termino;
     }
@@ -167,7 +199,10 @@ public class VigilanciaService {
         termino.actualizar(descripcion, fechaVencimiento);
         eventos.save(termino);
 
-        termino.fijarAnticipaciones(esquemaDeMiDespacho().anticipaciones());
+        // NO se relee el esquema del despacho. Se hacía, y era una trampa: un
+        // término con anticipaciones ajustadas (CA-27.3) las habría perdido en
+        // silencio la próxima vez que alguien corrigiera su fecha. Reprograma
+        // con las suyas, que es lo que el abogado configuró.
         programador.reprogramarPara(termino);
 
         return termino;

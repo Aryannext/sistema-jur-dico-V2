@@ -480,6 +480,22 @@ Lo destaparon **nueve pruebas de integración**, no la prueba negativa que se es
 
 ---
 
+### D-29 — El esquema de alertas se puede ajustar por término (H-5)
+
+**Contexto.** **CA-27.3** era el último criterio de aceptación sin cumplir: *«dado un término que lo amerita, cuando lo requiero, entonces puedo ajustar su esquema individualmente sin cambiar el del despacho»*. El recorrido lo registró como **H-5** con gravedad baja.
+
+**El caso que lo justifica es real.** Un término de dos días no se vigila igual que uno de sesenta. Con el esquema por defecto de 15/5/1, un término que vence en dos días **solo recibiría el aviso de un día**: los otros dos se omiten por momento pasado, y el abogado se queda con un único aviso para el plazo más urgente que tiene.
+
+**Decisión.** Se añade **RN-37c**: cada término lleva sus propias anticipaciones, copiadas del esquema del despacho al registrarlo y ajustables después sin tocarlo. Siguen sujetas a **RN-37b** —nunca cero— y a **RN-37** —siempre anticipadas, nunca el mismo día—.
+
+**Una trampa que apareció al implementarlo, y que no era la esperada.** Las anticipaciones eran `@Transient`: se leían del despacho, se usaban para programar y se tiraban. Eso no solo impedía CA-27.3; hacía que **`actualizarTermino` releyera el esquema del despacho** al reprogramar por cambio de fecha. Un ajuste individual se habría perdido **en silencio** la próxima vez que alguien corrigiera la fecha del término — sin error, sin pista, sin nada que lo delatara.
+
+Persistirlas corrige las dos cosas y hace explícito lo que **CA-38.3** ya exigía: cambiar el esquema del despacho no reprograma los términos existentes. Antes era cierto de rebote —sus alertas ya estaban creadas—; ahora lo es por diseño, porque cada término tiene su copia.
+
+**Lo que no cambia.** Reprogramar **descarta las alertas pendientes con su motivo**, nunca las borra, y **no toca las ya enviadas**: son el registro de que el sistema avisó (RNF-09), y limpiarlas para dejar el historial ordenado sería borrar justamente lo que sirve de defensa ante una reclamación. Tiene su prueba.
+
+---
+
 ## 5. Supuestos vigentes [S]
 
 Se trabaja con ellos hasta que se validen. Cada uno indica cuándo debe cerrarse.
@@ -570,3 +586,4 @@ Cada fase se valida antes de abrir la siguiente. Cada artefacto de una fase refe
 | 2026-08-23 | Decisión **D-28**: el radicado se **normaliza para comparar** y se **avisa** si no tiene forma de radicado colombiano. | Verificado que el mismo radicado con y sin espacios creaba **dos procesos distintos** en el mismo despacho, cada uno con su expediente: los términos del mismo caso quedaban repartidos entre los dos. Ninguna prueba lo vio porque todas comprueban que no se repita **idéntico**. Salió de una pregunta del analista sobre RF-35. |
 | 2026-08-23 | **Barrido de consistencia de la documentación.** Corregidas siete cifras desfasadas: reglas (58 → **60**), historias (42 → **44**) y decisiones (20 → **28**) en los documentos 02, 04, 05 y 06. Añadidos al modelo de datos la columna `radicado_normalizado` (D-28) y a **ADR-04** la revisión que le hicieron **D-27** y **D-28** durante la construcción. | El documento 06 se **contradecía a sí mismo**: decía 58 reglas en el alcance y 56 en la cadena de cierre. Es el mismo defecto que ya obligó a corregir «23 de los 52» y la fila 6 de D-23: una cifra que no cuadra hace dudar de todo lo demás, y la arquitectura que se sustenta debe ser la que corre, no la que se diseñó. |
 | 2026-08-23 | **La lista de D-23 pasa a ser código.** `VerificacionDeDespliegue` impide arrancar en producción si falta alguno de los seis controles comprobables desde la aplicación. Añadidos `application-produccion.properties` y los guiones de respaldo y **restauración probada** (control 7, ejecutada el 23/08). | La propia D-23 lo exigía: «un control relajado solo es aceptable si existe el momento exacto en que deja de estarlo y **alguien lo verifica**». Ese alguien era un documento que había que acordarse de leer. Verificado de verdad: con la clave `2283` y la clave de cifrado del repositorio, la aplicación se niega a arrancar y nombra cada fallo con la orden para corregirlo. |
+| 2026-08-23 | Decisión **D-29** y regla **RN-37c**: el esquema de alertas se puede ajustar **por término**. Cierra **H-5** y con él **CA-27.3**, el último criterio de aceptación que quedaba sin cumplir. | Al implementarlo apareció una trampa que no se buscaba: `actualizarTermino` releía el esquema del despacho, así que un ajuste individual se habría perdido **en silencio** al corregir la fecha. Tiene prueba propia. |

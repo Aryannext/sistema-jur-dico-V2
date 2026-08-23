@@ -150,7 +150,7 @@ criterio, y se dice que es la mitad.
 |---|---|---|---|
 | **CA-26.3** | Se pueden **añadir** avisos al esquema del despacho | ✅ | `[15,5,1]` → `[20,15,5,1]`, guardado |
 | **CA-27.1 · CA-38.1** | Los términos **nuevos** usan el esquema configurado | ✅ | Un término creado justo después nació con **[20, 15, 5, 1]** días de anticipación |
-| **CA-27.3** | Se puede ajustar el esquema de **un término** sin cambiar el del despacho | ❌ | **No existe.** Ni endpoint por término ni columna en la tabla `termino`: el esquema es solo del despacho. Ver **H-5** |
+| **CA-27.3** | Se puede ajustar el esquema de **un término** sin cambiar el del despacho | ✅ | Se descubrió sin existir; ver **H-5**, ya corregido (D-29 · RN-37c) |
 | **CA-31.1** | Al desactivar el despacho, recibe **un correo** avisando de la suspensión | ✅ | Se desactivó el despacho de prueba y el aviso salió a `contacto@cantillo.co` |
 | **CA-31.2** | Ese aviso es **notificación de corte**, no acceso | ✅ | El mensaje **no contiene ningún enlace, token ni vía de acceso**: dice qué deja de ocurrir y que la información se conserva |
 
@@ -448,7 +448,24 @@ un criterio de aceptación escrito y aprobado que no está implementado, y el ca
 que lo motiva es real: un término de dos días no se vigila igual que uno de
 sesenta, y con un esquema de 15/5/1 el primero solo recibiría el aviso de un día.
 
-**Estado:** abierto.
+**Corregido** (**D-29** · **RN-37c**). Cada término lleva ahora sus propias
+anticipaciones, copiadas del esquema del despacho al registrarlo y ajustables
+después sin tocarlo.
+
+**Y apareció una trampa que no se buscaba.** Las anticipaciones eran
+`@Transient`, así que `actualizarTermino` **releía el esquema del despacho** al
+reprogramar por cambio de fecha: un ajuste individual se habría perdido **en
+silencio** la próxima vez que alguien corrigiera la fecha del término — sin
+error, sin pista. Tiene prueba propia, y es la más valiosa de las siete.
+
+Persistirlas hace además explícito lo que **CA-38.3** ya exigía: cambiar el
+esquema del despacho no reprograma los términos existentes. Antes era cierto de
+rebote; ahora lo es por diseño.
+
+**7 pruebas**, cinco negativas — incluida que **las alertas ya enviadas no se
+borran** al reprogramar: son el registro de que el sistema avisó (RNF-09).
+
+**Estado:** cerrado. **CA-27.3 pasa a ✅.**
 
 ### H-2 · CA-04.4 no se puede cumplir en local, y eso ya estaba decidido
 
@@ -468,8 +485,8 @@ criterios que lo marcara «cumple» estaría mintiendo, y uno que lo marcara
 | | |
 |---:|---|
 | **54** | criterios recorridos |
-| **51** | ✅ cumplen |
-| **1** | ❌ no cumple: **CA-27.3** |
+| **53** | ✅ cumplen |
+| **0** | ❌ ninguno incumple |
 | **1** | ❌ no puede cumplirse en local por decisión: **CA-04.4** (TLS) |
 | **1** | ⚠ cumple por alerta, no en el pico: **CA-25.4**, que es **A-05** |
 
@@ -484,7 +501,7 @@ alcance declarado de la propuesta.
 | **H-3** | «Historial de alertas» no mostraba las enviadas, y su subtítulo lo prometía | ✅ corregido |
 | **H-2** | CA-04.4 (TLS) no se cumple en local | pendiente de despliegue (**D-23**, control 3) |
 | **H-4** | Solo el módulo de usuarios tenía prueba de acceso cruzado | ✅ corregido |
-| **H-5** | No se puede ajustar el esquema de alertas de un término | **abierto** |
+| **H-5** | No se podía ajustar el esquema de alertas de un término | ✅ corregido |
 | **H-6** | Un barrido interrumpido reenviaba lo que ya había salido | ✅ corregido |
 
 ### Cuatro veces me equivoqué yo, y no el sistema
