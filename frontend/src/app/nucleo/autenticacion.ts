@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { Sesion } from './modelos';
+import { rutaDe, zonaDe } from './zonas';
 
 /**
  * La sesión del usuario. RF-04 · RF-06.
@@ -68,8 +69,7 @@ export class Autenticacion {
    * OFRECIENDO lo que RN-10 le prohíbe. Una regla que el backend cumple y la
    * pantalla contradice sigue siendo una regla mal implementada.
    */
-  readonly esAdministradorDePlataforma = computed(
-    () => this._sesion()?.roles.includes('ADMIN_PLATAFORMA') ?? false);
+  readonly esAdministradorDePlataforma = computed(() => this.zona() === 'plataforma');
 
   /**
    * Solo cliente y nada más.
@@ -78,10 +78,17 @@ export class Autenticacion {
    * podría acumular roles (RN-08). Quien además es abogado trabaja en el
    * despacho; el portal es para quien SOLO es cliente.
    */
-  readonly soloCliente = computed(() => {
-    const roles = this._sesion()?.roles ?? [];
-    return roles.length > 0 && roles.every(r => r === 'CLIENTE');
-  });
+  readonly soloCliente = computed(() => this.zona() === 'portal');
+
+  /**
+   * La zona a la que pertenece quien está dentro. RN-08 · RN-10.
+   *
+   * <p>La decisión vive en `nucleo/zonas.ts`, no aquí, y de ahí derivan también
+   * los guardianes. Antes cada uno la tomaba por su cuenta y uno la tomaba por
+   * descarte: así fue como el Administrador de Plataforma acabó viendo el menú
+   * del despacho.
+   */
+  readonly zona = computed(() => zonaDe(this._sesion()?.roles));
 
   /**
    * Dónde aterriza cada quien al entrar.
@@ -90,10 +97,7 @@ export class Autenticacion {
    * pantalla que le devuelve 403 en cada consulta: vería el sistema roto
    * cuando lo que pasa es que ese sitio no es suyo.
    */
-  readonly rutaInicial = computed(() => {
-    if (this.esAdministradorDePlataforma()) return '/despachos';
-    return this.soloCliente() ? '/portal' : '/vencimientos';
-  });
+  readonly rutaInicial = computed(() => rutaDe(this.zona()));
 
   /**
    * Pregunta al backend quién está dentro.

@@ -34,16 +34,13 @@ export const exigeDespacho: CanActivateFn = async () => {
   const sesion = autenticacion.sesion() ?? await autenticacion.recuperarSesion();
   if (!sesion) return router.createUrlTree(['/ingreso']);
 
-  // RN-10: el Administrador de Plataforma no entra aquí. Antes sí entraba, y
-  // no por permitirlo sino por descarte: la comprobación era «¿es solo
-  // cliente?», y como no lo es, pasaba. Se comprueba ahora de forma
-  // afirmativa, que es lo que impide que el próximo rol que se añada vuelva a
-  // colarse por el mismo hueco.
-  if (autenticacion.esAdministradorDePlataforma()) {
-    return router.createUrlTree(['/despachos']);
-  }
-
-  return autenticacion.soloCliente() ? router.createUrlTree(['/portal']) : true;
+  // Se pregunta por la zona, no por lo que NO es. Antes se preguntaba «¿es
+  // solo cliente?» y todo lo demás pasaba: así entró el Administrador de
+  // Plataforma a un menú que RN-10 le prohíbe. Ahora, cualquiera cuya zona no
+  // sea esta vuelve a la suya — incluido un rol que todavía no existe.
+  return autenticacion.zona() === 'despacho'
+      ? true
+      : router.createUrlTree([autenticacion.rutaInicial()]);
 };
 
 /**
@@ -60,7 +57,7 @@ export const exigePlataforma: CanActivateFn = async () => {
   const sesion = autenticacion.sesion() ?? await autenticacion.recuperarSesion();
   if (!sesion) return router.createUrlTree(['/ingreso']);
 
-  return autenticacion.esAdministradorDePlataforma()
+  return autenticacion.zona() === 'plataforma'
     ? true
     : router.createUrlTree([autenticacion.rutaInicial()]);
 };
@@ -79,7 +76,9 @@ export const exigeCliente: CanActivateFn = async () => {
   const sesion = autenticacion.sesion() ?? await autenticacion.recuperarSesion();
   if (!sesion) return router.createUrlTree(['/ingreso']);
 
-  return autenticacion.soloCliente() ? true : router.createUrlTree(['/vencimientos']);
+  return autenticacion.zona() === 'portal'
+    ? true
+    : router.createUrlTree([autenticacion.rutaInicial()]);
 };
 
 /**
