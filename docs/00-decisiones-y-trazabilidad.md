@@ -496,6 +496,35 @@ Persistirlas corrige las dos cosas y hace explícito lo que **CA-38.3** ya exig�
 
 ---
 
+### D-30 — Proveedor de correo: se empieza gratis, y con una sola conexión
+
+**Contexto.** D-26 y D-27 dejaron abierto lo único que quedaba de A-05: *«el proveedor de correo hay que elegirlo con esa cifra delante»* — los **6 envíos por segundo** que exige despachar el pico de 2.499 alertas con cuatro conexiones.
+
+**El error que casi se comete.** Tratar esa cifra como un requisito de entrada. Los 2.499 correos son el **volumen objetivo de RNF-12** —50 despachos con 500 procesos cada uno—, es decir la meta, no el punto de partida. El pico escala con el número de despachos:
+
+| Despachos | Correos en el día peor |
+|---:|---:|
+| 1 | ~54 |
+| 5 | ~270 |
+| 10 | ~540 |
+| 50 *(objetivo)* | ~2.700 |
+
+Dimensionar desde el primer día para 50 despachos habría significado contratar —y pagar— capacidad para un volumen que no existe, en un proyecto que hoy no tiene ninguno.
+
+**Decisión.** Se empieza con el **plan gratuito de Brevo** (300 correos/día, permanente), que cubre los primeros cuatro o cinco despachos. Para entonces hay cuatro o cinco despachos pagando, y el salto a un plan de pago deja de ser una decisión difícil.
+
+Y con **`SGPJ_ALERTAS_CONEXIONES=1`**: con pocos despachos, 270 correos en serie tardan menos de tres minutos, muy dentro de los 15 que tolera RNF-11. Con una sola conexión **no se roza ningún límite por segundo de ningún proveedor**, que es lo que convierte «6 envíos/segundo» de restricción en no-problema.
+
+**Alternativas equivalentes:** Mailjet (200/día) y Resend (3.000/mes). **SendGrid queda descartado**: retiró su plan gratuito en 2025.
+
+**Por qué esto no aplaza el problema, lo resuelve.** El momento de subir las conexiones no hay que adivinarlo ni vigilarlo: el propio sistema lo dice. Cuando una alerta sale fuera de tolerancia, `EnvioDeUnaAlerta` escribe *«salió con N minutos de retraso sobre su momento programado. RNF-11 admite 15»*. Ese mensaje es la señal, y existe desde antes de esta decisión.
+
+**Lo que sigue siendo cierto de D-27.** Cuatro conexiones son ~6 envíos por segundo, y el día que hagan falta hay que comprobar que el plan contratado los admita. La decisión no desaparece: se aplaza hasta el momento en que hay con qué pagarla.
+
+**Documentado en** `despliegue/README.md`, con las variables de entorno y el orden de despliegue.
+
+---
+
 ## 5. Supuestos vigentes [S]
 
 Se trabaja con ellos hasta que se validen. Cada uno indica cuándo debe cerrarse.
@@ -528,7 +557,7 @@ No son vacíos de la propuesta ni supuestos: son **preguntas nuevas que nacieron
 
 | **A-04** | `PROCESO.juzgado` como texto libre degrada la búsqueda que exige P-RNF02 | Modelo de datos (Fase 5) | **Resuelto** → **D-17** (quinto catálogo, por despacho) |
 
-| **A-05** | Con el volumen objetivo, **2.499 alertas vencen en el mismo instante** y el motor drenaba 100 cada 5 minutos: el pico tardaba 125 minutos frente a los 15 que tolera RNF-11. | Medición de rendimiento (D-25) | **Resuelto** → **D-27** (envío en paralelo, lote 3.000). Queda elegir proveedor de correo que admita ~6 envíos/segundo |
+| **A-05** | Con el volumen objetivo, **2.499 alertas vencen en el mismo instante** y el motor drenaba 100 cada 5 minutos: el pico tardaba 125 minutos frente a los 15 que tolera RNF-11. | Medición de rendimiento (D-25) | **Cerrado del todo** → **D-27** (envío en paralelo) y **D-30** (proveedor: Brevo gratis con una conexión, porque el pico escala con los despachos y hoy no hay ninguno) |
 
 **Los cinco asuntos quedan cerrados.** RNF-11 y RNF-12 quedan verificados con evidencia reproducible. Lo único pendiente de A-05 no es técnico: elegir un proveedor de correo que admita el caudal medido (D-27).
 
@@ -587,3 +616,4 @@ Cada fase se valida antes de abrir la siguiente. Cada artefacto de una fase refe
 | 2026-08-23 | **Barrido de consistencia de la documentación.** Corregidas siete cifras desfasadas: reglas (58 → **60**), historias (42 → **44**) y decisiones (20 → **28**) en los documentos 02, 04, 05 y 06. Añadidos al modelo de datos la columna `radicado_normalizado` (D-28) y a **ADR-04** la revisión que le hicieron **D-27** y **D-28** durante la construcción. | El documento 06 se **contradecía a sí mismo**: decía 58 reglas en el alcance y 56 en la cadena de cierre. Es el mismo defecto que ya obligó a corregir «23 de los 52» y la fila 6 de D-23: una cifra que no cuadra hace dudar de todo lo demás, y la arquitectura que se sustenta debe ser la que corre, no la que se diseñó. |
 | 2026-08-23 | **La lista de D-23 pasa a ser código.** `VerificacionDeDespliegue` impide arrancar en producción si falta alguno de los seis controles comprobables desde la aplicación. Añadidos `application-produccion.properties` y los guiones de respaldo y **restauración probada** (control 7, ejecutada el 23/08). | La propia D-23 lo exigía: «un control relajado solo es aceptable si existe el momento exacto en que deja de estarlo y **alguien lo verifica**». Ese alguien era un documento que había que acordarse de leer. Verificado de verdad: con la clave `2283` y la clave de cifrado del repositorio, la aplicación se niega a arrancar y nombra cada fallo con la orden para corregirlo. |
 | 2026-08-23 | Decisión **D-29** y regla **RN-37c**: el esquema de alertas se puede ajustar **por término**. Cierra **H-5** y con él **CA-27.3**, el último criterio de aceptación que quedaba sin cumplir. | Al implementarlo apareció una trampa que no se buscaba: `actualizarTermino` releía el esquema del despacho, así que un ajuste individual se habría perdido **en silencio** al corregir la fecha. Tiene prueba propia. |
+| 2026-08-23 | Decisión **D-30**: se empieza con el plan **gratuito** de Brevo y **una sola conexión**. Cierra lo último que quedaba de **A-05**. Añadido `despliegue/README.md`. | Los 6 envíos/segundo de D-27 son para el volumen OBJETIVO —50 despachos—, no para el de partida. Con 5 despachos el pico son ~270 correos al día, que caben en un plan gratuito y en una sola conexión. Dimensionar desde el primer día para una meta que no existe habría significado pagar capacidad sin usar. El momento de subir no hay que vigilarlo: el sistema avisa cuando una alerta sale fuera de tolerancia. |
