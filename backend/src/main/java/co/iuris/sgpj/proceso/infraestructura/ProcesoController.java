@@ -2,6 +2,7 @@ package co.iuris.sgpj.proceso.infraestructura;
 
 import co.iuris.sgpj.proceso.aplicacion.ProcesoService;
 import co.iuris.sgpj.proceso.dominio.Proceso;
+import co.iuris.sgpj.proceso.dominio.Radicado;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -123,6 +124,28 @@ public class ProcesoController {
                 .buildAndExpand(proceso.id()).toUri();
 
         return ResponseEntity.created(ubicacion).body(ProcesoResponse.desde(proceso));
+    }
+
+    /**
+     * ¿Tiene esto forma de radicado? RN-17b · D-28.
+     *
+     * <p>Se consulta antes de guardar, mientras el abogado escribe. Devuelve un
+     * aviso, nunca un rechazo: hay tutelas y procesos antiguos con otra forma, y
+     * quien sabe cuál es el suyo es él (RN-36).
+     *
+     * <p>El texto viene del dominio y no de la pantalla por la misma razón que
+     * la advertencia de RF-16: si viviera en el frontend, cambiarlo no exigiría
+     * tocar la regla, y acabaría diciendo algo que ya no es verdad.
+     */
+    @GetMapping("/radicado/aviso")
+    public AvisoRadicadoResponse avisoDeRadicado(@RequestParam String valor) {
+        return new AvisoRadicadoResponse(
+                Radicado.pareceRadicado(valor),
+                Radicado.avisoSiNoPareceRadicado(valor));
+    }
+
+    /** @param aviso el texto que ver el abogado, o {@code null} si todo va bien. */
+    public record AvisoRadicadoResponse(boolean pareceRadicado, String aviso) {
     }
 
     /**

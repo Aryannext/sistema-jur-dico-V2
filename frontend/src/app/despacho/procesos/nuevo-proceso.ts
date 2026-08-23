@@ -66,6 +66,15 @@ export class NuevoProceso {
   protected readonly abogadoResponsableId = signal<number | null>(null);
   protected readonly descripcion = signal('');
 
+  /**
+   * El aviso de RN-17b, si el radicado no tiene forma de radicado.
+   *
+   * <p>Se consulta al salir del campo y no en cada tecla: mientras se escribe,
+   * un radicado de 23 dígitos está incompleto casi todo el tiempo, y avisar en
+   * cada pulsación sería gritarle al abogado por no haber terminado.
+   */
+  protected readonly avisoRadicado = signal<string | null>(null);
+
   /** Si el despacho todavía no tiene ningún cliente, no hay proceso que crear. */
   protected readonly sinClientes = computed(
     () => !this.cargando() && this.clientes().length === 0);
@@ -177,6 +186,31 @@ export class NuevoProceso {
   protected escribir(campo: 'radicado' | 'descripcion', evento: Event): void {
     this[campo].set((evento.target as HTMLInputElement).value);
     this.error.set(null);
+    if (campo === 'radicado') {
+      this.avisoRadicado.set(null);   // se recalcula al salir del campo
+    }
+  }
+
+  /**
+   * RN-17b: comprueba la forma del radicado al salir del campo.
+   *
+   * <p>Un fallo aquí <strong>no molesta al usuario</strong>: es un aviso de
+   * cortesía, y si el backend no responde lo peor que pasa es que no lo vea.
+   * Poner una franja roja porque no se pudo comprobar un formato sería
+   * convertir una ayuda en un estorbo.
+   */
+  protected async comprobarRadicado(): Promise<void> {
+    const valor = this.radicado().trim();
+    if (!valor) {
+      this.avisoRadicado.set(null);
+      return;
+    }
+    try {
+      const { aviso } = await this.servicio.avisoDeRadicado(valor);
+      this.avisoRadicado.set(aviso);
+    } catch {
+      this.avisoRadicado.set(null);
+    }
   }
 
   protected elegir(

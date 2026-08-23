@@ -20,8 +20,14 @@ public interface ProcesoRepository extends JpaRepository<Proceso, Long> {
             "clienteTitular", "abogadoResponsable"})
     List<Proceso> findByDespachoIdOrderByFechaCreacionDesc(Long despachoId);
 
-    /** RN-17 · RF-12 · CA-12.1: el radicado no se repite dentro del despacho. */
-    boolean existsByDespachoIdAndRadicado(Long despachoId, String radicado);
+    /**
+     * RN-17 · RN-17a · CA-12.1: el radicado no se repite dentro del despacho.
+     *
+     * <p>Se compara la forma <strong>normalizada</strong>, no la tecleada.
+     * Antes se comparaba la tecleada, y el mismo radicado escrito con y sin
+     * espacios pasaba como dos procesos distintos (D-28).
+     */
+    boolean existsByDespachoIdAndRadicadoNormalizado(Long despachoId, String radicadoNormalizado);
 
     Optional<Proceso> findByDespachoIdAndRadicado(Long despachoId, String radicado);
 

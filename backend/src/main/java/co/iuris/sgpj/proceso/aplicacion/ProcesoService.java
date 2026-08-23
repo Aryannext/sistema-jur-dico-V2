@@ -9,6 +9,7 @@ import co.iuris.sgpj.comun.dominio.RecursoNoEncontradoException;
 import co.iuris.sgpj.comun.dominio.ReglaDeNegocioException;
 import co.iuris.sgpj.despacho.aplicacion.DespachoService;
 import co.iuris.sgpj.proceso.dominio.Proceso;
+import co.iuris.sgpj.proceso.dominio.Radicado;
 import co.iuris.sgpj.proceso.infraestructura.ProcesoRepository;
 import co.iuris.sgpj.seguridad.aplicacion.ContextoSeguridad;
 import co.iuris.sgpj.usuario.aplicacion.UsuarioService;
@@ -151,7 +152,12 @@ public class ProcesoService {
         if (limpio.isEmpty()) {
             return; // La entidad lo rechaza con su propio mensaje.
         }
-        if (procesos.existsByDespachoIdAndRadicado(despachoId, limpio)) {
+        // RN-17a: se compara por los dígitos, no por lo tecleado. Antes se
+        // comparaba lo tecleado, y el aviso de abajo era irónico: el sistema
+        // avisaba de que no se creara «un duplicado con el radicado
+        // ligeramente cambiado» mientras dejaba pasar exactamente eso.
+        if (procesos.existsByDespachoIdAndRadicadoNormalizado(
+                despachoId, Radicado.normalizar(limpio))) {
             // CA-12.1: se le dice cuál es el proceso existente, para que no
             // acabe creando un duplicado con el radicado ligeramente cambiado.
             throw new ReglaDeNegocioException("RN-17",

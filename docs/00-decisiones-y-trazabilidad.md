@@ -425,6 +425,37 @@ Enviar en paralelo sí: **6,6 minutos con 4 conexiones y 3,5 con 8**, a 100 ms. 
 
 ---
 
+### D-28 — El radicado se normaliza y se avisa si no tiene forma de radicado
+
+**Contexto.** El radicado no se validaba de ninguna forma: obligatorio, máximo 50 caracteres y único por despacho (RN-17). Nada más. Al revisarlo aparecieron **dos problemas distintos**, y el segundo es el grave.
+
+**Problema 1 — el formato no se comprueba.** Se acepta `ABC-123` como radicado. Coherente con **RN-36** (el sistema no interpreta plazos ni derecho), pero comprobar un *formato* no es interpretar derecho: es lo mismo que se hace con un correo o un NIT.
+
+**Problema 2 — la unicidad se puede burlar sin querer.** Verificado contra el sistema corriendo: el mismo radicado escrito `41001 31 03 001 2026 09999 00` y `41001310300120260999900` creó **dos procesos distintos** en el mismo despacho, cada uno con su expediente. RN-17 no lo impidió porque el índice único compara la cadena tal como se tecleó.
+
+**Por qué el segundo importa más.** No es un problema estético. El despacho acaba con el mismo caso duplicado, y a partir de ahí **sus términos y audiencias quedan repartidos entre dos expedientes**: el abogado registra el término en uno, consulta el otro y no lo ve. Es una forma silenciosa de perder vigilancia, que es exactamente lo que **R-02** castiga.
+
+**De dónde salió.** De una pregunta del analista sobre la integración con la Rama Judicial, no de una prueba. Ninguna prueba lo detectó porque todas usan un radicado y comprueban que no se repita **idéntico**.
+
+**El argumento que lo decidió, y es del analista.** Su observación: *el radicado guardado es el que el sistema usaría para consultar la Rama Judicial (RF-35)*. De ahí se sigue que **la Rama Judicial no puede validar el radicado, porque la consulta va indexada por él** — no se puede usar la llave para verificar la llave. Y si el número está mal, pasa una de dos cosas:
+
+- **No devuelve nada** → el abogado concluye que su proceso no tiene movimiento, cuando lo que falla es el número. Fallo silencioso.
+- **Devuelve otro proceso real** → un radicado son 23 dígitos asignados de forma densa, así que un dígito mal tecleado cae con facilidad sobre un proceso existente, y el sistema mostraría **actuaciones de un tercero dentro del expediente del cliente**. Eso es **R-04**.
+
+**Decisión.**
+
+1. **Se normaliza para comparar, se conserva para mostrar.** El radicado se guarda tal como lo escribió el abogado —es su dato— pero la unicidad de RN-17 pasa a evaluarse sobre su forma normalizada (solo dígitos). Dos grafías del mismo número dejan de ser dos procesos.
+2. **Se avisa, no se bloquea,** cuando el radicado no tiene la forma de uno colombiano (23 dígitos). Bloquear sería invadir lo que RN-36 reserva al abogado: hay tutelas y procesos antiguos con otros formatos, y **quien sabe cuál es el suyo es él**.
+3. **Cuando exista RF-35**, al consultar la Rama Judicial se comparará el juzgado que responde con el registrado, y se avisará si no coinciden. Es lo que atrapa el dígito que cayó sobre un proceso real de otro despacho.
+
+**Lo que NO se decide aquí.** No se rechaza ningún radicado por su formato, ni se corrige automáticamente lo que el abogado escribió. El sistema vigila lo que él registró; esa frontera no se mueve.
+
+**Un fallo de la primera implementación, que conviene dejar escrito.** La regla de normalizar se escribió como «quitar todo lo que no sea dígito», y es correcta **solo para lo que es un radicado**. Aplicada a cualquier texto destruye información: `RAD-ff5c40e8A` y `RAD-ff5c40e8B` —dos procesos distintos— quedaban en `5408` los dos, y RN-17a los declaraba el mismo.
+
+Lo destaparon **nueve pruebas de integración**, no la prueba negativa que se escribió para eso: esa solo usaba radicados de 23 dígitos, donde la regla mala también funciona. La regla final tiene dos caminos —si al quitar la puntuación quedan los 23 dígitos, esa es la forma normalizada; si no, se conserva todo y solo se ignoran espacios y mayúsculas— y ahora sí hay una prueba con el caso que falló.
+
+---
+
 ## 5. Supuestos vigentes [S]
 
 Se trabaja con ellos hasta que se validen. Cada uno indica cuándo debe cerrarse.
@@ -512,3 +543,4 @@ Cada fase se valida antes de abrir la siguiente. Cada artefacto de una fase refe
 | 2026-08-21 | Corregida la fila 6 de la lista de controles de **D-23**: decía «Pendiente» y el cifrado en reposo lleva implementado desde el Sprint 3 (AES-256-GCM). | Una lista de seguridad desactualizada es peor que no tenerla: invita a gastar el esfuerzo del despliegue en algo ya hecho, y a confiar en que el resto de la lista está al día cuando esta fila demostraba que no. |
 | 2026-08-21 | Cerrado el pendiente de diagramas declarado en **D-24**: **CU-28** (cambiar mi contraseña) y **CU-29** (restablecer la de un usuario) en el diagrama de casos de uso, y **F26** en el funcional. | Al cerrarlo se vio que el pendiente estaba **declarado a medias**: decía que faltaban en el diagrama de casos de uso, y también faltaban en el funcional. Se documenta que CU-29 **no lo alcanza el Administrador de Plataforma** (RN-10): restablecer la clave de un abogado le daría acceso efectivo a expedientes ajenos, que es lo que prohíbe RN-02. |
 | 2026-08-22 | Decisión **D-27**: **A-05 queda resuelto** por envío en paralelo (lote 3.000, 4 conexiones). El pico de 2.499 alertas pasa de 125 minutos a un solo barrido. | La opción B dejó de ser la arriesgada al corregir **H-6**: el motor ya no es una sola transacción, así que paralelizar dejó de exigir compartir sesión de Hibernate entre hilos. El obstáculo desapareció arreglando otra cosa. |
+| 2026-08-23 | Decisión **D-28**: el radicado se **normaliza para comparar** y se **avisa** si no tiene forma de radicado colombiano. | Verificado que el mismo radicado con y sin espacios creaba **dos procesos distintos** en el mismo despacho, cada uno con su expediente: los términos del mismo caso quedaban repartidos entre los dos. Ninguna prueba lo vio porque todas comprueban que no se repita **idéntico**. Salió de una pregunta del analista sobre RF-35. |

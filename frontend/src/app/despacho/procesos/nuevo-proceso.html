@@ -53,12 +53,23 @@
             <div class="caja-c">
               <input id="radicado" type="text" [value]="radicado()"
                      (input)="escribir('radicado', $event)"
+                     (blur)="comprobarRadicado()"
                      placeholder="41001 31 03 001 2026 00123 00"
                      [disabled]="guardando()" autofocus>
             </div>
-            <span class="ayuda">
-              Tal como lo asignó el juzgado. Debe ser único en su despacho.
-            </span>
+            <!--
+              RN-17b: aviso, NO bloqueo. Hay tutelas y procesos antiguos con
+              otra forma, y quien sabe cuál es el suyo es el abogado (RN-36).
+              El texto lo redacta el backend, donde vive la regla.
+            -->
+            @if (avisoRadicado(); as aviso) {
+              <span class="ayuda ojo">{{ aviso }}</span>
+            } @else {
+              <span class="ayuda">
+                Tal como lo asignó el juzgado. Debe ser único en su despacho —
+                da igual si lo escribe con espacios o sin ellos.
+              </span>
+            }
           </div>
 
           <div class="campo">

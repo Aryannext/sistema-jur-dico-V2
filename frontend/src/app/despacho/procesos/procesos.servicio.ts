@@ -78,6 +78,20 @@ export class Procesos {
     return firstValueFrom(this.http.post<Proceso>('/api/procesos', datos));
   }
 
+  /**
+   * ¿Tiene esto forma de radicado? RN-17b · D-28.
+   *
+   * <p>El texto del aviso viene del backend, no de aquí: es donde vive la regla.
+   * Si se escribiera en la pantalla, cambiar la regla no obligaría a tocarlo y
+   * el aviso acabaría diciendo algo que ya no es cierto — que es exactamente lo
+   * que pasó con el «6:00 a.m.» del panel de vencimientos.
+   */
+  async avisoDeRadicado(valor: string): Promise<{ pareceRadicado: boolean; aviso: string | null }> {
+    const params = new HttpParams().set('valor', valor);
+    return firstValueFrom(this.http.get<{ pareceRadicado: boolean; aviso: string | null }>(
+        '/api/procesos/radicado/aviso', { params }));
+  }
+
   async proceso(id: number): Promise<Proceso> {
     return firstValueFrom(this.http.get<Proceso>(`/api/procesos/${id}`));
   }

@@ -50,6 +50,21 @@ public class Proceso {
     @JoinColumn(name = "despacho_id", nullable = false)
     private Despacho despacho;
 
+    /**
+     * Los dígitos del radicado, solo para comparar. RN-17a · D-28.
+     *
+     * <p>No se expone ni se muestra: lo que ve el abogado es {@code radicado},
+     * tal como lo escribió. Esta columna existe porque la unicidad de RN-17 se
+     * burlaba sin querer —el mismo radicado con y sin espacios creaba dos
+     * procesos— y el índice único vive ahora sobre ella.
+     *
+     * <p>Se mantiene aquí, junto al radicado, y no se calcula al consultar: un
+     * índice único necesita una columna, y calcularlo en cada comparación
+     * dejaría la puerta abierta a que alguien inserte por otro camino.
+     */
+    @Column(name = "radicado_normalizado", nullable = false, length = MAXIMO_RADICADO)
+    private String radicadoNormalizado;
+
     @Column(nullable = false, length = MAXIMO_RADICADO)
     private String radicado;
 
@@ -98,7 +113,7 @@ public class Proceso {
                    Cliente clienteTitular, Usuario abogadoResponsable, String descripcion) {
 
         this.despacho = Objects.requireNonNull(despacho, "El proceso debe pertenecer a un despacho");
-        this.radicado = exigirRadicado(radicado);
+        fijarRadicado(radicado);
         this.juzgado = exigirDelCatalogo(juzgado, TipoCatalogo.JUZGADO, "juzgado");
         this.tipoProceso = exigirDelCatalogo(tipoProceso, TipoCatalogo.TIPO_PROCESO, "tipo de proceso");
         this.estadoProcesal = exigirDelCatalogo(estadoProcesal, TipoCatalogo.ESTADO_PROCESAL, "estado procesal");
@@ -143,6 +158,19 @@ public class Proceso {
     }
 
     // --- Invariantes -------------------------------------------------
+
+    /**
+     * Fija el radicado y su forma normalizada a la vez. RN-17a.
+     *
+     * <p>Los dos van juntos siempre y por el mismo camino: si se pudieran fijar
+     * por separado, bastaría con olvidar uno para que el índice único dejara de
+     * proteger — y el olvido no daría ningún error, solo dejaría pasar el
+     * duplicado.
+     */
+    private void fijarRadicado(String valor) {
+        this.radicado = exigirRadicado(valor);
+        this.radicadoNormalizado = Radicado.normalizar(this.radicado);
+    }
 
     private static String exigirRadicado(String valor) {
         String limpio = valor == null ? "" : valor.trim();
