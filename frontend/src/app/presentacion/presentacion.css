@@ -1,0 +1,159 @@
+/* Página de presentación.
+   Usa los mismos tokens que el resto del producto (src/styles.css): quien llega
+   desde aquí tiene que reconocer la aplicación al entrar, no descubrir otra. */
+
+:host { display: block; }
+
+.pagina {
+  background: var(--fondo);
+  color: var(--tinta);
+  font-family: var(--t);
+  min-height: 100vh;
+}
+
+.dentro { max-width: 1000px; margin: 0 auto; padding: 0 28px; }
+
+/* --- Barra ---------------------------------------------------------- */
+.barra {
+  display: flex; align-items: center; justify-content: space-between;
+  max-width: 1000px; margin: 0 auto; padding: 22px 28px;
+}
+.barra .marca { display: flex; align-items: center; gap: 11px; }
+.barra .marca b { font-size: 17px; font-weight: 800; letter-spacing: -.02em; }
+.sello {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: var(--marca);
+  display: grid; place-items: center;
+}
+
+/* --- Portada -------------------------------------------------------- */
+/* Mucho aire: es lo único que se lee entero, y compite con el teléfono
+   sonando. Si no cabe de un vistazo, no se lee. */
+.portada {
+  max-width: 1000px; margin: 0 auto;
+  padding: 76px 28px 92px;
+  text-align: center;
+}
+.donde {
+  font-size: 13px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--apagado);
+  margin: 0 0 26px;
+}
+.portada h1 {
+  margin: 0 0 24px;
+  font-size: clamp(34px, 5.4vw, 58px);
+  font-weight: 800; line-height: 1.08; letter-spacing: -.035em;
+  text-wrap: balance;
+}
+.entrada {
+  max-width: 62ch; margin: 0 auto;
+  font-size: 17.5px; line-height: 1.65; color: var(--medio);
+}
+.portada .entrada { font-size: 19px; }
+.acciones {
+  display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+  margin-top: 36px;
+}
+.btn.grande {
+  padding: 14px 24px; font-size: 15px; border-radius: 12px;
+  display: inline-flex; align-items: center; gap: 9px;
+  text-decoration: none;
+}
+
+/* --- Bloques -------------------------------------------------------- */
+.bloque { padding: 66px 0; }
+.eyebrow {
+  display: block; margin-bottom: 12px;
+  font-size: 12.5px; font-weight: 800; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--marca);
+}
+.eyebrow.claro { color: var(--marca-media); }
+
+h2 {
+  margin: 0 0 20px;
+  font-size: clamp(25px, 3.2vw, 34px);
+  font-weight: 800; letter-spacing: -.028em; line-height: 1.2;
+  text-wrap: balance;
+}
+
+.tres {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;
+  margin-top: 34px;
+}
+.tres b { display: block; margin-bottom: 9px; font-size: 15.5px; font-weight: 800; }
+.tres p { margin: 0; font-size: 14.5px; line-height: 1.65; color: var(--medio); }
+
+.dos-columnas {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 34px;
+  margin-top: 30px;
+}
+.dos-columnas h3 {
+  margin: 0 0 12px; font-size: 18px; font-weight: 800; letter-spacing: -.015em;
+}
+.dos-columnas p { margin: 0 0 13px; font-size: 15px; line-height: 1.7; color: var(--medio); }
+.detalle {
+  padding-left: 15px; border-left: 2px solid var(--marca-media);
+  font-size: 14px !important; color: var(--apagado) !important;
+}
+.remate {
+  margin: 34px 0 0; padding: 20px 24px;
+  background: var(--marca-suave); border-radius: 14px;
+  font-size: 15px; line-height: 1.65; color: var(--medio);
+}
+
+/* --- El problema ----------------------------------------------------- */
+.franja-problema { padding: 62px 0; background: var(--sup); border-block: 1px solid var(--hilo); }
+
+/* --- La confianza ---------------------------------------------------- */
+/* En verde profundo, invirtiendo el contraste: es la sección que decide, y
+   tiene que verse distinta de todo lo demás. */
+.franja-confianza {
+  padding: 72px 0; background: var(--marca); color: #fff;
+}
+.franja-confianza h2 { color: #fff; }
+.franja-confianza .entrada { color: #CFE3DE; margin: 0 0 8px; }
+.garantias { margin-top: 38px; }
+.garantias b { color: #fff; }
+.garantias p { color: #CFE3DE; }
+
+/* --- La cita --------------------------------------------------------- */
+.cita {
+  display: grid; place-content: center;
+  padding: 28px; border-radius: 16px;
+  background: var(--sup); border: 1px solid var(--hilo);
+}
+.cita p {
+  margin: 0; font-size: 19px; line-height: 1.55;
+  font-weight: 700; letter-spacing: -.02em; color: var(--tinta);
+}
+.cita span {
+  display: block; margin-top: 12px;
+  font-size: 14px; font-weight: 500; color: var(--apagado);
+}
+
+/* --- Cierre ---------------------------------------------------------- */
+.cierre { padding: 74px 0 84px; text-align: center; background: var(--sup); border-top: 1px solid var(--hilo); }
+.cierre .entrada { margin-bottom: 14px; }
+.cierre .acciones { margin-top: 32px; }
+.quienes {
+  margin: 34px 0 0; font-size: 14px; color: var(--apagado);
+}
+
+/* --- Pie ------------------------------------------------------------- */
+.pie {
+  max-width: 1000px; margin: 0 auto;
+  padding: 26px 28px 40px;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 12px;
+  font-size: 13.5px; color: var(--apagado);
+}
+.pie a { color: var(--marca); font-weight: 700; text-decoration: none; }
+.pie a:hover { text-decoration: underline; }
+
+/* --- En pantalla pequeña --------------------------------------------- */
+@media (max-width: 860px) {
+  .tres, .dos-columnas { grid-template-columns: 1fr; gap: 26px; }
+  .portada { padding: 52px 24px 66px; }
+  .bloque, .franja-problema, .franja-confianza, .cierre { padding: 50px 0; }
+  .acciones .btn.grande { width: 100%; justify-content: center; }
+}

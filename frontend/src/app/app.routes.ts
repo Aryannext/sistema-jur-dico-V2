@@ -13,6 +13,23 @@ import {
  * nota.
  */
 export const routes: Routes = [
+  /**
+   * La presentación, en la raíz y solo para quien no ha entrado.
+   *
+   * <p>Va **antes** que la zona del despacho y con `pathMatch: 'full'`: sin lo
+   * primero nunca se alcanzaría —la zona del despacho también cuelga de `''`—
+   * y sin lo segundo se tragaría `/procesos`, `/clientes` y todo lo demás.
+   *
+   * <p>`exigeAnonimo` es lo que hace que un abogado con sesión abierta no
+   * aterrice en el folleto de su propio sistema: lo devuelve a su zona.
+   */
+  {
+    path: '',
+    pathMatch: 'full',
+    canActivate: [exigeAnonimo],
+    title: 'Iuris · Vigilancia de términos y audiencias para su despacho',
+    loadComponent: () => import('./presentacion/presentacion').then(m => m.Presentacion),
+  },
   {
     path: 'ingreso',
     canActivate: [exigeAnonimo],

@@ -1,0 +1,214 @@
+<div class="pagina">
+
+  <header class="barra">
+    <div class="marca">
+      <div class="sello">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v18M5 7h14M7 7l-3 7h6zM17 7l-3 7h6z"/><path d="M4 14a3 3 0 0 0 6 0M14 14a3 3 0 0 0 6 0"/>
+        </svg>
+      </div>
+      <b>Iuris</b>
+    </div>
+    <a class="btn fantasma" routerLink="/ingreso">Entrar</a>
+  </header>
+
+  <!--
+    El titular es el de la propuesta original: «los términos judiciales vencen
+    por falta de seguimiento». Un consultorio no compra un gestor documental,
+    compra no volver a perder un término.
+  -->
+  <section class="portada">
+    <p class="donde">Sistema de gestión de procesos jurídicos · {{ contacto.ciudad }}</p>
+    <h1>El término no espera<br>a que usted se acuerde.</h1>
+    <p class="entrada">
+      Iuris vigila los plazos y las audiencias de su despacho y avisa
+      <b>antes</b>, no después. Usted registra la fecha una vez; el resto lo hace
+      el sistema, todos los días, sin que nadie tenga que acordarse.
+    </p>
+    <div class="acciones">
+      <a class="btn grande" [href]="enlaceWhatsapp" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2A9.9 9.9 0 0 0 2.1 11.9a9.8 9.8 0 0 0 1.34 4.95L2 22l5.3-1.38a9.9 9.9 0 0 0 4.74 1.2h.01a9.9 9.9 0 0 0 9.94-9.9A9.9 9.9 0 0 0 12.04 2zm5.8 14.06c-.24.68-1.4 1.3-1.93 1.35-.5.05-.96.23-3.22-.67-2.7-1.07-4.42-3.8-4.55-3.98-.13-.18-1.09-1.45-1.09-2.77s.7-1.97.94-2.24c.25-.27.54-.34.72-.34l.52.01c.17 0 .39-.06.6.46l.83 2c.07.14.11.3.02.48-.09.18-.13.29-.27.44l-.4.47c-.13.13-.27.28-.12.55.15.27.66 1.09 1.42 1.77.97.87 1.79 1.14 2.06 1.27.27.14.42.11.58-.07l.83-.97c.2-.23.36-.18.6-.1l1.72.82c.25.12.42.18.48.29.06.1.06.62-.18 1.3z"/></svg>
+        Hablemos por WhatsApp
+      </a>
+      <a class="btn fantasma grande" [href]="enlaceCorreo">Escribir un correo</a>
+    </div>
+  </section>
+
+  <!-- El problema, dicho como lo vive el despacho, no como lo vería un ingeniero. -->
+  <section class="franja-problema">
+    <div class="dentro">
+      <h2>Un término vencido no se arregla después</h2>
+      <div class="tres">
+        <div>
+          <b>La agenda no avisa sola</b>
+          <p>
+            Un cuaderno, un calendario del teléfono y la memoria de quien lleva
+            el caso. Funciona hasta el día en que alguien está enfermo, de
+            audiencia o simplemente ocupado.
+          </p>
+        </div>
+        <div>
+          <b>El expediente está repartido</b>
+          <p>
+            Carpetas físicas, correos, fotos en el teléfono. Cuando hay que
+            responder rápido, el tiempo se va en buscar y no en resolver.
+          </p>
+        </div>
+        <div>
+          <b>El cliente llama a preguntar</b>
+          <p>
+            Y hay que dejar lo que se está haciendo para contarle algo que ya
+            está registrado en alguna parte.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- La vigilancia es el producto. Todo lo demás es su consecuencia. -->
+  <section class="bloque">
+    <div class="dentro">
+      <span class="eyebrow">Lo que hace</span>
+      <h2>Vigila el tiempo. Eso es todo, y eso es mucho.</h2>
+
+      <div class="dos-columnas">
+        <article>
+          <h3>Términos</h3>
+          <p>
+            Usted registra la fecha de vencimiento — <b>el sistema no la calcula
+            ni la interpreta</b>: el cómputo del plazo es suyo, el recordatorio
+            es del sistema. A partir de ahí avisa con la anticipación que su
+            despacho configure, por ejemplo 15, 5 y 1 día antes.
+          </p>
+          <p class="detalle">
+            La configuración decide cuántos avisos y cuándo, <b>nunca si los
+            hay</b>: el mínimo de un aviso anticipado no se puede apagar.
+          </p>
+        </article>
+        <article>
+          <h3>Audiencias</h3>
+          <p>
+            Se registran con fecha y hora, y el sistema avisa a las <b>48 horas,
+            a las 24 y el mismo día</b>. Esos tres avisos no son configurables:
+            son el piso.
+          </p>
+          <p class="detalle">
+            Si el proceso se archiva o el término se cumple, los avisos se
+            detienen solos. Un sistema que avisa de casos cerrados es un sistema
+            que se acaba ignorando.
+          </p>
+        </article>
+      </div>
+
+      <p class="remate">
+        Los avisos llegan por correo al <b>abogado responsable del proceso</b>, y
+        queda registrado cuál salió, a quién y cuándo. Si alguna vez alguien
+        pregunta si el sistema avisó, hay con qué responder.
+      </p>
+    </div>
+  </section>
+
+  <!--
+    La objeción real. Un abogado con expedientes bajo reserva profesional va a
+    preguntarse quién más los ve, y eso se responde aquí o se responde cuando ya
+    decidió que no. Todo lo de esta sección está construido y verificado.
+  -->
+  <section class="franja-confianza">
+    <div class="dentro">
+      <span class="eyebrow claro">La pregunta incómoda</span>
+      <h2>«¿Y quién más ve mis expedientes?»</h2>
+      <p class="entrada">
+        Es la primera pregunta que hace un abogado, y tiene razón en hacerla. Las
+        respuestas están construidas en el sistema, no prometidas en una reunión.
+      </p>
+
+      <div class="tres garantias">
+        <div>
+          <b>Nadie de otro despacho</b>
+          <p>
+            Cada despacho está aislado del resto. Ni por búsqueda, ni por
+            dirección directa, ni por descuido: es lo que más se comprueba de
+            todo el sistema.
+          </p>
+        </div>
+        <div>
+          <b>Los documentos van cifrados</b>
+          <p>
+            Se guardan cifrados en el servidor. Quien mirara el archivo
+            directamente no encontraría el texto, sino ruido.
+          </p>
+        </div>
+        <div>
+          <b>Cada consulta queda registrada</b>
+          <p>
+            Quién abrió qué expediente y cuándo. Ese registro <b>no se puede
+            editar ni borrar</b> — tampoco por el administrador del despacho, ni
+            por nosotros.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- La diferencia comercial: le ahorra tiempo al abogado, no se lo cuesta. -->
+  <section class="bloque">
+    <div class="dentro">
+      <span class="eyebrow">La diferencia</span>
+      <h2>Sus clientes consultan lo suyo, sin llamar</h2>
+      <div class="dos-columnas">
+        <article>
+          <p>
+            Cada cliente entra con su propio acceso y ve <b>únicamente sus
+            procesos</b>: las actuaciones, los documentos y las audiencias que le
+            corresponden.
+          </p>
+          <p>
+            No ve las notas internas del despacho. Esas son suyas y solo suyas, y
+            el sistema las separa antes de enviarle nada.
+          </p>
+        </article>
+        <article class="cita">
+          <p>
+            «Doctor, ¿cómo va mi proceso?»<br>
+            <span>— la llamada que deja de interrumpirle la mañana.</span>
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!--
+    Sin registro público. Se explica como lo que es -una decisión de seguridad-
+    y no como una carencia, porque es lo primero que va a notar quien busque un
+    botón de «crear cuenta».
+  -->
+  <section class="cierre">
+    <div class="dentro">
+      <h2>Cómo se empieza</h2>
+      <p class="entrada">
+        Aquí no hay botón de «crear cuenta», y no es un olvido: damos de alta
+        cada despacho uno por uno. Hablamos primero, configuramos su despacho con
+        sus juzgados y sus abogados, y le entregamos el acceso.
+      </p>
+      <p class="entrada">
+        Es más lento que un formulario. También es la razón de que nadie pueda
+        reclamar el expediente de otra persona.
+      </p>
+      <div class="acciones">
+        <a class="btn grande" [href]="enlaceWhatsapp" target="_blank" rel="noopener">
+          Hablemos por WhatsApp
+        </a>
+        <a class="btn fantasma grande" [href]="enlaceCorreo">Escribir un correo</a>
+      </div>
+      <p class="quienes">
+        Hecho en {{ contacto.ciudad }}, para los consultorios jurídicos,
+        despachos y abogados independientes de aquí.
+      </p>
+    </div>
+  </section>
+
+  <footer class="pie">
+    <span>Iuris · Sistema de gestión de procesos jurídicos</span>
+    <a routerLink="/ingreso">Ya tengo acceso</a>
+  </footer>
+</div>
