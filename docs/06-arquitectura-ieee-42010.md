@@ -18,7 +18,7 @@
 | **Versión / fecha** | 1.1 · 2026-08-20 |
 | **Autor** | Equipo de desarrollo — rol de Analista y Arquitecto de Software |
 | **Norma de referencia** | ISO/IEC/IEEE 42010 — *Systems and software engineering — Architecture description* (edición vigente: 2022, revisión de la 42010:2011) |
-| **Alcance** | Los 40 RF y 16 RNF de la Fase 3, sobre las 58 reglas de negocio de la Fase 2 |
+| **Alcance** | Los 40 RF y 16 RNF de la Fase 3, sobre las 60 reglas de negocio de la Fase 2 |
 | **Origen del sistema** | Propuesta 24, Competencia 220501094 (`24_propuesta.pdf`) |
 
 ### 1.1 Qué exige la norma y dónde se cumple aquí
@@ -524,6 +524,16 @@ Escenarios de calidad en formato estímulo–respuesta–medida. Son la forma de
 
 **Consecuencias:** ✅ cierra el pendiente de la Fase 5 y satisface RNF-10 y EQ-3. ⚠ acopla la solución a un motor que soporte `SKIP LOCKED` — PostgreSQL lo hace.
 
+#### Revisión durante la construcción — D-27 y D-28
+
+Esta decisión se sostuvo, pero **su implementación cambió dos veces** al medir el sistema con el volumen objetivo. Se anota aquí porque la arquitectura que se sustenta debe ser la que corre, no la que se diseñó.
+
+**El barrido dejó de ser una sola transacción (D-28 · H-6).** Lo era, y con ello se enviaban cien correos —irreversibles— antes de que el *commit* dejara constancia de que habían salido. Una reversión a media tanda devolvía las alertas a `PROGRAMADA` con los correos ya enviados, y el siguiente barrido los repetía: **CA-26.4 incumplido**. Ahora cada alerta se envía y se confirma en su propia transacción, y la relectura del estado **bajo bloqueo** —por alerta, ya no por lote— es lo que sigue impidiendo el envío doble entre instancias. `SKIP LOCKED` no se abandona: cambia de granularidad.
+
+**El envío pasó a ser paralelo (D-27 · A-05).** La medición del volumen objetivo encontró **2.499 alertas venciendo en el mismo instante**, que con un lote de 100 cada 5 minutos tardaban **125 minutos** en drenarse frente a los 15 que tolera RNF-11. Un aviso cuesta **diez viajes de red que ningún lote ahorra** —son del protocolo SMTP y van por mensaje—, así que la única salida es no pagarlos en fila. Con cuatro conexiones simultáneas el pico baja a menos de un barrido.
+
+**Lo que esto obliga a decidir fuera de la arquitectura:** cuatro conexiones despachando el lote son unos **6 envíos por segundo**. Un servicio transaccional lo admite; el SMTP de una cuenta personal no. **El proveedor de correo es ahora una restricción del despliegue**, no un detalle de configuración.
+
 ---
 
 ### ADR-05 · Documentos fuera de la base de datos, en almacén de objetos cifrado
@@ -655,13 +665,13 @@ Caso concreto: si `EsquemaAlerta.validar()` viviera en Angular, una llamada dire
 ```
 24_propuesta.pdf
       ↓
-20 Decisiones registradas  ·  9 Riesgos de proyecto  ·  7 Riesgos arquitectónicos
+28 Decisiones registradas  ·  9 Riesgos de proyecto  ·  7 Riesgos arquitectónicos
       ↓
-56 Reglas de Negocio
+60 Reglas de Negocio
       ↓
 56 Requisitos (40 RF + 16 RNF)
       ↓
-42 Historias de Usuario con criterios de aceptación
+44 Historias de Usuario con criterios de aceptación
       ↓
 15 Diagramas en 10 categorías
       ↓

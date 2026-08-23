@@ -14,7 +14,7 @@ Ningún diagrama se dibujó desde cero. Cada uno tiene una **fuente documental**
 
 | Diagrama | Sale de |
 |---|---|
-| 1 · Casos de uso | Actores (Fase 1 §6) + las 42 historias |
+| 1 · Casos de uso | Actores (Fase 1 §6) + las 44 historias |
 | 2 · Funcional | Los 12 módulos M1–M12 (Fase 3 §2) |
 | 3 · Modelo de datos | Glosario (Fase 1 §8) + reglas G1–G4 |
 | 4 · Clases | Modelo de datos + reglas de comportamiento G5–G7 |
@@ -261,7 +261,8 @@ erDiagram
     PROCESO {
         bigint id PK
         bigint despacho_id FK
-        string radicado "unico por despacho"
+        string radicado "como lo escribio el abogado"
+        string radicado_normalizado "RN-17a: sus digitos, para comparar"
         bigint juzgado_id FK
         bigint tipo_proceso_id FK
         bigint estado_procesal_id FK
@@ -361,6 +362,7 @@ erDiagram
 | 1 | **`despacho_id` en toda entidad raíz** | Sin la columna no hay forma de filtrar por tenant. **RN-01, RN-02** |
 | 2 | **`USUARIO_ROL` como tabla intermedia** (muchos a muchos) | Un `rol_id` dentro de `USUARIO` haría **imposible** el abogado independiente, que necesita dos roles simultáneos. **RN-08** |
 | 3 | **`VALOR_CATALOGO` única, con `tipo_catalogo`** | Cinco tablas casi idénticas serían duplicación. Una sola tabla tipificada, con `despacho_id`, cubre los cinco catálogos administrables — incluido **Juzgado**, que se añadió sin crear ninguna tabla nueva. **RN-06a, RN-06b, D-13, D-17** |
+| 3b | **`radicado` y `radicado_normalizado` en `PROCESO`** | El único índice de unicidad vive sobre el normalizado, no sobre lo tecleado. Sin esa separación, el mismo radicado con y sin espacios creaba **dos procesos** en el mismo despacho, y los términos del mismo caso quedaban repartidos entre dos expedientes. Se conserva lo que escribió el abogado porque es su dato; lo normalizado solo compara. **RN-17a, D-28** |
 | 4 | **`protegido` en `VALOR_CATALOGO`** | Es el mecanismo que impide desactivar *Activo* y *Archivado*, exigidos por P-RF05. **RN-06a** |
 | 5 | **`ALERTA` como entidad persistida, no calculada al vuelo** | Sin fila no hay forma de saber si se envió, ni de reintentar, ni de demostrarlo después. **RN-33, RN-34** |
 | 6 | **`CLIENTE.usuario_portal_id` opcional** | El cliente existe en el sistema **antes** de tener acceso al portal; el acceso lo habilita el despacho después. **RN-43, D-15** |

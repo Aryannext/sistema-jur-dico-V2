@@ -2,7 +2,7 @@
 
 **Proyecto:** Iuris / SGPJ — Sistema de Gestión de Procesos Jurídicos
 **Fuente base:** `24_propuesta.pdf` + [`00-decisiones-y-trazabilidad.md`](00-decisiones-y-trazabilidad.md) + [`01-idea-y-definicion-de-negocio.md`](01-idea-y-definicion-de-negocio.md)
-**Versión:** 1.3 · **Fecha:** 2026-08-21 · **Estado: CERRADA** — 58 reglas, decisiones D-13 a D-17 incorporadas; **RN-53 y RN-54 añadidas por D-24** durante la construcción
+**Versión:** 1.4 · **Fecha:** 2026-08-23 · **Estado: CERRADA** — 60 reglas, decisiones D-13 a D-17 incorporadas; **RN-53 y RN-54 añadidas por D-24**, **RN-17a y RN-17b por D-28**, ambas durante la construcción
 
 > Marcas de origen: **[P]** propuesta · **[D-nn]** decisión registrada · **[S]** supuesto por validar · **[R-nn]** riesgo que la regla trata.
 

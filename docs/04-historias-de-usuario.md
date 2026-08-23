@@ -639,14 +639,14 @@ Es el valor real de encadenar las fases: **la fase siguiente audita a la anterio
 La cadena está completa:
 
 ```
-Propuesta [P] → 17 Decisiones [D] → 58 Reglas RN → 56 Requisitos RF/RNF → 44 Historias HU
+Propuesta [P] → 28 Decisiones [D] → 60 Reglas RN → 56 Requisitos RF/RNF → 44 Historias HU
 ```
 
 Los diagramas ya no parten de cero:
 
 | Diagrama | De dónde sale |
 |---|---|
-| **Casos de uso** | Actores de la Fase 1 + las 42 historias. El *Sistema* como actor temporal aparece en EP6. |
+| **Casos de uso** | Actores de la Fase 1 + las 44 historias. El *Sistema* como actor temporal aparece en EP6. |
 | **Modelo de datos** | Glosario (Fase 1) + reglas de estructura G1–G4. La multi-tenencia obliga a que **toda** entidad cuelgue del Despacho. |
 | **Clases** | Módulos M1–M12 + la relación usuario–roles **de uno a muchos** (RN-08). |
 | **Componentes** | Los 12 módulos, con M8 y M12 desacoplados. |
