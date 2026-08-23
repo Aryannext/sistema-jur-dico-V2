@@ -320,6 +320,30 @@ El control 3 aporta la mayor parte del beneficio a una fracción del costo: atra
 | 8 | Rol `sgpj_app` sin privilegios administrativos | ✅ Ya aplicado desde el inicio | Se mantiene |
 | 9 | Contraseñas de usuario con hash y salt (RNF-05) | Se aplica igual desde el inicio | **Sí** |
 
+#### Estado a 2026-08-23 — la lista dejó de ser solo un documento
+
+`VerificacionDeDespliegue` comprueba al arrancar los controles que se pueden ver desde la aplicación y **impide arrancar** si alguno falta. Es el «alguien lo verifica» que esta misma decisión exigía: una lista que hay que acordarse de leer no protege de nada.
+
+| # | Control | Cómo está |
+|---|---|---|
+| 1 | Credenciales por entorno | ✅ **verificado al arrancar** — sin `SGPJ_BD_USUARIO`, `SGPJ_BD_CLAVE` o `SGPJ_DOCUMENTOS_CLAVE` no arranca |
+| 2 | Clave de base robusta | ✅ **verificado** — rechaza claves cortas o previsibles, incluida la de desarrollo |
+| 3 | TLS | ✅ **preparado y verificado** — `application-produccion.properties` fija cookie `Secure`, `HttpOnly`, `SameSite=Lax` y `forward-headers-strategy`; el arranque lo comprueba. **Falta el certificado en el proxy**, que es del servidor |
+| 4 | PostgreSQL no expuesto | ⏳ **del servidor** — la aplicación no puede verlo desde dentro |
+| 5 | CORS explícito | ✅ **verificado** — vacío por defecto (mismo origen) y rechaza `*` |
+| 6 | Cifrado en reposo | ✅ AES-256-GCM, y el arranque rechaza la clave del repositorio |
+| 7 | Respaldo con restauración **probada** | ✅ **guiones escritos y ejecutados**: `despliegue/respaldo.sh` y `despliegue/restaurar-prueba.sh`. Probado el 23/08/2026 — 6 cifras coincidentes, esquema V10, 16 documentos íntegros. ⏳ Falta programarlo en el VPS |
+| 8 | Rol sin privilegios | ✅ **verificado al arrancar** consultando `pg_roles` |
+| 9 | Hash y salt | ✅ bcrypt desde el inicio |
+
+**Y uno que no era de la lista.** El arranque en producción también rechaza el correo en modo «registro»: desplegar así significaría que **ninguna alerta sale y nadie se entera**, que es el fallo que el producto existe para evitar (R-02).
+
+**Lo que sigue siendo humano.** Cuatro comprobaciones no las puede hacer la aplicación —que PostgreSQL no escuche en internet, que el certificado sea válido y renueve, que el respaldo esté programado, y que su restauración se pruebe periódicamente—. El arranque las **lista explícitamente** en vez de callarlas: decir que verifica lo que no verifica sería peor que no intentarlo.
+
+**RNF-14 no se cumple una vez.** Se cumple mientras la última prueba de restauración sea reciente. Un respaldo que nunca se restauró no es un respaldo, es un fichero.
+
+---
+
 Los controles 8 y 9 **no se relajan ni siquiera en local**: el 8 porque un rol con privilegios anularía Row-Level Security más adelante sin que nadie lo note (ADR-03), y el 9 porque el hash de contraseñas es código de la aplicación, no configuración de entorno — escribirlo mal en local significa escribirlo mal en producción.
 
 #### ⚠ Impacto en la arquitectura que debe revisarse
@@ -545,3 +569,4 @@ Cada fase se valida antes de abrir la siguiente. Cada artefacto de una fase refe
 | 2026-08-22 | Decisión **D-27**: **A-05 queda resuelto** por envío en paralelo (lote 3.000, 4 conexiones). El pico de 2.499 alertas pasa de 125 minutos a un solo barrido. | La opción B dejó de ser la arriesgada al corregir **H-6**: el motor ya no es una sola transacción, así que paralelizar dejó de exigir compartir sesión de Hibernate entre hilos. El obstáculo desapareció arreglando otra cosa. |
 | 2026-08-23 | Decisión **D-28**: el radicado se **normaliza para comparar** y se **avisa** si no tiene forma de radicado colombiano. | Verificado que el mismo radicado con y sin espacios creaba **dos procesos distintos** en el mismo despacho, cada uno con su expediente: los términos del mismo caso quedaban repartidos entre los dos. Ninguna prueba lo vio porque todas comprueban que no se repita **idéntico**. Salió de una pregunta del analista sobre RF-35. |
 | 2026-08-23 | **Barrido de consistencia de la documentación.** Corregidas siete cifras desfasadas: reglas (58 → **60**), historias (42 → **44**) y decisiones (20 → **28**) en los documentos 02, 04, 05 y 06. Añadidos al modelo de datos la columna `radicado_normalizado` (D-28) y a **ADR-04** la revisión que le hicieron **D-27** y **D-28** durante la construcción. | El documento 06 se **contradecía a sí mismo**: decía 58 reglas en el alcance y 56 en la cadena de cierre. Es el mismo defecto que ya obligó a corregir «23 de los 52» y la fila 6 de D-23: una cifra que no cuadra hace dudar de todo lo demás, y la arquitectura que se sustenta debe ser la que corre, no la que se diseñó. |
+| 2026-08-23 | **La lista de D-23 pasa a ser código.** `VerificacionDeDespliegue` impide arrancar en producción si falta alguno de los seis controles comprobables desde la aplicación. Añadidos `application-produccion.properties` y los guiones de respaldo y **restauración probada** (control 7, ejecutada el 23/08). | La propia D-23 lo exigía: «un control relajado solo es aceptable si existe el momento exacto en que deja de estarlo y **alguien lo verifica**». Ese alguien era un documento que había que acordarse de leer. Verificado de verdad: con la clave `2283` y la clave de cifrado del repositorio, la aplicación se niega a arrancar y nombra cada fallo con la orden para corregirlo. |
