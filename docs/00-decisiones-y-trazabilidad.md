@@ -525,6 +525,49 @@ Y con **`SGPJ_ALERTAS_CONEXIONES=1`**: con pocos despachos, 270 correos en serie
 
 ---
 
+### D-31 — Los avisos propios de un término se ajustan en la pantalla del término
+
+**Contexto.** **D-29** implementó CA-27.3 —*«puedo ajustar el esquema de un
+término individualmente sin cambiar el del despacho»*— con endpoint, migración y
+siete pruebas. El criterio pasó a ✅.
+
+**Y quedó a medias.** No había pantalla. El criterio se cumplía por API y un
+abogado no podía usarlo: exactamente el mismo hueco que este recorrido le había
+encontrado ya a otras tres pantallas —endpoint sin interfaz—, recién creado.
+
+**Dónde va.** En la lista de términos, desplegándose bajo el término que se
+ajusta, no en una pantalla aparte. Mandar a otra vista a cambiar tres números
+rompería el «una sola pantalla» de **RNF-16** por la puerta de atrás. Cada
+término muestra además con cuánta anticipación avisa, y se distingue el que
+lleva **avisos propios**: uno ajustado que parece corriente es una sorpresa
+esperando a ocurrir.
+
+**Lo que la pantalla añade y el endpoint no tenía.** Advierte de los avisos que
+**ya no alcanzan a salir**. Es el caso que motivó todo esto: un término que
+vence en dos días con el esquema corriente de 15/5/1 solo recibiría el aviso de
+un día —los otros dos caen en el pasado y no se envían nunca—. El backend
+acepta esa configuración sin quejarse, y con razón: no es inválida. Pero el
+abogado creería tener tres avisos y tendría uno. **Decirlo mientras elige
+convierte un fallo silencioso en una decisión.**
+
+**Quién puede.** Un abogado raso ajusta el término que lleva y **no** el
+esquema del despacho: `/api/terminos/**` admite ABOGADO, `PUT /api/esquema-alertas`
+no. Es el reparto que CA-27.3 describe, y ya estaba en la configuración de
+seguridad.
+
+**Tres decisiones se sacaron a `nucleo/avisos.ts`** —cuáles avisos no alcanzan,
+si el término se apartó del despacho, y cómo se leen— por la misma razón que
+`zonas.ts`: dentro del componente vivirían atadas a señales y a un `TestBed`, y
+en la práctica no se probarían. **21 pruebas**, catorce negativas.
+
+**Un defecto encontrado usando la pantalla:** decía «**1 días antes**». Pequeño
+y no rompe nada, pero es la clase de descuido que hace dudar de lo que sí
+importa. Al corregirlo apareció la trampa contraria —«15, 5 y 1 **días** antes»
+sí va en plural, porque lo manda el conjunto y no el último número— y ambas
+quedaron con prueba.
+
+---
+
 ## 5. Supuestos vigentes [S]
 
 Se trabaja con ellos hasta que se validen. Cada uno indica cuándo debe cerrarse.
@@ -617,3 +660,4 @@ Cada fase se valida antes de abrir la siguiente. Cada artefacto de una fase refe
 | 2026-08-23 | **La lista de D-23 pasa a ser código.** `VerificacionDeDespliegue` impide arrancar en producción si falta alguno de los seis controles comprobables desde la aplicación. Añadidos `application-produccion.properties` y los guiones de respaldo y **restauración probada** (control 7, ejecutada el 23/08). | La propia D-23 lo exigía: «un control relajado solo es aceptable si existe el momento exacto en que deja de estarlo y **alguien lo verifica**». Ese alguien era un documento que había que acordarse de leer. Verificado de verdad: con la clave `2283` y la clave de cifrado del repositorio, la aplicación se niega a arrancar y nombra cada fallo con la orden para corregirlo. |
 | 2026-08-23 | Decisión **D-29** y regla **RN-37c**: el esquema de alertas se puede ajustar **por término**. Cierra **H-5** y con él **CA-27.3**, el último criterio de aceptación que quedaba sin cumplir. | Al implementarlo apareció una trampa que no se buscaba: `actualizarTermino` releía el esquema del despacho, así que un ajuste individual se habría perdido **en silencio** al corregir la fecha. Tiene prueba propia. |
 | 2026-08-23 | Decisión **D-30**: se empieza con el plan **gratuito** de Brevo y **una sola conexión**. Cierra lo último que quedaba de **A-05**. Añadido `despliegue/README.md`. | Los 6 envíos/segundo de D-27 son para el volumen OBJETIVO —50 despachos—, no para el de partida. Con 5 despachos el pico son ~270 correos al día, que caben en un plan gratuito y en una sola conexión. Dimensionar desde el primer día para una meta que no existe habría significado pagar capacidad sin usar. El momento de subir no hay que vigilarlo: el sistema avisa cuando una alerta sale fuera de tolerancia. |
+| 2026-08-23 | Decisión **D-31**: **pantalla** para los avisos propios de un término (CA-27.3). Nuevo `nucleo/avisos.ts` con 21 pruebas. | D-29 dio por cerrado CA-27.3 con endpoint y migración, pero sin interfaz: el criterio se cumplía por API y un abogado no podía usarlo — el mismo hueco que se le había encontrado ya a otras tres pantallas, recién creado. La pantalla añade además lo que el endpoint no podía: advertir de los avisos que YA NO ALCANZAN a salir, que es el caso que motivó todo esto. |

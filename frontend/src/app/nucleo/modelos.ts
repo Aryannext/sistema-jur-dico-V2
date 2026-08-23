@@ -32,6 +32,13 @@ export interface Termino {
   vencido: boolean;
   seVigila: boolean;
   destinatarioAlertas: string | null;
+  /**
+   * Las anticipaciones de ESTE término, en días. CA-27.3 · RN-37c.
+   *
+   * <p>Nacen del esquema del despacho pero son suyas: ajustarlas aquí no
+   * cambia las de los demás términos ni las del despacho.
+   */
+  diasAnticipacion: number[];
 }
 
 /** GET /api/calendario — RF-20. */

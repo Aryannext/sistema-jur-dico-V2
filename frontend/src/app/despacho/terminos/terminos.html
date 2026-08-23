@@ -103,17 +103,113 @@
                      va a recordar. Decirlo aquí evita la falsa tranquilidad. -->
                 <span class="eti ambar">Sin vigilancia</span>
               }
+
+              <!-- CA-27.3: con cuánta anticipación avisa ESTE término. Se
+                   distingue el que se apartó del esquema del despacho: un
+                   término ajustado que parece corriente es una sorpresa
+                   esperando a ocurrir. -->
+              @if (t.diasAnticipacion.length > 0) {
+                <span class="eti" [class.marca]="estaAjustado(t)" [class.gris]="!estaAjustado(t)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                  {{ avisosDe(t) }}@if (estaAjustado(t)) { · propios }
+                </span>
+              }
             </div>
           </div>
-          <button class="btn suave" type="button" (click)="cumplir(t)" [disabled]="ocupado() === t.id">
-            @if (ocupado() === t.id) {
-              <span class="girando"></span> Cerrando…
-            } @else {
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7"/></svg>
-              Marcar cumplido
-            }
-          </button>
+          <div class="botones">
+            <button class="btn fantasma" type="button" (click)="abrirAvisos(t)"
+                    [attr.aria-expanded]="ajustando() === t.id">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 8.9 19a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 5 8.9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9.6a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9.6a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1"/></svg>
+              Avisos
+            </button>
+            <button class="btn suave" type="button" (click)="cumplir(t)" [disabled]="ocupado() === t.id">
+              @if (ocupado() === t.id) {
+                <span class="girando"></span> Cerrando…
+              } @else {
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4.5 4.5L19 7"/></svg>
+                Marcar cumplido
+              }
+            </button>
+          </div>
         </div>
+
+        <!-- CA-27.3 · RN-37c: los avisos de este término, sin salir de aquí -->
+        @if (ajustando() === t.id) {
+          <div class="avisos">
+            <p class="explica">
+              Con cuánta anticipación quiere que le avisemos de <b>este</b> término.
+              Cambiarlo aquí no toca a los demás ni a la configuración del despacho.
+            </p>
+
+            <div class="opciones">
+              @for (d of sugeridos; track d) {
+                <button type="button" class="chip" [class.on]="elegidos().has(d)"
+                        (click)="alternar(d)" [attr.aria-pressed]="elegidos().has(d)">
+                  {{ d }}
+                </button>
+              }
+            </div>
+
+            <form class="otro" (submit)="agregarOtro($event)">
+              <input type="number" min="1" max="365" placeholder="Otro número de días"
+                     [value]="otro()" (input)="escribirOtro($event)"
+                     aria-label="Otro número de días de anticipación">
+              <button class="btn fantasma" type="submit" [disabled]="otro() === ''">Añadir</button>
+            </form>
+
+            @if (ordenados().length > 0) {
+              <div class="elegidos">
+                @for (d of ordenados(); track d) {
+                  <span class="marca-dia">
+                    {{ comoSeLee(d) }}
+                    <button type="button" (click)="alternar(d)"
+                            [attr.aria-label]="'Quitar ' + comoSeLee(d)">×</button>
+                  </span>
+                }
+              </div>
+            }
+
+            <!-- La razón de ser de esta pantalla: un término de dos días con el
+                 esquema corriente de 15/5/1 solo recibe el aviso de un día. El
+                 abogado creería tener tres avisos y tendría uno. -->
+            @if (avisosQueNoAlcanzan().length > 0) {
+              <p class="franja ambar" role="status">
+                @if (avisosQueNoAlcanzan().length === 1) {
+                  <b>Este aviso ya no alcanza a salir:</b> {{ losQueNoAlcanzan() }}.
+                  El término vence antes, así que no se enviaría.
+                } @else {
+                  <b>Estos avisos ya no alcanzan a salir:</b> {{ losQueNoAlcanzan() }}.
+                  El término vence antes, así que no se enviarían.
+                }
+                Elija anticipaciones más cortas si quiere que le avisen.
+              </p>
+            }
+
+            @if (sinNinguno()) {
+              <p class="franja roja" role="alert">
+                <b>Sin ningún aviso este término deja de vigilarse.</b>
+                Seguirá en la lista, pero el sistema no le recordará su vencimiento.
+              </p>
+            }
+
+            @if (errorAvisos(); as fallo) {
+              <p class="franja roja" role="alert">{{ fallo }}</p>
+            }
+
+            <div class="pie-avisos">
+              <button class="btn fantasma" type="button" (click)="cerrarAvisos()"
+                      [disabled]="guardandoAvisos()">Cancelar</button>
+              <button class="btn" type="button" (click)="guardarAvisos()"
+                      [disabled]="!puedeGuardarAvisos()">
+                @if (guardandoAvisos()) {
+                  <span class="girando claro"></span> Guardando…
+                } @else {
+                  Guardar avisos
+                }
+              </button>
+            </div>
+          </div>
+        }
       } @empty {
         <div class="vacio">
           <div class="bola">

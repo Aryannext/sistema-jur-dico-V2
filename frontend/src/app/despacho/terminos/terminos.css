@@ -74,3 +74,127 @@
   .campos { grid-template-columns: 1fr; align-items: stretch; }
   .term.grande { align-items: flex-start; flex-wrap: wrap; }
 }
+
+/* --- Avisos de un término (CA-27.3) ---------------------------------- */
+
+.term .botones {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Cuelga del término al que pertenece, sangrado y con un filete a la
+   izquierda: si flotara suelto no se sabría cuál de la lista se está
+   ajustando. */
+.avisos {
+  margin: 0 0 14px 34px;
+  padding: 18px 20px 16px;
+  border-left: 2px solid var(--marca);
+  border-radius: 0 12px 12px 0;
+  background: var(--sup);
+}
+
+.avisos .explica {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--apagado);
+}
+.avisos .explica b { color: var(--tinta); }
+
+.avisos .opciones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.avisos .chip {
+  min-width: 46px;
+  padding: 9px 13px;
+  border: 1.5px solid var(--hilo);
+  border-radius: 10px;
+  background: var(--fondo);
+  color: var(--tinta);
+  font: inherit;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: border-color .12s, background .12s;
+}
+.avisos .chip:hover { border-color: var(--marca-media); }
+.avisos .chip.on {
+  border-color: var(--marca);
+  background: var(--marca-suave);
+  color: var(--marca);
+  font-weight: 600;
+}
+.avisos .chip:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
+
+.avisos .otro {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.avisos .otro input {
+  flex: 1;
+  min-width: 0;
+  max-width: 260px;
+  height: 42px;
+  padding: 0 13px;
+  border: 1.5px solid var(--hilo);
+  border-radius: 10px;
+  background: var(--fondo);
+  color: var(--tinta);
+  font: inherit;
+  font-size: 14px;
+}
+.avisos .otro input::placeholder { color: var(--apagado); }
+.avisos .otro .btn { height: 42px; }
+
+.avisos .elegidos {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.avisos .marca-dia {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 8px 6px 13px;
+  border-radius: 99px;
+  background: var(--marca-suave);
+  color: var(--marca);
+  font-size: 13px;
+  font-weight: 600;
+}
+.avisos .marca-dia button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+.avisos .marca-dia button:hover { color: var(--alto); background: var(--alto-suave); }
+
+.avisos .franja { margin: 0 0 14px; }
+
+.avisos .pie-avisos {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .avisos { margin-left: 0; }
+  .term .botones { width: 100%; }
+}

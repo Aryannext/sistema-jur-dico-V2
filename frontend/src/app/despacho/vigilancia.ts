@@ -88,6 +88,24 @@ export class Vigilancia {
     await this.refrescar();
   }
 
+  /**
+   * Ajustar los avisos de UN término. CA-27.3 · RN-37c.
+   *
+   * <p>Existe porque un término de dos días no se vigila igual que uno de
+   * sesenta: con el esquema corriente de 15/5/1, el primero solo alcanzaría a
+   * recibir el aviso de un día.
+   *
+   * <p>El backend reprograma las alertas pendientes y <strong>conserva las ya
+   * enviadas</strong>: son el registro de que el sistema avisó (RNF-09).
+   */
+  async ajustarAnticipaciones(terminoId: number, dias: number[]): Promise<Termino> {
+    const termino = await firstValueFrom(this.http.put<Termino>(
+      `/api/terminos/${terminoId}/anticipaciones`, { diasAnticipacion: dias }));
+
+    await this.refrescar();
+    return termino;
+  }
+
   /** Reabrir uno cerrado por error. RF-22. */
   async reabrir(terminoId: number): Promise<void> {
     await firstValueFrom(this.http.put(`/api/terminos/${terminoId}/reabrir`, {}));

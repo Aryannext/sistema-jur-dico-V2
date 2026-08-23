@@ -150,7 +150,7 @@ criterio, y se dice que es la mitad.
 |---|---|---|---|
 | **CA-26.3** | Se pueden **añadir** avisos al esquema del despacho | ✅ | `[15,5,1]` → `[20,15,5,1]`, guardado |
 | **CA-27.1 · CA-38.1** | Los términos **nuevos** usan el esquema configurado | ✅ | Un término creado justo después nació con **[20, 15, 5, 1]** días de anticipación |
-| **CA-27.3** | Se puede ajustar el esquema de **un término** sin cambiar el del despacho | ✅ | Se descubrió sin existir; ver **H-5**, ya corregido (D-29 · RN-37c) |
+| **CA-27.3** | Se puede ajustar el esquema de **un término** sin cambiar el del despacho | ✅ | Se descubrió sin existir; corregido en **H-5** (D-29 · RN-37c) y **con pantalla** desde D-31. Comprobado en el sistema: un término pasó a **5/3/1**, el de al lado siguió en **15/5/1** y el esquema del despacho no se movió |
 | **CA-31.1** | Al desactivar el despacho, recibe **un correo** avisando de la suspensión | ✅ | Se desactivó el despacho de prueba y el aviso salió a `contacto@cantillo.co` |
 | **CA-31.2** | Ese aviso es **notificación de corte**, no acceso | ✅ | El mensaje **no contiene ningún enlace, token ni vía de acceso**: dice qué deja de ocurrir y que la información se conserva |
 
@@ -466,6 +466,11 @@ rebote; ahora lo es por diseño.
 borran** al reprogramar: son el registro de que el sistema avisó (RNF-09).
 
 **Estado:** cerrado. **CA-27.3 pasa a ✅.**
+
+**Y después quedó a medias otra vez.** El criterio se cumplía por API pero no
+había **pantalla**: un abogado no podía usarlo. Era el mismo hueco que se les
+había encontrado a otras tres pantallas en este mismo recorrido —endpoint sin
+interfaz—, recién creado. Cerrado en **D-31**.
 
 ### H-2 · CA-04.4 no se puede cumplir en local, y eso ya estaba decidido
 
