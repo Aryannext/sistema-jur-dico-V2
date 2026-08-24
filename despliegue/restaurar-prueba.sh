@@ -92,7 +92,11 @@ if [ -f "$CARPETA/documentos.tar.gz" ]; then
   # No se descomprime entero: se comprueba que el archivo esta integro y
   # cuantos ficheros trae. Un tar corrupto falla aqui, que es el momento
   # de enterarse.
-  FICHEROS=$(tar -tzf "$CARPETA/documentos.tar.gz" | grep -vc '/$' || echo 0)
+  # "|| true" y no "|| echo 0": grep -c YA imprime el 0 cuando no encuentra
+  # nada, pero ademas sale con codigo 1, asi que el echo se sumaba al 0 que
+  # grep ya habia escrito y el guion informaba de "0
+0 fichero(s)".
+  FICHEROS=$(tar -tzf "$CARPETA/documentos.tar.gz" | grep -vc '/$' || true)
   echo "  ✓ El archivo de documentos esta integro: $FICHEROS fichero(s)."
 else
   echo "  ! No hay documentos en este respaldo."
