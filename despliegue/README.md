@@ -178,3 +178,71 @@ restauración sea reciente. Conviene repetirla cada tanto y anotar la fecha.
 
 Los pasos 1 a 5 se pueden repetir cuantas veces haga falta: mientras algo falte,
 la aplicación no sube y dice qué es.
+
+---
+
+## Lo que enseñó el despliegue real (24/08/2026)
+
+Esta guía se escribió antes de desplegar. Estas cinco cosas solo aparecieron al
+hacerlo de verdad, y están todas corregidas en el repositorio — pero conviene
+saberlas antes del próximo servidor.
+
+**1. Java: hacen falta las dos cosas.** `openjdk-21-jre-headless` **corre** el jar
+pero no lo **compila**. Para construir en el servidor hace falta el `-jdk-`.
+
+**2. Node: cuidado con el del sistema.** Angular 22 exige Node ≥ 22.22.3. Si el
+servidor ya corre otros proyectos con una versión anterior, **no la actualice**:
+instale nvm y una versión aparte para el usuario. Actualizar el Node del sistema
+puede tumbar lo que ya funciona.
+
+**3. Compile con `npm run build`, nunca con `npx ng build`.** El segundo se salta
+los guiones de npm, y este proyecto tiene un `prebuild` que genera
+`src/styles.css` desde los mockups de diseño. Sin él la compilación falla con un
+`Could not resolve "src/styles.css"` que parece un fichero perdido y no lo es.
+
+**4. Los respaldos necesitan `PGHOST=localhost`.** El guion corre como root —para
+poder leer el almacén de documentos— y se conecta como `sgpj_app`. Por socket Unix
+PostgreSQL usa autenticación `peer` y exige que el usuario del sistema coincida con
+el de la base:
+
+```
+pg_dump: FATAL: Peer authentication failed for user "sgpj_app"
+```
+
+Por TCP sí vale la contraseña. En Windows este problema no existe, por eso los
+guiones parecían correctos.
+
+**5. Compruebe dónde escucha la aplicación.** Debe decir `127.0.0.1:8080`:
+
+```bash
+sudo ss -tlnp | grep 8080
+```
+
+Si dice `*:8080`, el sistema está accesible por `http://IP:8080` **saltándose el
+TLS**, y las contraseñas viajarían en claro aunque el sitio tenga certificado.
+Desde esta versión el perfil de producción lo fija solo, pero mírelo igual: el
+servicio arranca perfecto en los dos casos y ningún control de D-23 lo miraba.
+
+### Si el servidor comparte nginx con otros sitios
+
+Añada un fichero propio en `sites-available` y su enlace; **no toque los
+existentes**. Y ejecute siempre `nginx -t` antes de `reload`: si la configuración
+está mal, no recarga y los sitios que ya funcionaban siguen en pie.
+
+Use un **subdominio**, no una ruta dentro de otro sitio. Si el dominio principal ya
+enruta `/api/` a otro programa, las peticiones de este sistema se las come aquel
+—hace 32 llamadas a `/api/` sin base configurable—. Ver **D-32**.
+
+### El primer usuario
+
+En una base limpia no hay ninguno, y sin ninguno nadie puede entrar. Se crea al
+arrancar con:
+
+```bash
+SGPJ_ADMIN_CORREO=...
+SGPJ_ADMIN_CLAVE=...        # openssl rand -base64 18
+```
+
+**Bórrelas del fichero de entorno en cuanto el usuario exista.** El creador solo
+actúa cuando no hay ningún Administrador de Plataforma, así que a partir de ahí
+son una contraseña guardada en claro sin ningún motivo.

@@ -568,6 +568,74 @@ quedaron con prueba.
 
 ---
 
+### D-32 — El despliegue, y los cinco fallos que solo aparecieron al hacerlo
+
+**Fecha.** 23–24 de agosto de 2026. **Dónde.** `https://iuris.proyectosena.online`, en un VPS
+Ubuntu 24.04 que ya servía otros dos sitios.
+
+**Lo que importa de esta entrada no es que se desplegó.** Es que el despliegue encontró
+**cinco defectos** que ninguna prueba había detectado, cuatro de ellos capaces de impedir
+que el sistema funcionara. El proyecto tenía 132 pruebas de dominio, 237 de integración,
+48 de frontend y 54 criterios de aceptación recorridos a mano. Ninguna miraba nada de esto.
+
+| # | Defecto | Por qué no lo vio nadie |
+|---|---|---|
+| 1 | `mvnw` versionado sin bit de ejecución (`100644`) | En Windows se invoca `mvnw.cmd`. El problema **solo existe en Linux** |
+| 2 | `credenciales.interceptor.ts` **nunca estuvo en el repositorio** | La regla `credenciales*` del `.gitignore` se lo comía. Siempre compilábamos desde la copia de trabajo, donde el fichero sí está |
+| 3 | La aplicación escuchaba en `0.0.0.0:8080` | Arrancaba bien, los seis controles de D-23 pasaban. Lo delató `ss -tlnp`, no un fallo |
+| 4 | Sin forma de crear el primer usuario | El perfil de producción no mapeaba `sgpj.administrador-inicial.*` a ninguna variable. Sistema entero en línea y **nadie podía iniciar sesión** |
+| 5 | Los respaldos fallaban por autenticación `peer` | Los guiones se habían probado en Windows, donde PostgreSQL no usa `peer` |
+
+**El segundo es el más grave y el más silencioso.** Durante semanas el repositorio fue incapaz
+de producir el programa que decía contener, y nada lo dijo nunca. El primer sitio donde
+apareció fue un `git clone` en el servidor.
+
+**El tercero descubre un hueco en la propia D-23.** Existe un control para que PostgreSQL no
+escuche en internet —el 4— y **ninguno para la aplicación**, que es la que recibe las
+contraseñas. El sistema quedaba accesible por `http://IP:8080` saltándose el TLS. El hueco
+estaba en la lista, no en el código.
+
+---
+
+#### Subdominio y no ruta: lo decidió un choque, no una preferencia
+
+Se planteó servirlo en `proyectosena.online/sistema-juridico`, dentro del portafolio.
+**No se puede sin reescribir el frontend:** ese dominio ya enruta `/api/` al backend Node del
+portafolio, y el sistema hace 32 llamadas a `/api/` sin base configurable. Las peticiones de
+un abogado se las habría comido otro programa.
+
+Un subdominio lo resuelve sin tocar código, es gratis, y separa las cookies de sesión — que
+para un sistema con información reservada de clientes no es un detalle.
+
+#### systemd y no Docker
+
+Se evaluó. Docker resuelve la reproducibilidad entre máquinas, problema que aquí **no
+existe**: hay un servidor y ya se está en él. A cambio cobraba inmediato —volumen para el
+almacén cifrado, red hacia el PostgreSQL del host, reescribir los guiones de respaldo, y un
+segundo modelo de despliegue conviviendo con los otros dos proyectos del servidor—.
+
+#### Dos caminos de autenticación en los respaldos, a propósito
+
+`restaurar-prueba.sh` necesita el superusuario para crear la base desechable. Por TCP eso
+pediría una contraseña que **hoy no existe**. La salida fácil era ponérsela al rol `postgres`
+y guardarla en el fichero de entorno; se descartó. El usuario de la aplicación va por TCP con
+la suya, el superusuario por socket con `peer` y sin ninguna: así no hay un secreto permanente
+en disco a cambio de una comodidad de un momento.
+
+---
+
+**Estado al cierre.** Los nueve controles de D-23 cumplidos —seis los verifica la aplicación
+al arrancar y si alguien rompe uno **no levanta**—. Respaldo diario a las 02:00 con
+restauración probada. Correo autenticado con SPF, DKIM y DMARC desde el dominio propio.
+
+**Lo que queda explícitamente pendiente:** la prueba de restauración se hizo con
+`usuarios=1` y todo lo demás en cero. **Verifica el mecanismo, no los datos** —cinco de las
+seis cifras coincidirían igual con una base vacía—. Hay que repetirla cuando exista un
+despacho cargado. Es el mismo principio que este proyecto viene aplicando desde el principio:
+una prueba que pasa por accidente no prueba nada.
+
+---
+
 ## 5. Supuestos vigentes [S]
 
 Se trabaja con ellos hasta que se validen. Cada uno indica cuándo debe cerrarse.
@@ -661,3 +729,4 @@ Cada fase se valida antes de abrir la siguiente. Cada artefacto de una fase refe
 | 2026-08-23 | Decisión **D-29** y regla **RN-37c**: el esquema de alertas se puede ajustar **por término**. Cierra **H-5** y con él **CA-27.3**, el último criterio de aceptación que quedaba sin cumplir. | Al implementarlo apareció una trampa que no se buscaba: `actualizarTermino` releía el esquema del despacho, así que un ajuste individual se habría perdido **en silencio** al corregir la fecha. Tiene prueba propia. |
 | 2026-08-23 | Decisión **D-30**: se empieza con el plan **gratuito** de Brevo y **una sola conexión**. Cierra lo último que quedaba de **A-05**. Añadido `despliegue/README.md`. | Los 6 envíos/segundo de D-27 son para el volumen OBJETIVO —50 despachos—, no para el de partida. Con 5 despachos el pico son ~270 correos al día, que caben en un plan gratuito y en una sola conexión. Dimensionar desde el primer día para una meta que no existe habría significado pagar capacidad sin usar. El momento de subir no hay que vigilarlo: el sistema avisa cuando una alerta sale fuera de tolerancia. |
 | 2026-08-23 | Decisión **D-31**: **pantalla** para los avisos propios de un término (CA-27.3). Nuevo `nucleo/avisos.ts` con 21 pruebas. | D-29 dio por cerrado CA-27.3 con endpoint y migración, pero sin interfaz: el criterio se cumplía por API y un abogado no podía usarlo — el mismo hueco que se le había encontrado ya a otras tres pantallas, recién creado. La pantalla añade además lo que el endpoint no podía: advertir de los avisos que YA NO ALCANZAN a salir, que es el caso que motivó todo esto. |
+| 2026-08-24 | **Desplegado en producción** (D-32): `iuris.proyectosena.online`, nueve controles de D-23 cumplidos, respaldo diario con restauración probada, correo con SPF+DKIM+DMARC. | El despliegue encontró **cinco defectos que ninguna prueba vio**, cuatro capaces de impedir que el sistema funcionara — incluido que el repositorio llevaba semanas sin poder compilarse desde cero. Y descubrió un hueco en la propia D-23: hay control para que PostgreSQL no escuche en internet y ninguno para la aplicación, que es la que recibe las contraseñas. |
