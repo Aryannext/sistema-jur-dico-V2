@@ -79,10 +79,35 @@ export class NuevoProceso {
   protected readonly sinClientes = computed(
     () => !this.cargando() && this.clientes().length === 0);
 
-  /** Igual con los catálogos: sin juzgados o sin tipos no se puede clasificar. */
-  protected readonly catalogoIncompleto = computed(() =>
-    !this.cargando()
-    && (this.juzgados().length === 0 || this.tipos().length === 0 || this.estados().length === 0));
+  /**
+   * Cuáles de los tres catálogos están vacíos, con su nombre.
+   *
+   * <p>Nombrarlos importa. Antes la pantalla decía «falta al menos uno de los
+   * tres» sin decir cuál, y el caso normal es tener dos llenos y uno vacío:
+   * el abogado iba a Catálogos, veía siete tipos de proceso activos y concluía
+   * que el sistema estaba roto.
+   *
+   * <p>El que casi siempre falta es <strong>Juzgado</strong>, y no por error:
+   * **D-17** decidió no sembrarlo porque cada despacho trabaja con los suyos.
+   * Un aviso que no puede señalar la causa convierte una decisión de diseño en
+   * lo que parece un fallo.
+   */
+  protected readonly catalogosVacios = computed(() => {
+    const faltan: string[] = [];
+    if (this.juzgados().length === 0) faltan.push('Juzgado');
+    if (this.tipos().length === 0) faltan.push('Tipo de proceso');
+    if (this.estados().length === 0) faltan.push('Estado procesal');
+    return faltan;
+  });
+
+  protected readonly catalogoIncompleto = computed(
+    () => !this.cargando() && this.catalogosVacios().length > 0);
+
+  /** Si lo único que falta son juzgados, hay 60 de Neiva listos para agregar. */
+  protected readonly soloFaltanJuzgados = computed(() => {
+    const faltan = this.catalogosVacios();
+    return faltan.length === 1 && faltan[0] === 'Juzgado';
+  });
 
   protected readonly puedeCrear = computed(() =>
     !this.guardando()

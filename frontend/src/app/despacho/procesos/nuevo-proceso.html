@@ -33,11 +33,32 @@
 
   } @else if (catalogoIncompleto()) {
     <section class="caja vacio">
-      <h3>Faltan valores en sus catálogos</h3>
+      @if (catalogosVacios().length === 1) {
+        <h3>Su catálogo «{{ catalogosVacios()[0] }}» está vacío</h3>
+      } @else {
+        <h3>Faltan valores en sus catálogos</h3>
+      }
       <p>
-        Un proceso se clasifica con un juzgado, un tipo y un estado procesal, y
-        cada despacho define los suyos. Falta al menos uno de los tres.
+        Un proceso se clasifica con un juzgado, un tipo y un estado procesal.
+        @if (catalogosVacios().length === 1) {
+          Los otros dos ya tienen valores; falta <b>{{ catalogosVacios()[0] }}</b>.
+        } @else {
+          Están vacíos: <b>{{ catalogosVacios().join(', ') }}</b>.
+        }
       </p>
+
+      <!-- El caso normal, y por eso se nombra: D-17 no siembra los juzgados
+           porque cada despacho trabaja con los suyos. Pero sí hay 60 de Neiva
+           sugeridos, y no decirlo aquí deja al abogado creyendo que tiene que
+           escribirlos a mano. -->
+      @if (soloFaltanJuzgados()) {
+        <p class="pista">
+          Los juzgados no vienen cargados a propósito: cada despacho trabaja con los suyos.
+          En Catálogos encontrará los <b>60 juzgados de Neiva</b> sugeridos, para agregar
+          con un clic los que use.
+        </p>
+      }
+
       <a class="btn" routerLink="/configuracion/catalogos">Ir a Catálogos</a>
     </section>
 
