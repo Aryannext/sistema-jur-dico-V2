@@ -20,7 +20,18 @@ set -euo pipefail
 
 CARPETA="${1:?Uso: ./restaurar-prueba.sh <carpeta-del-respaldo>}"
 USUARIO="${SGPJ_BD_USUARIO:?falta SGPJ_BD_USUARIO}"
-SUPERUSUARIO="${SGPJ_BD_SUPERUSUARIO:-postgres}"
+# DOS CAMINOS DE AUTENTICACION, y no es un capricho.
+#
+# El usuario de la aplicacion se conecta por TCP con su contraseña (PGHOST
+# y PGPASSWORD, que pone el envoltorio). El superusuario NO: se alcanza por
+# socket Unix con autenticacion "peer", que no pide contraseña porque le
+# basta con que el usuario del sistema sea "postgres".
+#
+# Mezclar los dos caminos es lo que permite que este guion funcione sin
+# que la contraseña de postgres exista escrita en ningun sitio. Darsela
+# solo para poder probar respaldos seria pagar un precio permanente por
+# una comodidad de un momento.
+super() { ${SGPJ_PSQL_SUPER:-sudo -u postgres psql} "$@"; }
 PRUEBA="iuris_restauracion_prueba"
 
 [ -f "$CARPETA/base.dump" ]     || { echo "No hay base.dump en $CARPETA"; exit 1; }
@@ -33,11 +44,11 @@ echo ""
 
 # --- Base desechable -------------------------------------------------
 echo "· Creando base de prueba $PRUEBA..."
-psql -U "$SUPERUSUARIO" -d postgres -c "DROP DATABASE IF EXISTS $PRUEBA;" > /dev/null
-psql -U "$SUPERUSUARIO" -d postgres -c "CREATE DATABASE $PRUEBA OWNER $USUARIO;" > /dev/null
+super -d postgres -c "DROP DATABASE IF EXISTS $PRUEBA;" > /dev/null
+super -d postgres -c "CREATE DATABASE $PRUEBA OWNER $USUARIO;" > /dev/null
 
 limpiar() {
-  psql -U "$SUPERUSUARIO" -d postgres -c "DROP DATABASE IF EXISTS $PRUEBA;" > /dev/null 2>&1 || true
+  super -d postgres -c "DROP DATABASE IF EXISTS $PRUEBA;" > /dev/null 2>&1 || true
 }
 trap limpiar EXIT
 

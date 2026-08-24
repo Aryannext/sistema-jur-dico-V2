@@ -11,6 +11,17 @@
 # CLAVE APARTE Y FUERA DE ESTE SERVIDOR. Un respaldo perfecto de documentos
 # cuya clave se perdio con el servidor es un respaldo de ruido.
 #
+# CONEXION. Este guion corre como root -necesita leer el almacen de
+# documentos, que pertenece al usuario "iuris"- y se conecta a la base
+# como sgpj_app. Por socket Unix eso falla: PostgreSQL usa autenticacion
+# "peer" y exige que el usuario del sistema coincida con el de la base.
+#
+#   pg_dump: FATAL: Peer authentication failed for user "sgpj_app"
+#
+# Por eso hay que conectarse por TCP, y entonces si vale la contraseña:
+#
+#   export PGHOST=localhost PGPASSWORD=...
+#
 # Uso:  ./respaldo.sh [directorio-destino]
 # Cron: 0 2 * * *  /opt/iuris/respaldo.sh >> /var/log/iuris-respaldo.log 2>&1
 
