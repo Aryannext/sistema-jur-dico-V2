@@ -18,8 +18,22 @@ application-secrets.*
 *.key
 *.p12
 *.jks
-credenciales*
-secretos*
+# Ficheros que CONTIENEN credenciales. Sin comodin al final, a proposito:
+# «credenciales*» se comia credenciales.interceptor.ts -codigo fuente, no un
+# secreto- y el repositorio dejaba de poder compilarse desde cero sin que
+# nada lo dijera. Se descubrio clonandolo en el VPS para desplegar.
+credenciales.json
+credenciales.txt
+credenciales.env
+credenciales.yml
+credenciales.yaml
+credenciales.properties
+secretos.json
+secretos.txt
+secretos.env
+secretos.yml
+secretos.yaml
+secretos.properties
 
 # --- Java / Maven ---
 target/
