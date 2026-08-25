@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 import { ValorCatalogo } from '../nucleo/modelos';
+import { Procesos } from '../despacho/procesos/procesos.servicio';
 
 /** GET /api/esquema-alertas — RF-34. */
 export interface Esquema {
@@ -31,6 +32,21 @@ export class Configuracion {
 
   private readonly http = inject(HttpClient);
 
+  /**
+   * Para avisarle de que sus desplegables ya no son ciertos.
+   *
+   * <p>Nace de un defecto real: `Procesos` guarda los catálogos en memoria y
+   * nadie los invalidaba nunca. Un abogado agregaba su primer juzgado aquí,
+   * iba a Nuevo proceso y seguía leyendo que su catálogo estaba vacío; solo
+   * recargar la página entera lo arreglaba.
+   *
+   * <p>Se olvidan <strong>todos</strong> y no solo el que cambió: renombrar y
+   * cambiar el estado reciben un id, no un tipo, así que averiguar cuál tocar
+   * costaría más de lo que ahorra. Volver a pedir cuatro listas diminutas la
+   * vez que alguien edita un catálogo es un precio que no se nota.
+   */
+  private readonly procesos = inject(Procesos);
+
   /** Todos los valores del tipo, activos e inactivos: aquí se administran. */
   async catalogo(tipo: string): Promise<ValorCatalogo[]> {
     return firstValueFrom(this.http.get<ValorCatalogo[]>(`/api/catalogos/${tipo}`));
@@ -49,14 +65,20 @@ export class Configuracion {
   }
 
   async agregar(tipo: string, nombre: string, orden: number | null): Promise<ValorCatalogo> {
-    return firstValueFrom(
+    const valor = await firstValueFrom(
       this.http.post<ValorCatalogo>(`/api/catalogos/${tipo}`, { nombre, orden }));
+
+    this.procesos.olvidarCatalogo();
+    return valor;
   }
 
   /** RN-06: renombrar conserva el identificador, así lo ya clasificado no se pierde. */
   async renombrar(id: number, nombre: string, orden: number | null): Promise<ValorCatalogo> {
-    return firstValueFrom(
+    const valor = await firstValueFrom(
       this.http.put<ValorCatalogo>(`/api/catalogos/valores/${id}`, { nombre, orden }));
+
+    this.procesos.olvidarCatalogo();
+    return valor;
   }
 
   /**
@@ -68,8 +90,14 @@ export class Configuracion {
    */
   async cambiarEstado(id: number, activo: boolean): Promise<ValorCatalogo> {
     const accion = activo ? 'activar' : 'desactivar';
-    return firstValueFrom(
+    const valor = await firstValueFrom(
       this.http.put<ValorCatalogo>(`/api/catalogos/valores/${id}/${accion}`, {}));
+
+    // Desactivar importa tanto como agregar: un valor desactivado NO debe
+    // seguir ofreciendose para clasificar cosas nuevas, y sin esto seguiria
+    // apareciendo en el desplegable hasta que alguien recargara.
+    this.procesos.olvidarCatalogo();
+    return valor;
   }
 
   async esquemaAlertas(): Promise<Esquema> {

@@ -157,17 +157,59 @@ export class Procesos {
    * Los valores de un catálogo del despacho, para los desplegables.
    *
    * <p>Se piden los ACTIVOS: un tipo de proceso desactivado no debe ofrecerse
-   * para clasificar nada nuevo. Se guardan en memoria porque un catálogo
-   * cambia una vez al año y la pantalla se abre veinte veces al día.
+   * para clasificar nada nuevo. Se guardan en memoria porque la pantalla se
+   * abre muchas veces al día y un catálogo cambia rara vez.
+   *
+   * <h2>Dos correcciones que costaron un defecto en producción</h2>
+   *
+   * <p>Antes decía «un catálogo cambia una vez al año», y sobre esa frase se
+   * guardaba el resultado para siempre sin que nada lo invalidara nunca.
+   * <strong>Es falso justo cuando más importa:</strong> el primer día, cuando
+   * el despacho está montando sus catálogos, cambian cada minuto.
+   *
+   * <p>Y lo que se guardaba era una lista <em>vacía</em>. En JavaScript
+   * {@code []} es verdadero, así que el «¿ya lo tengo?» daba que sí y devolvía
+   * el vacío indefinidamente. Un abogado agregaba su primer juzgado, volvía a
+   * Nuevo proceso, y seguía leyendo que su catálogo estaba vacío. Solo
+   * recargar la página entera lo arreglaba.
+   *
+   * <p>Ahora: <strong>un resultado vacío no se guarda</strong> —es el estado
+   * que está a punto de dejar de ser cierto— y {@link olvidarCatalogo} permite
+   * tirar lo guardado cuando algo cambia.
    */
   async catalogo(tipo: string): Promise<ValorCatalogo[]> {
     const guardado = this._catalogos()[tipo];
-    if (guardado) return guardado;
+    if (guardado && guardado.length > 0) return guardado;
 
     const valores = await firstValueFrom(
       this.http.get<ValorCatalogo[]>(`/api/catalogos/${tipo}/activos`));
 
-    this._catalogos.update(actual => ({ ...actual, [tipo]: valores }));
+    // Vacío no se guarda: volver a preguntar por un catálogo que no tiene nada
+    // cuesta una petición diminuta, y es exactamente el momento en el que el
+    // usuario está a punto de llenarlo.
+    if (valores.length > 0) {
+      this._catalogos.update(actual => ({ ...actual, [tipo]: valores }));
+    }
     return valores;
+  }
+
+  /**
+   * Olvida lo guardado de un catálogo, o de todos si no se dice cuál.
+   *
+   * <p>Lo llama el servicio de configuración después de agregar, renombrar o
+   * cambiar el estado de un valor. Sin esto, la pantalla de un abogado seguiría
+   * mostrando la lista de antes hasta que recargara — y no tendría forma de
+   * saber que lo que ve ya no es cierto.
+   */
+  olvidarCatalogo(tipo?: string): void {
+    if (tipo === undefined) {
+      this._catalogos.set({});
+      return;
+    }
+    this._catalogos.update(actual => {
+      const copia = { ...actual };
+      delete copia[tipo];
+      return copia;
+    });
   }
 }
